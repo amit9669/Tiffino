@@ -67,6 +67,7 @@ public class ManagerService implements IManagerService {
     @Override
     public Object forgotPasswordOfManager(String email, HttpSession session) {
         System.out.println(email);
+        log.info("Email :-->" +email);
         if(managerRepository.existsByManagerEmail(email)){
             this.sendEmail(email, "For Update Password", "This is your OTP :- " + otpService.generateOTP(email));
             session.setAttribute("email", email);
