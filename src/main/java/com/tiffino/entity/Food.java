@@ -9,7 +9,7 @@ import lombok.Setter;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Setter
+
 @Entity
 @Table(name = "food")
 public class Food {
@@ -17,7 +17,6 @@ public class Food {
     @Id
     @Column(name = "food_id")
     private Long foodId;
-
     @Column(name = "food_name")
     private String foodName;
 
