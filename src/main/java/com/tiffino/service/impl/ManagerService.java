@@ -83,6 +83,8 @@ public class ManagerService implements IManagerService {
             Manager manager = managerRepository.findByManagerEmail((String) session.getAttribute("email")).get();
             if(newPassword.equals(confirmNewPassword)){
                 manager.setPassword(passwordEncoder.encode(newPassword));
+                managerRepository.save(manager);
+                otpService.clearOTP(manager.getManagerEmail());
                 return "Password has changed!!";
             }else{
                 return "password doesn't match!! Please Try Again!!";

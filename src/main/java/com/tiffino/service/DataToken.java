@@ -5,6 +5,7 @@ import com.tiffino.repository.SuperAdminRepository;
 import com.tiffino.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
@@ -23,7 +24,7 @@ public class DataToken {
 
     public Object getCurrentUserProfile() {
         try {
-            var auth = SecurityContextHolder.getContext().getAuthentication();
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
             String email = (String) auth.getPrincipal();
             String role = auth.getAuthorities().iterator().next().getAuthority(); // e.g., ROLE_SUPER_ADMIN
 
