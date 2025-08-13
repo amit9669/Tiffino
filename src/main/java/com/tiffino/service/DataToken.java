@@ -2,6 +2,7 @@ package com.tiffino.service;
 
 import com.tiffino.repository.ManagerRepository;
 import com.tiffino.repository.SuperAdminRepository;
+import com.tiffino.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -17,6 +18,9 @@ public class DataToken {
     @Autowired
     private ManagerRepository managerRepository;
 
+    @Autowired
+    private UserRepository userRepository;
+
     public Object getCurrentUserProfile() {
         try {
             var auth = SecurityContextHolder.getContext().getAuthentication();
@@ -31,6 +35,10 @@ public class DataToken {
                     return managerRepository.findByManagerEmail(email)
                             .or(() -> managerRepository.findByManagerEmail(email))
                             .orElseThrow(() -> new RuntimeException("Manager not found"));
+                case "ROLE_USER":
+                    return userRepository.findByEmail(email)
+                            .or(() -> userRepository.findByEmail(email))
+                            .orElseThrow(() -> new RuntimeException("User not found"));
                 default:
                     throw new RuntimeException("Unknown role: " + role);
             }

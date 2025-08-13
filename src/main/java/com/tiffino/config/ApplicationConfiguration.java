@@ -18,12 +18,6 @@ public class ApplicationConfiguration {
         this.superAdminRepository = superAdminRepository;
     }
 
-//    @Bean
-//    UserDetailsService userDetailsService() {
-//        return username -> superAdminRepository.findByEmail(username)
-//                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-//    }
-
     @Bean
     BCryptPasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -33,14 +27,4 @@ public class ApplicationConfiguration {
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
-
-//    @Bean
-//    AuthenticationProvider authenticationProvider() {
-//        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-//
-//        authProvider.setUserDetailsService(userDetailsService());
-//        authProvider.setPasswordEncoder(passwordEncoder());
-//
-//        return authProvider;
-//    }
 }

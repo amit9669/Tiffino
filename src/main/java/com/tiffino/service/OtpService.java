@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class OtpService {
 
-    private static final Integer EXPIRE_MINS = 1440;  //24 hours × 60 minutes = 1440 minutes
+    private static final Integer EXPIRE_MINS = 1440;  //--> 24 hours × 60 minutes = 1440 minutes
 
     private LoadingCache<String, Integer> cache;
 
