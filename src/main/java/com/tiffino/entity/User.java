@@ -5,6 +5,8 @@ import lombok.*;
 
 @Data
 @AllArgsConstructor
+@Setter
+@Getter
 @Entity
 @Table(name = "user")
 public class User {
