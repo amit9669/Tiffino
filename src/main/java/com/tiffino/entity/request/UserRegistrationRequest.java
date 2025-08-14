@@ -28,4 +28,7 @@ public class UserRegistrationRequest {
     @Size(min = 10, max = 10, message = "Phone number must be exactly 10 digits")
     @Pattern(regexp = "^[0-9]{10}$", message = "Phone number must contain only digits")
     private String phoneNo;
+
+
+
 }
