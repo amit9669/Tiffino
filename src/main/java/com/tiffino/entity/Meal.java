@@ -16,6 +16,7 @@ import java.util.List;
 @Builder
 public class Meal {
 
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "meal_id")

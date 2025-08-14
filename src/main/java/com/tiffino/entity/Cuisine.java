@@ -39,7 +39,7 @@ public class Cuisine {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-//    @OneToMany(mappedBy = "cuisine", cascade = CascadeType.ALL, orphanRemoval = true)
-//    @JsonIgnoreProperties("cuisine")
-//    private List<Meal> meals;
+    @OneToMany(mappedBy = "cuisine", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties("cuisine")
+    private List<Meal> meals;
 }
