@@ -13,6 +13,7 @@ import lombok.NoArgsConstructor;
 public class Food {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "food_id")
     private Long foodId;
 
