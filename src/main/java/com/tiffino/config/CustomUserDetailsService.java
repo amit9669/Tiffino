@@ -34,4 +34,5 @@ public class CustomUserDetailsService implements UserDetailsService {
                                 List.of(new SimpleGrantedAuthority("ROLE_USER")))))
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
     }
+
 }

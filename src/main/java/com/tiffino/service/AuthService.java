@@ -39,8 +39,10 @@ public class AuthService {
         if (superAdmin.isPresent() && passwordEncoder.matches(password, superAdmin.get().getPassword())) {
             return jwtService.generateToken(emailOrId, Role.SUPER_ADMIN.name());
         }
+        System.out.println("Email 1"+emailOrId);
 
         if (managerRepo.existsByManagerEmail(emailOrId)) {
+            System.out.println("Email 2"+emailOrId);
             Optional<Manager> manager = managerRepo.findByManagerEmail(emailOrId);
             if (manager.isPresent() && passwordEncoder.matches(password, manager.get().getPassword())) {
                 return jwtService.generateToken(emailOrId, Role.MANAGER.name());
@@ -48,6 +50,8 @@ public class AuthService {
                 return "Invalid Manager Credentials";
             }
         } else if (managerRepo.existsById(emailOrId)) {
+            System.out.println("Email 3"+emailOrId);
+
             Optional<Manager> managerId = managerRepo.findById(emailOrId);
             if (managerId.isPresent() && passwordEncoder.matches(password, managerId.get().getPassword())) {
                 return jwtService.generateToken(managerId.get().getManagerEmail(), Role.MANAGER.name());

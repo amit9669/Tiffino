@@ -1,4 +1,5 @@
 package com.tiffino.entity;
+
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -39,6 +40,15 @@ public class Meal {
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @Column(name = "is_available")
+    private boolean isAvailable = true;
+
+    @Column(name = "is_unavailable")
+    private boolean isUnavailable = false;
+
+    @Column(name = "price")
+    private double price;
 
     @ManyToOne
     @JoinColumn(name = "cuisine_id", nullable = false)
