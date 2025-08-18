@@ -1,5 +1,6 @@
 package com.tiffino.service;
 
+import com.tiffino.entity.Cuisine;
 import jakarta.servlet.http.HttpSession;
 
 public interface IManagerService {
@@ -11,4 +12,6 @@ public interface IManagerService {
     Object changePassword(int otp, String newPassword, String confirmNewPassword, HttpSession session);
 
     Object getDataOfCloudKitchen();
+
+    Cuisine createCuisine(Cuisine cuisine);
 }

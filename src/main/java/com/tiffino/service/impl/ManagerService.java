@@ -2,9 +2,11 @@ package com.tiffino.service.impl;
 
 import com.tiffino.config.AuthenticationService;
 import com.tiffino.config.JwtService;
+import com.tiffino.entity.Cuisine;
 import com.tiffino.entity.Manager;
 import com.tiffino.exception.CustomException;
 import com.tiffino.repository.CloudKitchenRepository;
+import com.tiffino.repository.CuisineRepository;
 import com.tiffino.repository.ManagerRepository;
 import com.tiffino.service.DataToken;
 import com.tiffino.service.IManagerService;
@@ -12,10 +14,14 @@ import com.tiffino.service.OtpService;
 import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 @Slf4j
 @Service
@@ -45,6 +51,9 @@ public class ManagerService implements IManagerService {
     @Autowired
     private JavaMailSender javaMailSender;
 
+    @Autowired
+    private CuisineRepository cuisineRepository;
+
 
     @Override
     public Object updatePassword(String managerId, int otp, String newPassword) {
@@ -67,29 +76,29 @@ public class ManagerService implements IManagerService {
     @Override
     public Object forgotPasswordOfManager(String email, HttpSession session) {
         System.out.println(email);
-        log.info("Email :-->" +email);
-        if(managerRepository.existsByManagerEmail(email)){
+        log.info("Email :-->" + email);
+        if (managerRepository.existsByManagerEmail(email)) {
             this.sendEmail(email, "For Update Password", "This is your OTP :- " + otpService.generateOTP(email));
             session.setAttribute("email", email);
             return "Check email for OTP verification!";
-        }else{
+        } else {
             return "This Email not exists!! First Create account!!";
         }
     }
 
     @Override
     public Object changePassword(int otp, String newPassword, String confirmNewPassword, HttpSession session) {
-        if (otpService.getOtp((String) session.getAttribute("email"))==otp){
+        if (otpService.getOtp((String) session.getAttribute("email")) == otp) {
             Manager manager = managerRepository.findByManagerEmail((String) session.getAttribute("email")).get();
-            if(newPassword.equals(confirmNewPassword)){
+            if (newPassword.equals(confirmNewPassword)) {
                 manager.setPassword(passwordEncoder.encode(newPassword));
                 managerRepository.save(manager);
                 otpService.clearOTP(manager.getManagerEmail());
                 return "Password has changed!!";
-            }else{
+            } else {
                 return "password doesn't match!! Please Try Again!!";
             }
-        }else{
+        } else {
             return "OTP not Matched!!!";
         }
     }
@@ -111,4 +120,11 @@ public class ManagerService implements IManagerService {
         Manager manager = (Manager) dataToken.getCurrentUserProfile();
         return kitchenRepository.findById(manager.getCloudKitchen().getCloudKitchenId()).get();
     }
+
+
+    @Override
+    public Cuisine createCuisine(Cuisine cuisine) {
+        return cuisineRepository.save(cuisine);
+    }
+
 }
