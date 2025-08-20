@@ -58,9 +58,6 @@ public class CloudKitchen {
     @JsonBackReference
     private Manager manager;
 
-    @OneToMany(mappedBy = "cloudKitchen", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Food> foods = new ArrayList<>();
-
     @Enumerated(EnumType.STRING)
     @Column(name = "role")
     private Role role = Role.CLOUD_KITCHEN;
