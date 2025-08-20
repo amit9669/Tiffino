@@ -5,16 +5,14 @@ import com.tiffino.entity.Order;
 import com.tiffino.entity.User;
 import com.tiffino.entity.request.CreateOrderRequest;
 import com.tiffino.entity.request.UserRegistrationRequest;
+import com.tiffino.repository.MealRepository;
 import com.tiffino.repository.OrderRepository;
 import com.tiffino.repository.UserRepository;
 import com.tiffino.service.IUserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -32,6 +30,9 @@ public class UserController {
     @Autowired
     private OrderRepository orderRepository;
 
+    @Autowired
+    private MealRepository mealRepository;
+
     @PostMapping("/register")
     public ResponseEntity<String> register(@Valid @RequestBody UserRegistrationRequest userRegistrationRequest) {
 
@@ -39,44 +40,24 @@ public class UserController {
         return ResponseEntity.ok("User registered successfully");
     }
 
+
+
+//    @PostMapping("/forgot-password-otp")
+//    public ResponseEntity<?> sendOtp(@RequestParam String email) {
+//        System.out.println("Sending OTP to email: " + email);
+//        iUserService.sendOtp(email);
+//        return ResponseEntity.ok("OTP sent to email.");
+//    }
+//
+//    @PostMapping("/reset-password-otp")
+//    public ResponseEntity<String> resetPassword(@RequestParam String email, @RequestParam String otp, @RequestParam String newPassword) {
+//        iUserService.resetPasswordWithOtp(email, otp, newPassword);
+//        return ResponseEntity.ok("Password updated successfully.");
+//    }
+
     @PostMapping("/orders")
     public ResponseEntity<Order> createOrder(@RequestBody CreateOrderRequest request) {
-        // 1. Fetch user
-        User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        // 2. Fetch meals
-        List<Meal> meals = mealRepository.findAllById(request.getMealIds());
-
-        if (meals.isEmpty()) {
-            throw new RuntimeException("No meals found for given IDs");
-        }
-
-        // 3. Calculate total price
-        double totalCost = meals.stream()
-                .mapToDouble(Meal::getPrice)
-                .sum();
-
-        // 4. Build Order
-        Order order = Order.builder()
-                .user(user)
-                .meals(meals)
-                .orderDate(LocalDateTime.now())
-                .orderStatus("PENDING")
-                .deliveryDetails(request.getDeliveryDetails())
-
-                .status(request.getStatus())
-                .totalCost(totalCost)
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
-                .build();
-
-        // 5. Save order
-        Order savedOrder = orderRepository.save(order);
-
-        return ResponseEntity.ok(savedOrder);
+        Order order = iUserService.createOrder(request);
+        return ResponseEntity.ok(order);
     }
-
-
-
 }
