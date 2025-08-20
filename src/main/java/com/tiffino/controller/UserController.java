@@ -1,5 +1,7 @@
 package com.tiffino.controller;
 
+import com.tiffino.entity.Order;
+import com.tiffino.entity.request.CreateOrderRequest;
 import com.tiffino.entity.request.UserRegistrationRequest;
 import com.tiffino.service.IUserService;
 import jakarta.validation.Valid;
@@ -30,5 +32,10 @@ public class UserController {
     @PostMapping("/assignSubscriptionToUser")
     public ResponseEntity<?> assignSubscriptionToUser(@RequestParam String name, @RequestParam Double price){
         return new ResponseEntity<>(iUserService.assignSubscriptionToUser(name,price),HttpStatus.OK);
+    }
+    @PostMapping("/orders")
+    public ResponseEntity<Order> createOrder(@RequestBody CreateOrderRequest request) {
+        Order order = iUserService.createOrder(request);
+        return ResponseEntity.ok(order);
     }
 }

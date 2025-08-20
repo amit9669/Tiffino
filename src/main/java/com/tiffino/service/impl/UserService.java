@@ -1,13 +1,9 @@
 package com.tiffino.service.impl;
 
-import com.tiffino.entity.DurationType;
-import com.tiffino.entity.Subscription;
-import com.tiffino.entity.User;
-import com.tiffino.entity.UserSubscription;
+import com.tiffino.entity.*;
+import com.tiffino.entity.request.CreateOrderRequest;
 import com.tiffino.exception.CustomException;
-import com.tiffino.repository.SubscriptionRepository;
-import com.tiffino.repository.UserRepository;
-import com.tiffino.repository.UserSubscriptionRepository;
+import com.tiffino.repository.*;
 import com.tiffino.service.DataToken;
 import com.tiffino.service.IUserService;
 import jakarta.transaction.Transactional;
@@ -36,6 +32,12 @@ public class UserService implements IUserService {
 
     @Autowired
     private UserSubscriptionRepository userSubscriptionRepository;
+
+    @Autowired
+    private OrderRepository orderRepository;
+    @Autowired
+    private MealRepository mealRepository;
+
 
     @Autowired
     private DataToken dataToken;
@@ -126,4 +128,41 @@ public class UserService implements IUserService {
                 throw new CustomException("Invalid subscription duration type!");
         }
     }
+
+
+    @Override
+    public Order createOrder(CreateOrderRequest request) {
+        // 1. Fetch user
+        User user = userRepository.findById(request.getUserId())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // 2. Fetch meals
+        List<Meal> meals = mealRepository.findAllById(request.getMealIds());
+
+        if (meals.isEmpty()) {
+            throw new RuntimeException("No meals found for given IDs");
+        }
+
+        // 3. Calculate total price
+        double totalCost = meals.stream()
+                .mapToDouble(Meal::getPrice)
+                .sum();
+
+        // 4. Build order
+        Order order = Order.builder()
+                .user(user)
+                .meals(meals)
+                .orderDate(LocalDateTime.now())
+                .orderStatus("PENDING")
+                .deliveryDetails(request.getDeliveryDetails())
+                .totalCost(totalCost)
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .build();
+
+        // 5. Save order
+        return orderRepository.save(order);
+    }
+
+
 }
