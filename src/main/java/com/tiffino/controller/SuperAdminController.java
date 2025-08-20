@@ -45,4 +45,9 @@ public class SuperAdminController {
         return new ResponseEntity<>(iSuperAdminService.searchFilterForAdmin(adminFilterRequest.getState(),
                 adminFilterRequest.getCity(), adminFilterRequest.getDivision()),HttpStatus.FOUND);
     }
+
+    @PostMapping("/saveOrUpdateSubscriptionPlan")
+    public ResponseEntity<?> saveOrUpdateSubscriptionPlan(@RequestBody SubscriptionRequest subscriptionRequest){
+        return new ResponseEntity<>(iSuperAdminService.saveOrUpdateSubscriptionPlan(subscriptionRequest),HttpStatus.CREATED);
+    }
 }
