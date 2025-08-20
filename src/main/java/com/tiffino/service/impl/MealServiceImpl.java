@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 public class MealServiceImpl implements MealService {
@@ -21,7 +22,7 @@ public class MealServiceImpl implements MealService {
     private CuisineRepository cuisineRepository;
 
     @Override
-    public Object saveOrUpdateMeal(MealRequest mealRequest) {
+    public Object saveOrUpdateMeal(MealRequest mealRequest, Long cuisineId) {
 
         // 1. Check cuisine exists
         Cuisine cuisine = cuisineRepository.findById(mealRequest.getCuisineId())
@@ -64,9 +65,16 @@ public class MealServiceImpl implements MealService {
             mealRepository.save(meal);
             return "Meal Inserted Successfully!!";
         }
+
     }
 
+    @Override
+    public List<Meal> getMealsByCuisine(Long cuisineId) {
+        return mealRepository.findByCuisine_CuisineId(cuisineId);
+    }
 
-
-
+    @Override
+    public List<Meal> getAvailableMealsByCuisine(Long cuisineId) {
+        return mealRepository.findByCuisine_CuisineIdAndAvailableTrue(cuisineId);
+    }
 }

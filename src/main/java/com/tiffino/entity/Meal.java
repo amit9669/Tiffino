@@ -42,7 +42,7 @@ public class Meal {
     private LocalDateTime updatedAt;
 
     @Column(name = "is_available")
-    private boolean isAvailable = true;
+    private boolean available = true;
 
     @Column(name = "is_unavailable")
     private boolean isUnavailable = false;
