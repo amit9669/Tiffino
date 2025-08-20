@@ -29,7 +29,7 @@ public class User {
     @Column(name = "phone_no")
     private String phoneNo;
 
-    @Column(name = "email")
+    @Column(name = "email", unique = true, nullable = false)
     private String email;
 
     @Column(name = "password")
@@ -41,4 +41,13 @@ public class User {
     @JsonManagedReference
     @JsonIgnore
     private Set<UserSubscription> subscriptions = new HashSet<>();
+
+    @Column(name = "address")
+    private String address;
+
+    @Column(name = "meal_preference")
+    private String mealPreference;
+
+    @Column(name = "dietary_needs")
+    private String dietaryNeeds;
 }

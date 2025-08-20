@@ -1,13 +1,17 @@
 package com.tiffino.controller;
 
+import com.tiffino.entity.User;
 import com.tiffino.entity.Order;
 import com.tiffino.entity.request.CreateOrderRequest;
 import com.tiffino.entity.request.UserRegistrationRequest;
+import com.tiffino.entity.request.UserUpdationRequest;
+import com.tiffino.entity.response.UserUpdationResponse;
 import com.tiffino.service.IUserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -23,6 +27,20 @@ public class UserController {
         iUserService.registerUser(userRegistrationRequest.getName(), userRegistrationRequest.getEmail(), userRegistrationRequest.getPassword(), userRegistrationRequest.getPhoneNo());
         return ResponseEntity.ok("User registered successfully");
     }
+
+    @PutMapping("/update")
+    public ResponseEntity<UserUpdationResponse> updateUser(@Valid @RequestBody UserUpdationRequest req, Authentication authentication) {
+        // Ensure user is logged in (extra defense; your SecurityConfig already enforces ROLE_USER)
+        if (authentication == null || authentication.getName() == null) {
+            return ResponseEntity.status(401).build();
+        }
+
+        String currentEmail = authentication.getName(); // set by JwtAuthenticationFilter
+        UserUpdationResponse userUpdationResponse = iUserService.updateCurrentUser(currentEmail, req);
+        return ResponseEntity.ok(userUpdationResponse);
+    }
+
+
 
     @GetMapping("/getAllSubscriptionPlan")
     public ResponseEntity<?> getAllSubscriptionPlan(){

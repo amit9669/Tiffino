@@ -5,6 +5,10 @@ import com.tiffino.entity.request.CreateOrderRequest;
 import com.tiffino.exception.CustomException;
 import com.tiffino.repository.*;
 import com.tiffino.service.DataToken;
+import com.tiffino.entity.User;
+import com.tiffino.entity.request.UserUpdationRequest;
+import com.tiffino.entity.response.UserUpdationResponse;
+import com.tiffino.repository.UserRepository;
 import com.tiffino.service.IUserService;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
@@ -12,6 +16,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.util.*;
+
+import static org.springframework.http.HttpStatus.CONFLICT;
+import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -165,4 +175,75 @@ public class UserService implements IUserService {
     }
 
 
+
+    @Override
+    @Transactional
+    public UserUpdationResponse updateCurrentUser(String currentEmail, UserUpdationRequest req) {
+        // Load the current user (auth guaranteed by security; this is the source of truth)
+        User user = userRepository.findByEmail(currentEmail)
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "User not found"));
+
+        // Track changes (field → new value)
+        Map<String, Object> updated = new LinkedHashMap<>();
+        List<String> changed = new ArrayList<>();
+        boolean passwordChanged = false;
+
+        if (req.getName() != null) {
+            String newName = req.getName().trim();
+            if (!Objects.equals(user.getUserName(), newName)) {
+                user.setUserName(newName);
+                updated.put("name", newName);
+                changed.add("name");
+            }
+        }
+
+        if (req.getPhoneNo() != null) {
+            if (!Objects.equals(user.getPhoneNo(), req.getPhoneNo())) {
+                user.setPhoneNo(req.getPhoneNo());
+                updated.put("phoneNo", req.getPhoneNo());
+                changed.add("phoneNo");
+            }
+        }
+
+        if (req.getAddress() != null) {
+            if (!Objects.equals(user.getAddress(), req.getAddress())) {
+                user.setAddress(req.getAddress());
+                updated.put("address", req.getAddress());
+                changed.add("address");
+            }
+        }
+
+        if (req.getMealPreference() != null) {
+            if (!Objects.equals(user.getMealPreference(), req.getMealPreference())) {
+                user.setMealPreference(req.getMealPreference());
+                updated.put("mealPreference", req.getMealPreference());
+                changed.add("mealPreference");
+            }
+        }
+
+        if (req.getDietaryNeeds() != null) {
+            if (!Objects.equals(user.getDietaryNeeds(), req.getDietaryNeeds())) {
+                user.setDietaryNeeds(req.getDietaryNeeds());
+                updated.put("dietaryNeeds", req.getDietaryNeeds());
+                changed.add("dietaryNeeds");
+            }
+        }
+
+
+
+        // Persist only once
+        if (!changed.isEmpty()) {
+            userRepository.save(user);
+        }
+
+        return UserUpdationResponse.builder()
+                .updated(updated)              // only fields that changed, with new values
+                .changedFields(changed)        // list of changed field names
+                .build();
+    }
+
+
+
 }
+
+
