@@ -1,5 +1,6 @@
 package com.tiffino.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
@@ -38,5 +39,6 @@ public class User {
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     @JsonManagedReference
+    @JsonIgnore
     private Set<UserSubscription> subscriptions = new HashSet<>();
 }
