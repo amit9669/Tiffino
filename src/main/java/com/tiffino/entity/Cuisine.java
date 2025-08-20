@@ -32,6 +32,12 @@ public class Cuisine {
     @Column(name = "image")
     private String image;
 
+    @Column(name = "is_available")
+    private boolean isAvailable = true;
+
+    @Column(name = "is_unavailable")
+    private boolean isUnavailable = false;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
