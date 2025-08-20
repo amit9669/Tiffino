@@ -4,13 +4,16 @@ import com.tiffino.config.AuthenticationService;
 import com.tiffino.config.JwtService;
 import com.tiffino.entity.CloudKitchen;
 import com.tiffino.entity.Manager;
+import com.tiffino.entity.Subscription;
 import com.tiffino.entity.SuperAdmin;
 import com.tiffino.entity.request.CloudKitchenRequest;
 import com.tiffino.entity.request.ManagerRequest;
+import com.tiffino.entity.request.SubscriptionRequest;
 import com.tiffino.entity.request.SuperAdminRequest;
 import com.tiffino.exception.CustomException;
 import com.tiffino.repository.CloudKitchenRepository;
 import com.tiffino.repository.ManagerRepository;
+import com.tiffino.repository.SubscriptionRepository;
 import com.tiffino.repository.SuperAdminRepository;
 import com.tiffino.service.ISuperAdminService;
 import com.tiffino.service.ImageUploadService;
@@ -59,6 +62,9 @@ public class SuperAdminService implements ISuperAdminService {
 
     @Autowired
     private OtpService otpService;
+
+    @Autowired
+    private SubscriptionRepository subscriptionRepository;
 
     /*@Value("${twilio.account.sid}")
     private String ACCOUNT_SID;
@@ -296,5 +302,26 @@ public class SuperAdminService implements ISuperAdminService {
             if (division.isEmpty()) division = null;
         }
         return managerRepository.getAllDetails(state, city, division);
+    }
+
+    @Override
+    public Object saveOrUpdateSubscriptionPlan(SubscriptionRequest subscriptionRequest) {
+            if(subscriptionRepository.existsById(subscriptionRequest.getId())){
+                Subscription subscription = subscriptionRepository.findById(subscriptionRequest.getId()).get();
+                subscription.setPrice(subscriptionRequest.getPrice());
+                subscription.setSubName(subscriptionRequest.getName());
+                subscription.setDescription(subscriptionRequest.getDescription());
+                subscription.setDurationType(subscriptionRequest.getDurationType());
+                subscriptionRepository.save(subscription);
+                return "updated Successfully";
+            }else{
+                Subscription subscription = new Subscription();
+                subscription.setPrice(subscriptionRequest.getPrice());
+                subscription.setSubName(subscriptionRequest.getName());
+                subscription.setDescription(subscriptionRequest.getDescription());
+                subscription.setDurationType(subscriptionRequest.getDurationType());
+                subscriptionRepository.save(subscription);
+                return "Inserted Successfully";
+            }
     }
 }
