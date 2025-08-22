@@ -1,11 +1,10 @@
 package com.tiffino.service;
 
 import com.tiffino.entity.Order;
-import com.tiffino.entity.Review;
 import com.tiffino.entity.request.CreateOrderRequest;
-import com.tiffino.entity.request.ReviewRequest;
 
-import java.util.List;
+import com.tiffino.entity.request.UserUpdationRequest;
+import com.tiffino.entity.response.UserUpdationResponse;
 
 public interface IUserService {
 
@@ -14,33 +13,10 @@ public interface IUserService {
     Object getAllSubscriptionPlan();
 
     Object assignSubscriptionToUser(String name, Double price);
-    Order createOrder(CreateOrderRequest request);
 
-    Order getOrderById(Long orderId);
+    Object createOrder(CreateOrderRequest request);
 
-    List<Order> getAllOrders();
+    Object updateCurrentUser(UserUpdationRequest req);
 
-    void deleteOrder(Long orderId);
-
-    Order updateOrder(Long orderId, CreateOrderRequest updatedOrderRequest);
-
-    boolean checkUserExistsByEmail(String email);
-
-    void updatePasswordByEmail(String email, String newPassword);
-
-
-    Review createReview(ReviewRequest request);
-
-
-    String updateReview(Long id, ReviewRequest request);
-
-    void deleteReview(Long reviewId);
-
-    Review getReviewById(Long reviewId);
-
-    List<Review> getAllReviews();
-
-//    List<Review> getReviewsByMealId(Long mealId);
-
-    List<Review> getReviewsByUserId(Long userId);
 }
+

@@ -10,7 +10,6 @@ public class MealRequest {
     private String name;
     private String description;
     private String nutritionalInformation;
-    private MultipartFile photos;
     private double price;
     private Long cuisineId;
 }

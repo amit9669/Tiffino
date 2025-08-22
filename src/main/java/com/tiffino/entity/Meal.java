@@ -42,10 +42,10 @@ public class Meal {
     private LocalDateTime updatedAt;
 
     @Column(name = "is_available")
-    private Boolean available = true;
+    private boolean available = true;
 
     @Column(name = "is_unavailable")
-    private Boolean isUnavailable = false;
+    private boolean isUnavailable = false;
 
     @Column(name = "price")
     private double price;
@@ -53,9 +53,4 @@ public class Meal {
     @ManyToOne
     @JoinColumn(name = "cuisine_id", nullable = false)
     private Cuisine cuisine;
-
-//    @OneToMany(mappedBy = "meal", cascade = CascadeType.ALL)
-//    private List<Review> reviews;
-    @ManyToMany(mappedBy = "meals")
-    private List<Order> orders;
 }

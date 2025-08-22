@@ -29,9 +29,6 @@ public class Cuisine {
     @Column(name = "description")
     private String description;
 
-    @Column(name = "image")
-    private String image;
-
     @Column(name = "is_available")
     private Boolean isAvailable = true;
 
