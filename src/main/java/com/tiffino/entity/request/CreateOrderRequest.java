@@ -1,5 +1,6 @@
 package com.tiffino.entity.request;
 
+import com.tiffino.entity.DeliveryDetails;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
@@ -9,7 +10,11 @@ import java.util.List;
 @Getter
 @Data
 public class CreateOrderRequest {
+    private Long userId;
     private List<Long> mealIds;
-    private String deliveryDetails;
-    private String status;
+    private DeliveryDetails deliveryDetails;
+    private String Status;
+
+
+
 }

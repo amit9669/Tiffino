@@ -6,6 +6,10 @@ import com.tiffino.entity.request.ReviewRequest;
 import com.tiffino.exception.CustomException;
 import com.tiffino.repository.*;
 import com.tiffino.service.DataToken;
+import com.tiffino.entity.User;
+import com.tiffino.entity.request.UserUpdationRequest;
+import com.tiffino.entity.response.UserUpdationResponse;
+import com.tiffino.repository.UserRepository;
 import com.tiffino.service.IUserService;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
@@ -13,12 +17,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.util.*;
+
+import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 import java.time.LocalDateTime;
-import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
-import java.util.Set;
 
 @Slf4j
 @Service
@@ -38,15 +45,18 @@ public class UserService implements IUserService {
 
     @Autowired
     private OrderRepository orderRepository;
+
     @Autowired
     private MealRepository mealRepository;
-@Autowired
-private ReviewRepository reviewRepository;
 
-@Autowired
-private CloudKitchenRepository cloudKitchenRepository;
+
     @Autowired
     private DataToken dataToken;
+
+    @Autowired
+    private ReviewRepository reviewRepository;
+    @Autowired
+    private CloudKitchenRepository cloudKitchenRepository;
 
     public void registerUser(String name, String email, String password, String phoneNo) {
 
@@ -136,40 +146,48 @@ private CloudKitchenRepository cloudKitchenRepository;
     }
 
 
-    @Override
-    public Order createOrder(CreateOrderRequest request) {
-        // 1. Fetch user
-        User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // 2. Fetch meals
+
+    @Override
+    public Object updateCurrentUser(UserUpdationRequest req) {
+        User user = (User) dataToken.getCurrentUserProfile();
+        user.setUserName(req.getName());
+        user.setAddress(req.getAddress());
+        user.setDietaryNeeds(req.getDietaryNeeds());
+        user.setMealPreference(req.getMealPreference());
+        user.setPhoneNo(req.getPhoneNo());
+        userRepository.save(user);
+        return "Updated Successfully!!";
+    }
+
+    @Override
+    public Object createOrder(CreateOrderRequest request) {
+        User user = (User) dataToken.getCurrentUserProfile();
+
         List<Meal> meals = mealRepository.findAllById(request.getMealIds());
 
         if (meals.isEmpty()) {
-            throw new RuntimeException("No meals found for given IDs");
+            return "No meals found for given IDs";
         }
 
-        // 3. Calculate total price
         double totalCost = meals.stream()
                 .mapToDouble(Meal::getPrice)
                 .sum();
 
-        // 4. Build order
         Order order = Order.builder()
                 .user(user)
                 .meals(meals)
                 .orderDate(LocalDateTime.now())
-                .orderStatus(request.getStatus())
+                .orderStatus("PENDING")
                 .deliveryDetails(request.getDeliveryDetails())
                 .totalCost(totalCost)
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
 
-        // 5. Save order
-        return orderRepository.save(order);
+        orderRepository.save(order);
+        return "Order Successfully!!";
     }
-
     public Order getOrderById(Long orderId) {
         return orderRepository.findById(orderId).map(order -> {
             if (order.getMeals() == null || order.getMeals().isEmpty()) {
@@ -230,19 +248,6 @@ private CloudKitchenRepository cloudKitchenRepository;
         order.setUpdatedAt(LocalDateTime.now());
 
         return orderRepository.save(order);
-    }
-
-    @Override
-    public boolean checkUserExistsByEmail(String email) {
-        return userRepository.existsByEmail(email);
-    }
-
-    @Override
-    public void updatePasswordByEmail(String email, String newPassword) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
-        user.setPassword(passwordEncoder.encode(newPassword));
-        userRepository.save(user);
     }
 
 
@@ -325,4 +330,19 @@ private CloudKitchenRepository cloudKitchenRepository;
     public List<Review> getReviewsByUserId(Long userId) {
         return reviewRepository.findByUserUserId(userId);
     }
+
+    @Override
+    public boolean checkUserExistsByEmail(String email) {
+        return userRepository.existsByEmail(email);
+    }
+
+    @Override
+    public void updatePasswordByEmail(String email, String newPassword) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+    }
+
+
 }
