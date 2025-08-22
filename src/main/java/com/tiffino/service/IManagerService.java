@@ -12,6 +12,4 @@ public interface IManagerService {
     Object changePassword(int otp, String newPassword, String confirmNewPassword, HttpSession session);
 
     Object getDataOfCloudKitchen();
-
-    Cuisine createCuisine(Cuisine cuisine);
 }

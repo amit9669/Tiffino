@@ -120,11 +120,4 @@ public class ManagerService implements IManagerService {
         Manager manager = (Manager) dataToken.getCurrentUserProfile();
         return kitchenRepository.findById(manager.getCloudKitchen().getCloudKitchenId()).get();
     }
-
-
-    @Override
-    public Cuisine createCuisine(Cuisine cuisine) {
-        return cuisineRepository.save(cuisine);
-    }
-
 }

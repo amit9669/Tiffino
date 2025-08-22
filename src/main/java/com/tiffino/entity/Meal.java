@@ -53,7 +53,4 @@ public class Meal {
     @ManyToOne
     @JoinColumn(name = "cuisine_id", nullable = false)
     private Cuisine cuisine;
-
-    @OneToMany(mappedBy = "meal", cascade = CascadeType.ALL)
-    private List<Review> reviews;
 }

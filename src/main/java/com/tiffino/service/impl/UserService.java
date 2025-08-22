@@ -20,7 +20,6 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.*;
 
-import static org.springframework.http.HttpStatus.CONFLICT;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 import java.time.LocalDateTime;
@@ -45,6 +44,7 @@ public class UserService implements IUserService {
 
     @Autowired
     private OrderRepository orderRepository;
+
     @Autowired
     private MealRepository mealRepository;
 
@@ -141,24 +141,19 @@ public class UserService implements IUserService {
 
 
     @Override
-    public Order createOrder(CreateOrderRequest request) {
-        // 1. Fetch user
-        User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+    public Object createOrder(CreateOrderRequest request) {
+        User user = (User) dataToken.getCurrentUserProfile();
 
-        // 2. Fetch meals
         List<Meal> meals = mealRepository.findAllById(request.getMealIds());
 
         if (meals.isEmpty()) {
-            throw new RuntimeException("No meals found for given IDs");
+            return "No meals found for given IDs";
         }
 
-        // 3. Calculate total price
         double totalCost = meals.stream()
                 .mapToDouble(Meal::getPrice)
                 .sum();
 
-        // 4. Build order
         Order order = Order.builder()
                 .user(user)
                 .meals(meals)
@@ -170,80 +165,22 @@ public class UserService implements IUserService {
                 .updatedAt(LocalDateTime.now())
                 .build();
 
-        // 5. Save order
-        return orderRepository.save(order);
+        orderRepository.save(order);
+        return "Order Successfully!!";
     }
-
 
 
     @Override
-    @Transactional
-    public UserUpdationResponse updateCurrentUser(String currentEmail, UserUpdationRequest req) {
-        // Load the current user (auth guaranteed by security; this is the source of truth)
-        User user = userRepository.findByEmail(currentEmail)
-                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "User not found"));
-
-        // Track changes (field → new value)
-        Map<String, Object> updated = new LinkedHashMap<>();
-        List<String> changed = new ArrayList<>();
-        boolean passwordChanged = false;
-
-        if (req.getName() != null) {
-            String newName = req.getName().trim();
-            if (!Objects.equals(user.getUserName(), newName)) {
-                user.setUserName(newName);
-                updated.put("name", newName);
-                changed.add("name");
-            }
-        }
-
-        if (req.getPhoneNo() != null) {
-            if (!Objects.equals(user.getPhoneNo(), req.getPhoneNo())) {
-                user.setPhoneNo(req.getPhoneNo());
-                updated.put("phoneNo", req.getPhoneNo());
-                changed.add("phoneNo");
-            }
-        }
-
-        if (req.getAddress() != null) {
-            if (!Objects.equals(user.getAddress(), req.getAddress())) {
-                user.setAddress(req.getAddress());
-                updated.put("address", req.getAddress());
-                changed.add("address");
-            }
-        }
-
-        if (req.getMealPreference() != null) {
-            if (!Objects.equals(user.getMealPreference(), req.getMealPreference())) {
-                user.setMealPreference(req.getMealPreference());
-                updated.put("mealPreference", req.getMealPreference());
-                changed.add("mealPreference");
-            }
-        }
-
-        if (req.getDietaryNeeds() != null) {
-            if (!Objects.equals(user.getDietaryNeeds(), req.getDietaryNeeds())) {
-                user.setDietaryNeeds(req.getDietaryNeeds());
-                updated.put("dietaryNeeds", req.getDietaryNeeds());
-                changed.add("dietaryNeeds");
-            }
-        }
-
-
-
-        // Persist only once
-        if (!changed.isEmpty()) {
-            userRepository.save(user);
-        }
-
-        return UserUpdationResponse.builder()
-                .updated(updated)              // only fields that changed, with new values
-                .changedFields(changed)        // list of changed field names
-                .build();
+    public Object updateCurrentUser(UserUpdationRequest req) {
+        User user = (User) dataToken.getCurrentUserProfile();
+        user.setUserName(req.getName());
+        user.setAddress(req.getAddress());
+        user.setDietaryNeeds(req.getDietaryNeeds());
+        user.setMealPreference(req.getMealPreference());
+        user.setPhoneNo(req.getPhoneNo());
+        userRepository.save(user);
+        return "Updated Successfully!!";
     }
-
-
-
 }
 
 

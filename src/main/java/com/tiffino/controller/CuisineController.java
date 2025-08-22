@@ -1,51 +1,49 @@
 package com.tiffino.controller;
 
-import com.tiffino.entity.Cuisine;
 import com.tiffino.entity.request.CuisineRequest;
-import com.tiffino.service.CuisineService;
+import com.tiffino.service.ICuisineService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/cuisines")
 public class CuisineController {
 
     @Autowired
-    private CuisineService cuisineService;
+    private ICuisineService iCuisineService;
 
 
-    @PostMapping("/save")
-    public ResponseEntity<String> saveOrUpdateMeal(@ModelAttribute CuisineRequest cuisineRequest) throws IOException {
-        return ResponseEntity.ok(cuisineService.saveOrUpdateCuisine(cuisineRequest));
+    @PostMapping("/saveOrUpdateCuisine")
+    public ResponseEntity<?> saveOrUpdateCuisine(@RequestBody CuisineRequest cuisineRequest) throws IOException {
+        return ResponseEntity.ok(iCuisineService.saveOrUpdateCuisine(cuisineRequest));
     }
 
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteCuisine(@PathVariable Long id) {
-        return ResponseEntity.ok(cuisineService.deleteCuisine(id));
+    @DeleteMapping("/deleteCuisine/{id}")
+    public ResponseEntity<?> deleteCuisine(@PathVariable Long id) {
+        return ResponseEntity.ok(iCuisineService.deleteCuisine(id));
     }
 
 
-    @GetMapping("/{id}")
-    public ResponseEntity<Cuisine> getCuisineById(@PathVariable Long id) {
-        return ResponseEntity.ok(cuisineService.getCuisineById(id));
+    @GetMapping("/getCuisineById/{id}")
+    public ResponseEntity<?> getCuisineById(@PathVariable Long id) {
+        return ResponseEntity.ok(iCuisineService.getCuisineById(id));
     }
 
 
-    @GetMapping
-    public ResponseEntity<List<Cuisine>> getAllCuisines() {
-        return ResponseEntity.ok(cuisineService.getAllCuisines());
+    @GetMapping("/getAllCuisines")
+    public ResponseEntity<?> getAllCuisines() {
+        return ResponseEntity.ok(iCuisineService.getAllCuisines());
     }
 
 
 
-    @GetMapping("/with-meals")
-    public ResponseEntity<List<Cuisine>> getAllCuisinesWithMeals() {
-        return ResponseEntity.ok(cuisineService.getAllCuisinesWithMeals());
+    @GetMapping("/getAllCuisinesWithMeals")
+    public ResponseEntity<?> getAllCuisinesWithMeals() {
+        return ResponseEntity.ok(iCuisineService.getAllCuisinesWithMeals());
     }
 
 }
