@@ -2,19 +2,10 @@ package com.tiffino.service.impl;
 
 import com.tiffino.config.AuthenticationService;
 import com.tiffino.config.JwtService;
-import com.tiffino.entity.CloudKitchen;
-import com.tiffino.entity.Manager;
-import com.tiffino.entity.Subscription;
-import com.tiffino.entity.SuperAdmin;
-import com.tiffino.entity.request.CloudKitchenRequest;
-import com.tiffino.entity.request.ManagerRequest;
-import com.tiffino.entity.request.SubscriptionRequest;
-import com.tiffino.entity.request.SuperAdminRequest;
+import com.tiffino.entity.*;
+import com.tiffino.entity.request.*;
 import com.tiffino.exception.CustomException;
-import com.tiffino.repository.CloudKitchenRepository;
-import com.tiffino.repository.ManagerRepository;
-import com.tiffino.repository.SubscriptionRepository;
-import com.tiffino.repository.SuperAdminRepository;
+import com.tiffino.repository.*;
 import com.tiffino.service.ISuperAdminService;
 import com.tiffino.service.ImageUploadService;
 import com.tiffino.service.OtpService;
@@ -65,6 +56,9 @@ public class SuperAdminService implements ISuperAdminService {
 
     @Autowired
     private SubscriptionRepository subscriptionRepository;
+
+    @Autowired
+    private OfferRepository offerRepository;
 
     /*@Value("${twilio.account.sid}")
     private String ACCOUNT_SID;
@@ -324,4 +318,17 @@ public class SuperAdminService implements ISuperAdminService {
                 return "Inserted Successfully";
             }
     }
+
+    @Override
+    public Offer createOffer(OfferRequest request) {
+        Offer offer = Offer.builder()
+                .type(request.getType())
+                .description(request.getDescription())
+                .termsAndConditions(request.getTermsAndConditions())
+                .isActive(true)
+                .build();
+
+        return offerRepository.save(offer); // ✅ actively used
+    }
+
 }

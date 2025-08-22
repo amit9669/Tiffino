@@ -2,6 +2,7 @@ package com.tiffino.service.impl;
 
 import com.tiffino.entity.*;
 import com.tiffino.entity.request.CreateOrderRequest;
+import com.tiffino.entity.request.ReviewRequest;
 import com.tiffino.exception.CustomException;
 import com.tiffino.repository.*;
 import com.tiffino.service.DataToken;
@@ -14,8 +15,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 @Slf4j
 @Service
@@ -37,8 +40,11 @@ public class UserService implements IUserService {
     private OrderRepository orderRepository;
     @Autowired
     private MealRepository mealRepository;
+@Autowired
+private ReviewRepository reviewRepository;
 
-
+@Autowired
+private CloudKitchenRepository cloudKitchenRepository;
     @Autowired
     private DataToken dataToken;
 
@@ -153,7 +159,7 @@ public class UserService implements IUserService {
                 .user(user)
                 .meals(meals)
                 .orderDate(LocalDateTime.now())
-                .orderStatus("PENDING")
+                .orderStatus(request.getStatus())
                 .deliveryDetails(request.getDeliveryDetails())
                 .totalCost(totalCost)
                 .createdAt(LocalDateTime.now())
@@ -164,5 +170,159 @@ public class UserService implements IUserService {
         return orderRepository.save(order);
     }
 
+    public Order getOrderById(Long orderId) {
+        return orderRepository.findById(orderId).map(order -> {
+            if (order.getMeals() == null || order.getMeals().isEmpty()) {
+                System.out.println("Meals are empty for order: " + orderId);
+                throw new CustomException("Order has no meals");
+            }
+            return order;
+        }).orElseThrow(() -> {
+            System.out.println("Order not found for ID: " + orderId);
+            return new CustomException("Order not found");
+        });
+    }
+    @Override
+    public List<Order> getAllOrders() {
+        return orderRepository.findAll();
+    }
 
+    @Override
+    public void deleteOrder(Long orderId) {
+        if (!orderRepository.existsById(orderId)) {
+            throw new RuntimeException("Order not found with ID: " + orderId);
+        }
+        orderRepository.deleteById(orderId);
+    }
+
+    @Override
+    public Order updateOrder(Long orderId, CreateOrderRequest request) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found with ID: " + orderId));
+
+        // ✅ Update User
+        if (request.getUserId() != null) {
+            User user = userRepository.findById(request.getUserId())
+                    .orElseThrow(() -> new RuntimeException("User not found with ID: " + request.getUserId()));
+            order.setUser(user);
+        }
+
+        // ✅ Update Meals
+        if (request.getMealIds() != null && !request.getMealIds().isEmpty()) {
+            List<Meal> meals = mealRepository.findAllById(request.getMealIds());
+            if (meals.size() != request.getMealIds().size()) {
+                throw new RuntimeException("One or more meals not found.");
+            }
+            order.setMeals(meals);
+        }
+
+        // ✅ Update Order Status
+        if (request.getStatus() != null) {
+            order.setOrderStatus(request.getStatus());
+        }
+
+        // ✅ Update Delivery Details (embedded object)
+        if (request.getDeliveryDetails() != null) {
+            order.setDeliveryDetails(request.getDeliveryDetails());
+        }
+
+        // ✅ Update timestamp
+        order.setUpdatedAt(LocalDateTime.now());
+
+        return orderRepository.save(order);
+    }
+
+    @Override
+    public boolean checkUserExistsByEmail(String email) {
+        return userRepository.existsByEmail(email);
+    }
+
+    @Override
+    public void updatePasswordByEmail(String email, String newPassword) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+    }
+
+
+
+    @Override
+    public Review createReview(ReviewRequest request) {
+        User user = userRepository.findById(request.getUserId())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Set<CloudKitchen> cloudKitchens = new HashSet<>();
+        for (String id : request.getCloudKitchenIds()) {
+            CloudKitchen kitchen = cloudKitchenRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Cloud kitchen not found: " + id));
+            cloudKitchens.add(kitchen);
+        }
+
+        Review review = Review.builder()
+                .comment(request.getComment())
+                .rating(request.getRating())
+                .user(user)
+                .cloudKitchens(cloudKitchens)
+                .build();
+
+        return reviewRepository.save(review);
+    }
+
+
+
+    @Override
+    public String updateReview(Long id, ReviewRequest request) {
+        Review review = reviewRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Review not found"));
+
+        if (request.getComment() != null) {
+            review.setComment(request.getComment());
+        }
+
+        if (request.getRating() != null) {
+            review.setRating(request.getRating());
+        }
+
+        if (request.getUserId() != null) {
+            User user = userRepository.findById(request.getUserId())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+            review.setUser(user);
+        }
+
+        if (request.getCloudKitchenIds() != null && !request.getCloudKitchenIds().isEmpty()) {
+            Set<CloudKitchen> kitchens = new HashSet<>(
+                    cloudKitchenRepository.findAllById(request.getCloudKitchenIds())
+            );
+            review.setCloudKitchens(kitchens);
+        }
+
+        reviewRepository.save(review);
+        return "Review updated successfully";
+    }
+
+
+    @Override
+    public void deleteReview(Long reviewId) {
+        reviewRepository.deleteById(reviewId);
+    }
+
+    @Override
+    public Review getReviewById(Long reviewId) {
+        return reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new RuntimeException("Review not found with id: " + reviewId));
+        //remove it
+    }
+
+    @Override
+    public List<Review> getAllReviews() {
+        return reviewRepository.findAll();
+    }
+
+
+
+    @Override
+    public List<Review> getReviewsByUserId(Long userId) {
+        return reviewRepository.findByUserUserId(userId);
+    }
 }

@@ -42,9 +42,7 @@ public class SecurityConfiguration {
                         .requestMatchers("/manager/**").hasRole("MANAGER")
                         .requestMatchers("/kitchen/**").hasRole("CLOUD_KITCHEN")
                         .requestMatchers("/user/**").hasRole("USER")
-                        //add swagger by datta
-                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-                        .anyRequest().authenticated()
+//                        .requestMatchers("/user/**").permitAll()
                 )
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

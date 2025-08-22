@@ -11,7 +11,9 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Data
 @AllArgsConstructor
@@ -61,4 +63,10 @@ public class CloudKitchen {
     @Enumerated(EnumType.STRING)
     @Column(name = "role")
     private Role role = Role.CLOUD_KITCHEN;
+
+    @ManyToMany(mappedBy = "cloudKitchens")
+    @JsonBackReference
+    private Set<Review> reviews = new HashSet<>();
+
+    //mamytmany reviews cascade
 }

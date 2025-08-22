@@ -1,9 +1,7 @@
 package com.tiffino.service;
 
-import com.tiffino.entity.request.CloudKitchenRequest;
-import com.tiffino.entity.request.ManagerRequest;
-import com.tiffino.entity.request.SubscriptionRequest;
-import com.tiffino.entity.request.SuperAdminRequest;
+import com.tiffino.entity.Offer;
+import com.tiffino.entity.request.*;
 
 import java.util.List;
 
@@ -22,4 +20,6 @@ public interface ISuperAdminService {
     Object searchFilterForAdmin(List<String> state, List<String> city, List<String> division);
 
     Object saveOrUpdateSubscriptionPlan(SubscriptionRequest subscriptionRequest);
+
+    Offer createOffer(OfferRequest request);
 }

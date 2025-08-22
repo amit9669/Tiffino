@@ -1,46 +1,57 @@
 package com.tiffino.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
+@Entity
+@Table(name = "reviews")
 @Getter
 @Setter
-@AllArgsConstructor
 @NoArgsConstructor
-@Entity
+@AllArgsConstructor
+@Builder
 public class Review {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long reviewId;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "user_id")
+    @Column(nullable = false)
+    private String comment;
+
+    @Column(nullable = false)
+    private Integer rating;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JsonIgnore
+    @JoinColumn(name = "user_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private User user;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "meal_id")
-    private Meal meal;
-
-    @Min(value = 1, message = "Rating must be at least 1")
-    @Max(value = 5, message = "Rating must not exceed 5")
-    private int rating;
-
-    @Column(length = 1000)
-    private String reviewText;
-
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @UpdateTimestamp
+    @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-
-
+    @ManyToMany
+    @JoinTable(
+            name = "review_cloud_kitchen",
+            joinColumns = @JoinColumn(name = "review_id"),
+            inverseJoinColumns = @JoinColumn(name = "cloud_kitchen_id")
+    )
+    @JsonBackReference
+    private Set<CloudKitchen> cloudKitchens = new HashSet<>();
 
 }

@@ -1,7 +1,10 @@
 package com.tiffino.controller;
 
+import com.tiffino.entity.Offer;
 import com.tiffino.entity.request.*;
+import com.tiffino.repository.OfferRepository;
 import com.tiffino.service.ISuperAdminService;
+import com.tiffino.service.impl.SuperAdminService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,6 +16,12 @@ public class SuperAdminController {
 
     @Autowired
     private ISuperAdminService iSuperAdminService;
+
+    @Autowired
+    private OfferRepository offerRepository;
+
+    @Autowired
+    private SuperAdminService superAdminService;
 
     @PostMapping("/saveOrUpdateAdmin")
     public ResponseEntity<?> saveOrUpdateAdmin(@RequestBody SuperAdminRequest superAdminRequest){
@@ -49,5 +58,9 @@ public class SuperAdminController {
     @PostMapping("/saveOrUpdateSubscriptionPlan")
     public ResponseEntity<?> saveOrUpdateSubscriptionPlan(@RequestBody SubscriptionRequest subscriptionRequest){
         return new ResponseEntity<>(iSuperAdminService.saveOrUpdateSubscriptionPlan(subscriptionRequest),HttpStatus.CREATED);
+    }
+    @PostMapping("/createOffer")
+    public ResponseEntity<?> createOffer(@RequestBody OfferRequest request) {
+        return new ResponseEntity<>(iSuperAdminService.createOffer(request), HttpStatus.CREATED);
     }
 }

@@ -33,10 +33,10 @@ public class Cuisine {
     private String image;
 
     @Column(name = "is_available")
-    private boolean isAvailable = true;
+    private Boolean isAvailable = true;
 
     @Column(name = "is_unavailable")
-    private boolean isUnavailable = false;
+    private Boolean isUnavailable = false;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
