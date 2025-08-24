@@ -12,19 +12,20 @@ import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
-@Entity
-@Table(name = "reviews")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Entity
+@Table(name = "reviews")
 public class Review {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long reviewId;
 
+    @Lob
     @Column(nullable = false)
     private String comment;
 
@@ -45,13 +46,7 @@ public class Review {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    @ManyToMany
-    @JoinTable(
-            name = "review_cloud_kitchen",
-            joinColumns = @JoinColumn(name = "review_id"),
-            inverseJoinColumns = @JoinColumn(name = "cloud_kitchen_id")
-    )
-    @JsonBackReference
-    private Set<CloudKitchen> cloudKitchens = new HashSet<>();
-
+    @ManyToOne
+    @JoinColumn(name = "cloud_kitchen_id", nullable = false)
+    private CloudKitchen cloudKitchen;
 }

@@ -6,7 +6,6 @@ import com.tiffino.entity.request.CreateOrderRequest;
 
 import com.tiffino.entity.request.ReviewRequest;
 import com.tiffino.entity.request.UserUpdationRequest;
-import com.tiffino.entity.response.UserUpdationResponse;
 
 import java.util.List;
 
@@ -18,36 +17,30 @@ public interface IUserService {
 
     Object assignSubscriptionToUser(String name, Double price);
 
-
     Object updateCurrentUser(UserUpdationRequest req);
 
-    Object createOrder (CreateOrderRequest request);
-    Order getOrderById(Long orderId);
+    Object createOrder(CreateOrderRequest request);
 
-    List<Order> getAllOrders();
+    Object getOrderById(Long orderId);
+
+    Object getAllOrders();
 
     void deleteOrder(Long orderId);
 
-    Order updateOrder(Long orderId, CreateOrderRequest updatedOrderRequest);
-
-    Review createReview(ReviewRequest request);
-
-
-    String updateReview(Long id, ReviewRequest request);
+    Object createReview(ReviewRequest request);
 
     void deleteReview(Long reviewId);
 
-    Review getReviewById(Long reviewId);
+    Object getReviewById(Long reviewId);
 
-    List<Review> getAllReviews();
+    Object getAllReviews();
 
-//    List<Review> getReviewsByMealId(Long mealId);
-
-    List<Review> getReviewsByUserId(Long userId);
+    Object getReviewsByUserId();
 
     void updatePasswordByEmail(String email, String newPassword);
+
     boolean checkUserExistsByEmail(String email);
 
-
+    Object trackOrder();
 }
 

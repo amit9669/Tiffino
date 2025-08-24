@@ -21,5 +21,7 @@ public interface ISuperAdminService {
 
     Object saveOrUpdateSubscriptionPlan(SubscriptionRequest subscriptionRequest);
 
-    Offer createOffer(OfferRequest request);
+    Object saveOrUpdateDeliveryPerson(DeliveryPersonRequest personRequest);
+
+    Object listOfIsAvailable();
 }

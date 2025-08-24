@@ -10,6 +10,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/manager")
 public class ManagerController {
@@ -37,6 +39,22 @@ public class ManagerController {
     @GetMapping("/getDataOfCloudKitchen")
     public ResponseEntity<?> getDataOfCloudKitchen() {
         return new ResponseEntity<>(iManagerService.getDataOfCloudKitchen(), HttpStatus.OK);
+    }
+
+    @PostMapping("/enableMealForKitchen")
+    public ResponseEntity<?> enableMealForKitchen(@RequestBody List<Long> mealsIds){
+        return new ResponseEntity<>(iManagerService.enableMealForKitchen(mealsIds),HttpStatus.OK);
+    }
+
+    @PostMapping("/disableMealForKitchen")
+    public ResponseEntity<?> disableMealForKitchen(@RequestBody List<Long> mealsIds){
+        iManagerService.disableMealForKitchen(mealsIds);
+        return new ResponseEntity<>("Disable Meals!!!",HttpStatus.OK);
+    }
+
+    @PostMapping("/assignOrderToDeliveryPerson")
+    public ResponseEntity<?> assignOrderToDeliveryPerson(@RequestParam Long orderId,@RequestParam Long deliveryPersonId){
+        return new ResponseEntity<>(iManagerService.assignOrderToDeliveryPerson(orderId,deliveryPersonId),HttpStatus.OK);
     }
 
 }

@@ -12,6 +12,5 @@ import java.util.Set;
 public class ReviewRequest {
     private String comment;
     private Integer rating;
-    private Long userId;
-    private Set<String> cloudKitchenIds;
+    private String cloudKitchenId;
 }

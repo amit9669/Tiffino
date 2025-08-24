@@ -1,12 +1,9 @@
 package com.tiffino.controller;
 
-import com.tiffino.entity.Order;
-import com.tiffino.entity.Review;
 import com.tiffino.entity.request.CreateOrderRequest;
 import com.tiffino.entity.request.ReviewRequest;
 import com.tiffino.entity.request.UserRegistrationRequest;
 import com.tiffino.entity.request.UserUpdationRequest;
-import com.tiffino.entity.response.UserUpdationResponse;
 import com.tiffino.service.EmailService;
 import com.tiffino.service.IUserService;
 import com.tiffino.service.OtpService;
@@ -14,10 +11,7 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/user")
@@ -40,7 +34,7 @@ public class UserController {
 
     @PostMapping("/updateUser")
     public ResponseEntity<?> updateUser(@Valid @RequestBody UserUpdationRequest req) {
-        return new ResponseEntity<>( iUserService.updateCurrentUser(req),HttpStatus.OK);
+        return new ResponseEntity<>(iUserService.updateCurrentUser(req), HttpStatus.OK);
     }
 
     @GetMapping("/getAllSubscriptionPlan")
@@ -55,15 +49,7 @@ public class UserController {
 
     @PostMapping("/orders")
     public ResponseEntity<?> createOrder(@RequestBody CreateOrderRequest request) {
-        return new ResponseEntity<>(iUserService.createOrder(request),HttpStatus.OK);
-    }
-
-
-    @PutMapping("/order/{orderId}")
-    public ResponseEntity<Order> updateOrder(@PathVariable Long orderId,
-                                             @RequestBody CreateOrderRequest updatedOrderRequest) {
-        Order updatedOrder = iUserService.updateOrder(orderId, updatedOrderRequest);
-        return ResponseEntity.ok(updatedOrder);
+        return new ResponseEntity<>(iUserService.createOrder(request), HttpStatus.OK);
     }
 
     @DeleteMapping("/order/{orderId}")
@@ -111,36 +97,33 @@ public class UserController {
 
 
     @PostMapping("/createReview")
-    public ResponseEntity<Review> createReview(@RequestBody ReviewRequest request) {
-        return ResponseEntity.ok(iUserService.createReview(request));
+    public ResponseEntity<?> createReview(@RequestBody ReviewRequest request) {
+        return new ResponseEntity<>(iUserService.createReview(request), HttpStatus.OK);
     }
 
     @GetMapping("/getAllReviews")
-    public ResponseEntity<List<Review>> getAllReviews() {
-        return ResponseEntity.ok(iUserService.getAllReviews());
+    public ResponseEntity<?> getAllReviews() {
+        return new ResponseEntity<>(iUserService.getAllReviews(), HttpStatus.OK);
     }
 
     @GetMapping("/getReviewById/{id}")
-    public ResponseEntity<Review> getReviewById(@PathVariable Long id) {
-        return ResponseEntity.ok(iUserService.getReviewById(id));
-    }
-
-    @PutMapping("/updateReview/{id}")
-    public ResponseEntity<String> updateReview(@PathVariable Long id, @RequestBody ReviewRequest request) {
-        return ResponseEntity.ok(iUserService.updateReview(id, request));
+    public ResponseEntity<?> getReviewById(@PathVariable Long id) {
+        return new ResponseEntity<>(iUserService.getReviewById(id), HttpStatus.OK);
     }
 
     @DeleteMapping("/deleteReview/{id}")
-    public ResponseEntity<String> deleteReview(@PathVariable Long id) {
+    public ResponseEntity<?> deleteReview(@PathVariable Long id) {
         iUserService.deleteReview(id);
         return ResponseEntity.ok("Review deleted successfully");
     }
 
-
-    @GetMapping("/getReviewsByUser/{userId}")
-    public ResponseEntity<List<Review>> getReviewsByUser(@PathVariable Long userId) {
-        return ResponseEntity.ok(iUserService.getReviewsByUserId(userId));
+    @GetMapping("/getReviewsByUser")
+    public ResponseEntity<?> getReviewsByUser() {
+        return new ResponseEntity<>(iUserService.getReviewsByUserId(), HttpStatus.OK);
     }
 
-
+    @GetMapping("/trackOrder")
+    public ResponseEntity<?> trackOrder() {
+        return new ResponseEntity<>(iUserService.trackOrder(), HttpStatus.OK);
+    }
 }

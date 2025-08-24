@@ -60,6 +60,9 @@ public class SuperAdminService implements ISuperAdminService {
     @Autowired
     private OfferRepository offerRepository;
 
+    @Autowired
+    private DeliveryPersonRepository deliveryPersonRepository;
+
     /*@Value("${twilio.account.sid}")
     private String ACCOUNT_SID;
 
@@ -320,15 +323,26 @@ public class SuperAdminService implements ISuperAdminService {
     }
 
     @Override
-    public Offer createOffer(OfferRequest request) {
-        Offer offer = Offer.builder()
-                .type(request.getType())
-                .description(request.getDescription())
-                .termsAndConditions(request.getTermsAndConditions())
-                .isActive(true)
-                .build();
-
-        return offerRepository.save(offer); // ✅ actively used
+    public Object saveOrUpdateDeliveryPerson(DeliveryPersonRequest personRequest) {
+        if(deliveryPersonRepository.existsById(personRequest.getDeliveryPersonId())){
+            DeliveryPerson deliveryPerson = deliveryPersonRepository.findById(personRequest.getDeliveryPersonId()).get();
+            deliveryPerson.setEmail(personRequest.getEmail());
+            deliveryPerson.setPhoneNo(personRequest.getPhoneNo());
+            deliveryPerson.setName(personRequest.getName());
+            deliveryPersonRepository.save(deliveryPerson);
+            return "Updated Successfully!!!";
+        }else{
+            DeliveryPerson deliveryPerson = new DeliveryPerson();
+            deliveryPerson.setEmail(personRequest.getEmail());
+            deliveryPerson.setPhoneNo(personRequest.getPhoneNo());
+            deliveryPerson.setName(personRequest.getName());
+            deliveryPersonRepository.save(deliveryPerson);
+            return "Inserted Successfully!!";
+        }
     }
 
+    @Override
+    public Object listOfIsAvailable() {
+        return deliveryPersonRepository.findByIsAvailableTrue();
+    }
 }

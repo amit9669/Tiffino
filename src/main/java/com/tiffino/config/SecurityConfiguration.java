@@ -38,11 +38,9 @@ public class SecurityConfiguration {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/user/register","/superAdmin/**","/manager/**","/meals/**","/**").permitAll()
                         .requestMatchers("/auth/**").permitAll()
-                        .requestMatchers("/admin/**").hasRole("SUPER_ADMIN")
+                        .requestMatchers("/superAdmin/**").hasRole("SUPER_ADMIN")
                         .requestMatchers("/manager/**").hasRole("MANAGER")
-                        .requestMatchers("/kitchen/**").hasRole("CLOUD_KITCHEN")
                         .requestMatchers("/user/**").hasRole("USER")
-//                        .requestMatchers("/user/**").permitAll()
                 )
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

@@ -3,12 +3,12 @@ package com.tiffino.service.impl;
 import com.tiffino.entity.*;
 import com.tiffino.entity.request.CreateOrderRequest;
 import com.tiffino.entity.request.ReviewRequest;
+import com.tiffino.entity.response.DeliveryTrackingResponse;
 import com.tiffino.exception.CustomException;
 import com.tiffino.repository.*;
 import com.tiffino.service.DataToken;
 import com.tiffino.entity.User;
 import com.tiffino.entity.request.UserUpdationRequest;
-import com.tiffino.entity.response.UserUpdationResponse;
 import com.tiffino.repository.UserRepository;
 import com.tiffino.service.IUserService;
 import jakarta.transaction.Transactional;
@@ -17,15 +17,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.*;
 
-import static org.springframework.http.HttpStatus.NOT_FOUND;
-
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -49,14 +46,20 @@ public class UserService implements IUserService {
     @Autowired
     private MealRepository mealRepository;
 
-
     @Autowired
     private DataToken dataToken;
 
     @Autowired
     private ReviewRepository reviewRepository;
+
     @Autowired
     private CloudKitchenRepository cloudKitchenRepository;
+
+    @Autowired
+    private CloudKitchenMealRepository cloudKitchenMealRepository;
+
+    @Autowired
+    private DeliveryRepository deliveryRepository;
 
     public void registerUser(String name, String email, String password, String phoneNo) {
 
@@ -95,6 +98,13 @@ public class UserService implements IUserService {
 
         Subscription plan = subscriptionRepository.findBySubNameAndPrice(name, price)
                 .orElseThrow(() -> new CustomException("Subscription plan not available!!"));
+
+        if (userSubscriptionRepository
+                .existsByUser_UserIdAndIsSubscribedTrue(user.getUserId())) {
+             UserSubscription userSubscription = userSubscriptionRepository.findByUser_UserIdAndIsSubscribedTrue(user.getUserId());
+            return "User already has " + userSubscription.getPlan().getSubName() + " this active subscription! " +
+                    "Please wait for expired date "+userSubscription.getExpiryDate();
+        }
 
         UserSubscription userSubscription = UserSubscription.builder()
                 .user(user)
@@ -146,8 +156,6 @@ public class UserService implements IUserService {
     }
 
 
-
-
     @Override
     public Object updateCurrentUser(UserUpdationRequest req) {
         User user = (User) dataToken.getCurrentUserProfile();
@@ -161,13 +169,26 @@ public class UserService implements IUserService {
     }
 
     @Override
+    @Transactional
     public Object createOrder(CreateOrderRequest request) {
         User user = (User) dataToken.getCurrentUserProfile();
 
-        List<Meal> meals = mealRepository.findAllById(request.getMealIds());
+        CloudKitchen cloudKitchen = cloudKitchenRepository.findById(request.getCloudKitchenId())
+                .orElseThrow(() -> new RuntimeException("CloudKitchen not found"));
 
-        if (meals.isEmpty()) {
-            return "No meals found for given IDs";
+        List<CloudKitchenMeal> kitchenMeals = cloudKitchenMealRepository
+                .findByCloudKitchenAndAvailableTrue(cloudKitchen);
+
+        Map<Long, Meal> availableMeals = kitchenMeals.stream()
+                .map(CloudKitchenMeal::getMeal)
+                .collect(Collectors.toMap(Meal::getMealId, m -> m));
+
+        List<Meal> meals = new ArrayList<>();
+        for (Long mealId : request.getMealIds()) {
+            if (!availableMeals.containsKey(mealId)) {
+                throw new RuntimeException("Meal ID " + mealId + " not available in this kitchen");
+            }
+            meals.add(availableMeals.get(mealId));
         }
 
         double totalCost = meals.stream()
@@ -176,19 +197,19 @@ public class UserService implements IUserService {
 
         Order order = Order.builder()
                 .user(user)
+                .cloudKitchen(cloudKitchen)
                 .meals(meals)
-                .orderDate(LocalDateTime.now())
                 .orderStatus("PENDING")
                 .deliveryDetails(request.getDeliveryDetails())
                 .totalCost(totalCost)
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
                 .build();
 
         orderRepository.save(order);
-        return "Order Successfully!!";
+        return "Order placed successfully!";
     }
-    public Order getOrderById(Long orderId) {
+
+
+    public Object getOrderById(Long orderId) {
         return orderRepository.findById(orderId).map(order -> {
             if (order.getMeals() == null || order.getMeals().isEmpty()) {
                 System.out.println("Meals are empty for order: " + orderId);
@@ -200,8 +221,9 @@ public class UserService implements IUserService {
             return new CustomException("Order not found");
         });
     }
+
     @Override
-    public List<Order> getAllOrders() {
+    public Object getAllOrders() {
         return orderRepository.findAll();
     }
 
@@ -213,97 +235,24 @@ public class UserService implements IUserService {
         orderRepository.deleteById(orderId);
     }
 
-    @Override
-    public Order updateOrder(Long orderId, CreateOrderRequest request) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Order not found with ID: " + orderId));
-
-        // ✅ Update User
-        if (request.getUserId() != null) {
-            User user = userRepository.findById(request.getUserId())
-                    .orElseThrow(() -> new RuntimeException("User not found with ID: " + request.getUserId()));
-            order.setUser(user);
-        }
-
-        // ✅ Update Meals
-        if (request.getMealIds() != null && !request.getMealIds().isEmpty()) {
-            List<Meal> meals = mealRepository.findAllById(request.getMealIds());
-            if (meals.size() != request.getMealIds().size()) {
-                throw new RuntimeException("One or more meals not found.");
-            }
-            order.setMeals(meals);
-        }
-
-        // ✅ Update Order Status
-        if (request.getStatus() != null) {
-            order.setOrderStatus(request.getStatus());
-        }
-
-        // ✅ Update Delivery Details (embedded object)
-        if (request.getDeliveryDetails() != null) {
-            order.setDeliveryDetails(request.getDeliveryDetails());
-        }
-
-        // ✅ Update timestamp
-        order.setUpdatedAt(LocalDateTime.now());
-
-        return orderRepository.save(order);
-    }
-
-
 
     @Override
-    public Review createReview(ReviewRequest request) {
-        User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+    @Transactional
+    public Object createReview(ReviewRequest request) {
+        User user = (User) dataToken.getCurrentUserProfile();
 
-        Set<CloudKitchen> cloudKitchens = new HashSet<>();
-        for (String id : request.getCloudKitchenIds()) {
-            CloudKitchen kitchen = cloudKitchenRepository.findById(id)
-                    .orElseThrow(() -> new RuntimeException("Cloud kitchen not found: " + id));
-            cloudKitchens.add(kitchen);
-        }
+        CloudKitchen cloudKitchen = cloudKitchenRepository.findById(request.getCloudKitchenId())
+                .orElseThrow(() -> new RuntimeException("CloudKitchen not found"));
 
         Review review = Review.builder()
                 .comment(request.getComment())
                 .rating(request.getRating())
                 .user(user)
-                .cloudKitchens(cloudKitchens)
+                .cloudKitchen(cloudKitchen)
                 .build();
 
-        return reviewRepository.save(review);
-    }
-
-
-
-    @Override
-    public String updateReview(Long id, ReviewRequest request) {
-        Review review = reviewRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Review not found"));
-
-        if (request.getComment() != null) {
-            review.setComment(request.getComment());
-        }
-
-        if (request.getRating() != null) {
-            review.setRating(request.getRating());
-        }
-
-        if (request.getUserId() != null) {
-            User user = userRepository.findById(request.getUserId())
-                    .orElseThrow(() -> new RuntimeException("User not found"));
-            review.setUser(user);
-        }
-
-        if (request.getCloudKitchenIds() != null && !request.getCloudKitchenIds().isEmpty()) {
-            Set<CloudKitchen> kitchens = new HashSet<>(
-                    cloudKitchenRepository.findAllById(request.getCloudKitchenIds())
-            );
-            review.setCloudKitchens(kitchens);
-        }
-
         reviewRepository.save(review);
-        return "Review updated successfully";
+        return "Review submitted successfully!";
     }
 
 
@@ -313,27 +262,50 @@ public class UserService implements IUserService {
     }
 
     @Override
-    public Review getReviewById(Long reviewId) {
+    public Object getReviewById(Long reviewId) {
         return reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new RuntimeException("Review not found with id: " + reviewId));
-        //remove it
     }
 
     @Override
-    public List<Review> getAllReviews() {
+    public Object getAllReviews() {
         return reviewRepository.findAll();
     }
 
 
-
     @Override
-    public List<Review> getReviewsByUserId(Long userId) {
-        return reviewRepository.findByUserUserId(userId);
+    public Object getReviewsByUserId() {
+        User user = (User) dataToken.getCurrentUserProfile();
+        return reviewRepository.findByUserUserId(user.getUserId());
     }
 
     @Override
     public boolean checkUserExistsByEmail(String email) {
         return userRepository.existsByEmail(email);
+    }
+
+    @Override
+    public Object trackOrder() {
+        User user = (User) dataToken.getCurrentUserProfile();
+
+        List<Delivery> deliveries = deliveryRepository.findAllByOrder_User_UserId(user.getUserId());
+
+        if (deliveries.isEmpty()) {
+            throw new RuntimeException("No pending deliveries found for this user");
+        }
+        return deliveries.stream()
+                .map(delivery -> DeliveryTrackingResponse.builder()
+                        .orderId(delivery.getOrder().getOrderId())
+                        .orderStatus(delivery.getOrder().getOrderStatus())
+                        .deliveryId(delivery.getDeliveryId())
+                        .deliveryStatus(delivery.getStatus())
+                        .deliveryPersonName(delivery.getDeliveryPerson() != null ? delivery.getDeliveryPerson().getName() : "Not Assigned")
+                        .deliveryPersonPhone(delivery.getDeliveryPerson() != null ? delivery.getDeliveryPerson().getPhoneNo() : "N/A")
+                        .assignedAt(delivery.getAssignedAt())
+                        .pickedUpAt(delivery.getPickedUpAt())
+                        .deliveredAt(delivery.getDeliveredAt())
+                        .build())
+                .toList();
     }
 
     @Override
@@ -343,6 +315,4 @@ public class UserService implements IUserService {
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
     }
-
-
 }

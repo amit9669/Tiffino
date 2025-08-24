@@ -1,11 +1,10 @@
 package com.tiffino.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -14,8 +13,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-@Data
+@Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
@@ -36,12 +35,6 @@ public class CloudKitchen {
     @Column(name = "division")
     private String division;
 
-    @Column(name = "email")
-    private String email;
-
-    @Column(name = "password")
-    private String password;
-
     @Column(name = "isActive")
     private Boolean isActive = true;
 
@@ -60,13 +53,6 @@ public class CloudKitchen {
     @JsonBackReference
     private Manager manager;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "role")
-    private Role role = Role.CLOUD_KITCHEN;
-
-    @ManyToMany(mappedBy = "cloudKitchens")
-    @JsonBackReference
+    @OneToMany(mappedBy = "cloudKitchen", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Review> reviews = new HashSet<>();
-
-    //mamytmany reviews cascade
 }

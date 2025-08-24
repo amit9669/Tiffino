@@ -7,4 +7,8 @@ import java.util.List;
 
 public interface UserSubscriptionRepository extends JpaRepository<UserSubscription,Long> {
     List<UserSubscription> findByIsSubscribedTrue();
+
+    boolean existsByUser_UserIdAndIsSubscribedTrue(Long userId);
+
+    UserSubscription findByUser_UserIdAndIsSubscribedTrue(Long userId);
 }

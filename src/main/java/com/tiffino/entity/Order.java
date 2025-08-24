@@ -1,11 +1,14 @@
 package com.tiffino.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
@@ -17,41 +20,37 @@ public class Order {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "order_id")
     private Long orderId;
-    @Column(name = "order_date")
-    private LocalDateTime orderDate;
-    @Column(name = "order_status")
-    private String orderStatus;
-    //true or false add
 
-    @Column(name = "delivery_details")
-
-    @Embedded
-    private DeliveryDetails deliveryDetails;
-
-    @Column(name = "total_cost")
-    private Double totalCost;
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
-
     private User user;
-    @ManyToMany(fetch = FetchType.EAGER)
+
+    @ManyToOne
+    @JoinColumn(name = "cloud_kitchen_id", nullable = false)
+    private CloudKitchen cloudKitchen;
+
+    @ManyToMany
     @JoinTable(
             name = "order_meals",
             joinColumns = @JoinColumn(name = "order_id"),
             inverseJoinColumns = @JoinColumn(name = "meal_id")
     )
+    private List<Meal> meals = new ArrayList<>();
 
-    private List<Meal> meals;
+    @Embedded
+    private DeliveryDetails deliveryDetails;  // ✅ Embedded object
 
+    private String orderStatus;
+    private double totalCost;
 
+    @CreationTimestamp
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    private LocalDateTime updatedAt;
 }
+
 
 
 

@@ -10,11 +10,8 @@ import java.util.List;
 @Getter
 @Data
 public class CreateOrderRequest {
-    private Long userId;
+    private String cloudKitchenId;
     private List<Long> mealIds;
     private DeliveryDetails deliveryDetails;
     private String Status;
-
-
-
 }

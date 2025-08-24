@@ -1,5 +1,5 @@
 package com.tiffino.entity;
 
 public enum Role {
-    SUPER_ADMIN, MANAGER, CLOUD_KITCHEN, USER
+    SUPER_ADMIN, MANAGER, USER
 }
