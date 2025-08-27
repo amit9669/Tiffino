@@ -1,17 +1,15 @@
 package com.tiffino.entity.request;
 
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder
-public class CloudKitchenRequest {
+public class DeliveryPersonPasswordRequest {
 
-    private String state;
-    private String city;
-    private String division;
+    private String email ;
+    private int otp ;
+    private String newPassword ;
 }

@@ -8,8 +8,6 @@ import lombok.Data;
 @AllArgsConstructor
 @Builder
 public class SuperAdminRequest {
-
-    private Long superAdminId;
     private String adminName;
     private String email;
     private String password;

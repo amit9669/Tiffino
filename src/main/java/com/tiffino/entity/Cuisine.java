@@ -1,5 +1,6 @@
 package com.tiffino.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
@@ -45,5 +46,6 @@ public class Cuisine {
 
     @OneToMany(mappedBy = "cuisine", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties("cuisine")
+    @JsonIgnore
     private List<Meal> meals;
 }

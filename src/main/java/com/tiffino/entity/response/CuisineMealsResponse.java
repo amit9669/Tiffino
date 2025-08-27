@@ -1,17 +1,18 @@
-package com.tiffino.entity.request;
+package com.tiffino.entity.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class CloudKitchenRequest {
+public class CuisineMealsResponse {
 
-    private String state;
-    private String city;
-    private String division;
+    private String cuisine;
+    private List<MealResponse> meals;
 }

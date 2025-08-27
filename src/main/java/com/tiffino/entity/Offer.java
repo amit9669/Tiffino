@@ -1,5 +1,6 @@
 package com.tiffino.entity;//package com.tiffino.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -7,13 +8,12 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "offers")
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Entity
+@Table(name = "offers")
 public class Offer {
 
     @Id
@@ -30,6 +30,14 @@ public class Offer {
     @Column(name = "terms_and_conditions")
     private String termsAndConditions;
 
+    @Enumerated(EnumType.STRING)
+    private TargetGroup targetGroup;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "subscription_id", nullable = true)
+    @JsonIgnore
+    private Subscription applicablePlan;
+
     @Column(name = "is_active")
     private Boolean isActive = true;
 
@@ -40,41 +48,4 @@ public class Offer {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
-
-    //user add manay to one mapping
 }
-
-//
-//import jakarta.persistence.*;
-//import lombok.*;
-//import org.hibernate.annotations.CreationTimestamp;
-//import org.hibernate.annotations.UpdateTimestamp;
-//
-//import java.time.LocalDateTime;
-//
-//@Entity
-//@Table(name = "offers")
-//@Getter
-//@Setter
-//@NoArgsConstructor
-//@AllArgsConstructor
-//@Builder
-//public class Offer {
-//    @Id
-//    @GeneratedValue(strategy = GenerationType.IDENTITY)
-//    private Long offerId;
-//
-//    private String type;
-//    private String description;
-//
-//    @Column(name = "terms_and_conditions", columnDefinition = "TEXT")
-//    private String termsAndConditions;
-//
-//    private Boolean isActive = true;
-//
-//    @CreationTimestamp
-//    private LocalDateTime createdAt;
-//
-//    @UpdateTimestamp
-//    private LocalDateTime updatedAt;
-//}

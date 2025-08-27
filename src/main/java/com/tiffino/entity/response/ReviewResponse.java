@@ -1,16 +1,16 @@
-package com.tiffino.entity.request;
+package com.tiffino.entity.response;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Set;
-
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
-public class ReviewRequest {
-    private Long orderId;
+@NoArgsConstructor
+@Builder
+public class ReviewResponse {
+
     private String comment;
     private Integer rating;
 }

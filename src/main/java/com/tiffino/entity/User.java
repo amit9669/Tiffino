@@ -50,4 +50,8 @@ public class User {
 
     @Column(name = "dietary_needs")
     private String dietaryNeeds;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role")
+    private Role role = Role.USER;
 }

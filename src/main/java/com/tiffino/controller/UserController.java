@@ -19,6 +19,7 @@ public class UserController {
 
     @Autowired
     private IUserService iUserService;
+
     @Autowired
     private EmailService emailService;
 
@@ -32,32 +33,6 @@ public class UserController {
         return ResponseEntity.ok("User registered successfully");
     }
 
-    @PostMapping("/updateUser")
-    public ResponseEntity<?> updateUser(@Valid @RequestBody UserUpdationRequest req) {
-        return new ResponseEntity<>(iUserService.updateCurrentUser(req), HttpStatus.OK);
-    }
-
-    @GetMapping("/getAllSubscriptionPlan")
-    public ResponseEntity<?> getAllSubscriptionPlan() {
-        return new ResponseEntity<>(iUserService.getAllSubscriptionPlan(), HttpStatus.OK);
-    }
-
-    @PostMapping("/assignSubscriptionToUser")
-    public ResponseEntity<?> assignSubscriptionToUser(@RequestParam String name, @RequestParam Double price) {
-        return new ResponseEntity<>(iUserService.assignSubscriptionToUser(name, price), HttpStatus.OK);
-    }
-
-    @PostMapping("/orders")
-    public ResponseEntity<?> createOrder(@RequestBody CreateOrderRequest request) {
-        return new ResponseEntity<>(iUserService.createOrder(request), HttpStatus.OK);
-    }
-
-    @DeleteMapping("/order/{orderId}")
-    public ResponseEntity<String> deleteOrder(@PathVariable Long orderId) {
-        iUserService.deleteOrder(orderId);
-        return ResponseEntity.ok("Order deleted successfully.");
-    }
-
     @PostMapping("/forgot-password")
     public ResponseEntity<String> forgotPassword(@RequestParam String email) {
         if (!iUserService.checkUserExistsByEmail(email)) {
@@ -69,14 +44,6 @@ public class UserController {
         emailService.sendOtpEmail(email, otp); // actual email send
 
         return ResponseEntity.ok("OTP has been sent to your email");
-    }
-
-    @PostMapping("/verify-otp")
-    public ResponseEntity<String> verifyOtp(@RequestParam String email, @RequestParam int otp) {
-        int storedOtp = otpService.getOtp(email);
-        return storedOtp == otp
-                ? ResponseEntity.ok("OTP verified")
-                : ResponseEntity.badRequest().body("Invalid OTP");
     }
 
     @PostMapping("/reset-password")
@@ -95,31 +62,62 @@ public class UserController {
         return ResponseEntity.ok("Password updated successfully");
     }
 
+    @GetMapping("/getAllAvailableMealsGroupedByCuisine")
+    public ResponseEntity<?> getAllAvailableMealsGroupedByCuisine() {
+        return new ResponseEntity<>(iUserService.getAllAvailableMealsGroupedByCuisine(), HttpStatus.OK);
+    }
+
+
+    @PostMapping("/updateUser")
+    public ResponseEntity<?> updateUser(@Valid @RequestBody UserUpdationRequest req) {
+        return new ResponseEntity<>(iUserService.updateCurrentUser(req), HttpStatus.OK);
+    }
+
+    @GetMapping("/getAllSubscriptionPlan")
+    public ResponseEntity<?> getAllSubscriptionPlan() {
+        return new ResponseEntity<>(iUserService.getAllSubscriptionPlan(), HttpStatus.OK);
+    }
+
+    @PostMapping("/assignSubscriptionToUser")
+    public ResponseEntity<?> assignSubscriptionToUser(@RequestParam String name, @RequestParam Double price) {
+        return new ResponseEntity<>(iUserService.assignSubscriptionToUser(name, price), HttpStatus.OK);
+    }
+
+    @PostMapping("/redeemOffer/{offerId}")
+    public ResponseEntity<?> redeemOffer(@PathVariable Long offerId) {
+        return ResponseEntity.ok(iUserService.redeemOffer(offerId));
+    }
+
+    @GetMapping("/getUserAllOffers")
+    public ResponseEntity<?> getUserAllOffers() {
+        return new ResponseEntity<>(iUserService.getUserAllOffers(), HttpStatus.OK);
+    }
+
+    @PostMapping("/orders")
+    public ResponseEntity<?> createOrder(@RequestBody CreateOrderRequest request) {
+        return new ResponseEntity<>(iUserService.createOrder(request), HttpStatus.OK);
+    }
+
+    @DeleteMapping("/deleteOrder/{orderId}")
+    public ResponseEntity<String> deleteOrder(@PathVariable Long orderId) {
+        iUserService.deleteOrder(orderId);
+        return ResponseEntity.ok("Order deleted successfully.");
+    }
+
+    @GetMapping("/getAllOrders")
+    public ResponseEntity<?> getAllOrders() {
+        return new ResponseEntity<>(iUserService.getAllOrders(), HttpStatus.OK);
+    }
 
     @PostMapping("/createReview")
     public ResponseEntity<?> createReview(@RequestBody ReviewRequest request) {
         return new ResponseEntity<>(iUserService.createReview(request), HttpStatus.OK);
     }
 
-    @GetMapping("/getAllReviews")
-    public ResponseEntity<?> getAllReviews() {
-        return new ResponseEntity<>(iUserService.getAllReviews(), HttpStatus.OK);
-    }
-
-    @GetMapping("/getReviewById/{id}")
-    public ResponseEntity<?> getReviewById(@PathVariable Long id) {
-        return new ResponseEntity<>(iUserService.getReviewById(id), HttpStatus.OK);
-    }
-
     @DeleteMapping("/deleteReview/{id}")
     public ResponseEntity<?> deleteReview(@PathVariable Long id) {
         iUserService.deleteReview(id);
         return ResponseEntity.ok("Review deleted successfully");
-    }
-
-    @GetMapping("/getReviewsByUser")
-    public ResponseEntity<?> getReviewsByUser() {
-        return new ResponseEntity<>(iUserService.getReviewsByUserId(), HttpStatus.OK);
     }
 
     @GetMapping("/trackOrder")

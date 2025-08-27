@@ -38,6 +38,11 @@ public class Review {
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private User user;
 
+    @ManyToOne
+    @JoinColumn(name = "order_id", nullable = false)
+    @JsonIgnore
+    private Order order;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -48,5 +53,6 @@ public class Review {
 
     @ManyToOne
     @JoinColumn(name = "cloud_kitchen_id", nullable = false)
+    @JsonIgnore
     private CloudKitchen cloudKitchen;
 }

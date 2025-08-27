@@ -11,22 +11,29 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface ManagerRepository extends JpaRepository<Manager,String> {
+public interface ManagerRepository extends JpaRepository<Manager, String> {
 
-    @Query(value = "SELECT new com.tiffino.entity.response.AdminFilterResponse(ck.cloudKitchenId, ck.state," +
-            " ck.city, ck.division, ck.isActive, ck.isDeleted, ck.createdAt, man.managerId," +
-            " man.managerName, man.managerEmail, man.dob, man.phoneNo, man.currentAddress, man.permeantAddress," +
-            " man.adharCard, man.panCard, man.photo, man.isActive, man.isDeleted, man.createdAt) FROM CloudKitchen AS ck " +
-            " LEFT JOIN Manager AS man ON man.cloudKitchen.cloudKitchenId = ck.cloudKitchenId WHERE" +
-            " man.isDeleted = false AND ck.isDeleted = false AND" +
-            " (COALESCE(:state,'')='' OR TRIM(LOWER(ck.state)) IN (:state)) AND" +
-            " (COALESCE(:city,'')='' OR TRIM(LOWER(ck.city)) IN (:city)) AND" +
-            " (COALESCE(:division,'')='' OR TRIM(LOWER(ck.division)) IN (:division))",nativeQuery = false)
+    @Query("SELECT new com.tiffino.entity.response.AdminFilterResponse(" +
+            " ck.cloudKitchenId, ck.city, ck.division, ck.isActive, ck.isDeleted, ck.createdAt," +
+            " man.managerId, man.isActive, man.isDeleted, man.createdAt) " +
+            "FROM CloudKitchen ck " +
+            "LEFT JOIN Manager man ON man.cloudKitchen.cloudKitchenId = ck.cloudKitchenId " +
+            "WHERE man.isDeleted = false AND ck.isDeleted = false " +
+            "AND (:state IS NULL OR TRIM(LOWER(ck.state)) IN (:state)) " +
+            "AND (:city IS NULL OR TRIM(LOWER(ck.city)) IN (:city)) " +
+            "AND (:division IS NULL OR TRIM(LOWER(ck.division)) IN (:division))")
     List<AdminFilterResponse> getAllDetails(@Param("state") List<String> state,
                                             @Param("city") List<String> city,
                                             @Param("division") List<String> division);
 
+
     boolean existsByManagerEmail(String email);
 
     Optional<Manager> findByManagerEmail(String email);
+
+    Manager findByCloudKitchen_CloudKitchenId(String cloudKitchenId);
+
+    boolean existsByManagerIdAndIsDeletedFalse(String managerId);
+
+    List<Manager> findByIsDeletedFalse();
 }

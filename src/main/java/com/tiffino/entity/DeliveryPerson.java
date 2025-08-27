@@ -1,5 +1,6 @@
 package com.tiffino.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -26,6 +27,9 @@ public class DeliveryPerson {
     @Column(nullable = false, unique = true)
     private String email;
 
+    @Column(name = "password")
+    private String password;
+
     private String phoneNo;
 
     @Column(name = "isAvailable")
@@ -37,7 +41,16 @@ public class DeliveryPerson {
     @Column(name = "isDeleted")
     private Boolean isDeleted = false;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role")
+    private Role role = Role.DELIVERY_PERSON;
+
     @OneToMany(mappedBy = "deliveryPerson")
     @JsonIgnore
     private List<Delivery> deliveries;
+
+    @ManyToOne
+    @JoinColumn(name = "cloud_kitchen_id")
+    @JsonBackReference
+    private CloudKitchen cloudKitchen;
 }

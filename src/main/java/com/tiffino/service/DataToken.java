@@ -1,5 +1,6 @@
 package com.tiffino.service;
 
+import com.tiffino.repository.DeliveryPersonRepository;
 import com.tiffino.repository.ManagerRepository;
 import com.tiffino.repository.SuperAdminRepository;
 import com.tiffino.repository.UserRepository;
@@ -22,6 +23,9 @@ public class DataToken {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private DeliveryPersonRepository deliveryPersonRepository;
+
     public Object getCurrentUserProfile() {
         try {
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -40,6 +44,10 @@ public class DataToken {
                     return userRepository.findByEmail(email)
                             .or(() -> userRepository.findByEmail(email))
                             .orElseThrow(() -> new RuntimeException("User not found"));
+                case "ROLE_DELIVERY_PERSON":
+                    return deliveryPersonRepository.findByEmail(email)
+                            .or(() -> deliveryPersonRepository.findByEmail(email))
+                            .orElseThrow(() -> new RuntimeException("DELIVERY_PERSON not found"));
                 default:
                     throw new RuntimeException("Unknown role: " + role);
             }

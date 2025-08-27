@@ -12,7 +12,6 @@ import org.springframework.web.multipart.MultipartFile;
 @NoArgsConstructor
 public class ManagerRequest {
 
-    private String managerId;
     private String managerName;
     private String managerEmail;
     private String dob;

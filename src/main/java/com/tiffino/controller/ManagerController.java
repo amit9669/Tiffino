@@ -1,6 +1,5 @@
 package com.tiffino.controller;
 
-import com.tiffino.entity.Cuisine;
 import com.tiffino.entity.request.ManagerPasswordRequest;
 import com.tiffino.entity.request.PasswordRequest;
 import com.tiffino.service.IManagerService;
@@ -32,8 +31,13 @@ public class ManagerController {
 
     @PostMapping("/changePassword")
     public ResponseEntity<?> changePassword(@RequestBody PasswordRequest passwordRequest, HttpSession session) {
-     return new ResponseEntity<>(iManagerService.changePassword(passwordRequest.getOtp(),passwordRequest.getNewPassword(),
-             passwordRequest.getConfirmNewPassword(),session),HttpStatus.OK);
+        return new ResponseEntity<>(iManagerService.changePassword(passwordRequest.getOtp(), passwordRequest.getNewPassword(),
+                passwordRequest.getConfirmNewPassword(), session), HttpStatus.OK);
+    }
+
+    @GetMapping("/getAllCuisinesAndMeals")
+    public ResponseEntity<?> getAllCuisinesAndMeals() {
+        return new ResponseEntity<>(iManagerService.getAllCuisinesAndMeals(), HttpStatus.OK);
     }
 
     @GetMapping("/getDataOfCloudKitchen")
@@ -42,19 +46,32 @@ public class ManagerController {
     }
 
     @PostMapping("/enableMealForKitchen")
-    public ResponseEntity<?> enableMealForKitchen(@RequestBody List<Long> mealsIds){
-        return new ResponseEntity<>(iManagerService.enableMealForKitchen(mealsIds),HttpStatus.OK);
+    public ResponseEntity<?> enableMealForKitchen(@RequestBody List<Long> mealsIds) {
+        return new ResponseEntity<>(iManagerService.enableMealForKitchen(mealsIds), HttpStatus.OK);
+    }
+
+    @GetMapping("/getAllCloudKitchenMealIsAvailable")
+    public ResponseEntity<?> getAllCloudKitchenMealIsAvailable() {
+        return new ResponseEntity<>(iManagerService.getAllCloudKitchenMealIsAvailable(), HttpStatus.OK);
     }
 
     @PostMapping("/disableMealForKitchen")
-    public ResponseEntity<?> disableMealForKitchen(@RequestBody List<Long> mealsIds){
-        iManagerService.disableMealForKitchen(mealsIds);
-        return new ResponseEntity<>("Disable Meals!!!",HttpStatus.OK);
+    public ResponseEntity<?> disableMealForKitchen(@RequestBody List<Long> mealsIds) {
+        return new ResponseEntity<>(iManagerService.disableMealForKitchen(mealsIds), HttpStatus.OK);
     }
 
     @PostMapping("/assignOrderToDeliveryPerson")
-    public ResponseEntity<?> assignOrderToDeliveryPerson(@RequestParam Long orderId,@RequestParam Long deliveryPersonId){
-        return new ResponseEntity<>(iManagerService.assignOrderToDeliveryPerson(orderId,deliveryPersonId),HttpStatus.OK);
+    public ResponseEntity<?> assignOrderToDeliveryPerson(@RequestParam Long orderId, @RequestParam Long deliveryPersonId) {
+        return new ResponseEntity<>(iManagerService.assignOrderToDeliveryPerson(orderId, deliveryPersonId), HttpStatus.OK);
     }
 
+    @GetMapping("/listOfDeliveryPersonIsAvailable")
+    public ResponseEntity<?> listOfDeliveryPersonIsAvailable() {
+        return ResponseEntity.ok(iManagerService.listOfDeliveryPersonIsAvailable());
+    }
+
+    @GetMapping("/getAllOrders")
+    public ResponseEntity<?> getAllOrders() {
+        return new ResponseEntity<>(iManagerService.getAllOrders(), HttpStatus.OK);
+    }
 }

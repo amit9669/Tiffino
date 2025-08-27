@@ -1,12 +1,8 @@
 package com.tiffino.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -22,22 +18,33 @@ public class ImageUploadService {
     private static final String API_KEY = "4b13c7f9a6d506df9b7988d9dd2db7eb";
 
     public String uploadImage(MultipartFile file) {
-
         try {
+            // Convert file to Base64
             String base64Image = Base64.getEncoder().encodeToString(file.getBytes());
-            MultiValueMap<String, Object> params = new LinkedMultiValueMap<>();
+
+            // Prepare form data
+            MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
             params.add("key", API_KEY);
             params.add("image", base64Image);
 
             HttpHeaders headers = new HttpHeaders();
-            headers.add("Content-Type", "application/x-www-form-urlencoded");
+            headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
-            HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(params, headers);
+            HttpEntity<MultiValueMap<String, String>> requestEntity =
+                    new HttpEntity<>(params, headers);
 
+            // Send request
             RestTemplate restTemplate = new RestTemplate();
-            ResponseEntity<String> response = restTemplate.exchange(IMGBB_API_URL, HttpMethod.POST, requestEntity, String.class);
+            ResponseEntity<String> response = restTemplate.exchange(
+                    IMGBB_API_URL,
+                    HttpMethod.POST,
+                    requestEntity,
+                    String.class
+            );
 
+            // Parse response
             return parseImageUrlFromResponse(response.getBody());
+
         } catch (Exception e) {
             e.printStackTrace();
             return null;
@@ -45,16 +52,19 @@ public class ImageUploadService {
     }
 
     private String parseImageUrlFromResponse(String response) {
-
         try {
             ObjectMapper objectMapper = new ObjectMapper();
             JsonNode jsonResponse = objectMapper.readTree(response);
-            return jsonResponse.get("data").get("url").asText();
-        } catch (JsonProcessingException e) {
 
+            if (jsonResponse.has("data")) {
+                return jsonResponse.get("data").get("url").asText();
+            } else {
+                System.err.println("Invalid response: " + response);
+                return null;
+            }
+        } catch (Exception e) {
             e.printStackTrace();
             return null;
         }
     }
 }
-//class ends here

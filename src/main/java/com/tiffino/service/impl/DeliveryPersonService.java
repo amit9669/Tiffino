@@ -3,14 +3,23 @@ package com.tiffino.service.impl;
 import com.tiffino.entity.Delivery;
 import com.tiffino.entity.DeliveryPerson;
 import com.tiffino.entity.DeliveryStatus;
+import com.tiffino.entity.Manager;
+import com.tiffino.exception.CustomException;
 import com.tiffino.repository.DeliveryPersonRepository;
 import com.tiffino.repository.DeliveryRepository;
 import com.tiffino.service.IDeliveryPersonService;
+import com.tiffino.service.OtpService;
+import jakarta.servlet.http.HttpSession;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 
+@Slf4j
 @Service
 public class DeliveryPersonService implements IDeliveryPersonService {
     
@@ -20,13 +29,82 @@ public class DeliveryPersonService implements IDeliveryPersonService {
     @Autowired
     private DeliveryPersonRepository deliveryPersonRepository;
 
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private OtpService otpService;
+
+    @Autowired
+    private JavaMailSender javaMailSender;
+
+    @Override
+    public Object updatePassword(String email, int otp, String newPassword) {
+        if (deliveryPersonRepository.existsByEmail(email)) {
+            DeliveryPerson deliveryPerson = deliveryPersonRepository.findByEmail(email).get();
+            if (otpService.getOtp(deliveryPerson.getEmail()) == otp) {
+                otpService.clearOTP(deliveryPerson.getEmail());
+                System.out.println("New Password : " + newPassword);
+                deliveryPerson.setPassword(passwordEncoder.encode(newPassword));
+                deliveryPersonRepository.save(deliveryPerson);
+                return "Password Updated Successfully!!";
+            } else {
+                return "OTP NOT MATCHED!!";
+            }
+        } else {
+            return "Incorrect Id!!";
+        }
+    }
+
+    @Override
+    public Object forgotPasswordOfDeliveryPartner(String email, HttpSession session) {
+        System.out.println(email);
+        log.info("Email :-->" + email);
+        if (deliveryPersonRepository.existsByEmail(email)) {
+            this.sendEmail(email, "For Update Password", "This is your OTP :- " + otpService.generateOTP(email));
+            session.setAttribute("email", email);
+            return "Check email for OTP verification!";
+        } else {
+            return "This Email not exists!!";
+        }
+    }
+
+    @Override
+    public Object changePassword(int otp, String newPassword, String confirmNewPassword, HttpSession session) {
+        if (otpService.getOtp((String) session.getAttribute("email")) == otp) {
+            DeliveryPerson deliveryPerson = deliveryPersonRepository.findByEmail((String) session.getAttribute("email")).get();
+            if (newPassword.equals(confirmNewPassword)) {
+                deliveryPerson.setPassword(passwordEncoder.encode(newPassword));
+                deliveryPersonRepository.save(deliveryPerson);
+                otpService.clearOTP(deliveryPerson.getEmail());
+                return "Password has changed!!";
+            } else {
+                return "password doesn't match!! Please Try Again!!";
+            }
+        } else {
+            return "OTP not Matched!!!";
+        }
+    }
+
+    public void sendEmail(String to, String subject, String message) {
+        try {
+            SimpleMailMessage email = new SimpleMailMessage();
+            email.setTo(to);
+            email.setSubject(subject);
+            email.setText(message);
+            javaMailSender.send(email);
+        } catch (CustomException e) {
+            log.error("Exception while send Email ", e);
+        }
+    }
+
     @Override
     public Object pickupOrder(Long deliveryId) {
         Delivery delivery = deliveryRepository.findById(deliveryId)
                 .orElseThrow(() -> new RuntimeException("Delivery not found"));
 
         if (delivery.getStatus() != DeliveryStatus.ASSIGNED) {
-            throw new RuntimeException("Order cannot be picked up, current status: " + delivery.getStatus());
+            return "Order cannot be picked up, current status: " + delivery.getStatus();
         }
 
         delivery.setStatus(DeliveryStatus.PICKED_UP);
@@ -44,7 +122,7 @@ public class DeliveryPersonService implements IDeliveryPersonService {
                 .orElseThrow(() -> new RuntimeException("Delivery not found"));
 
         if (delivery.getStatus() != DeliveryStatus.PICKED_UP) {
-            throw new RuntimeException("Order cannot be delivered, current status: " + delivery.getStatus());
+            return "Order cannot be delivered, current status: " + delivery.getStatus();
         }
 
         delivery.setStatus(DeliveryStatus.DELIVERED);

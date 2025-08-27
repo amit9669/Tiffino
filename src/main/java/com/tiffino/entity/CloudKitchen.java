@@ -54,5 +54,9 @@ public class CloudKitchen {
     private Manager manager;
 
     @OneToMany(mappedBy = "cloudKitchen", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<Review> reviews = new HashSet<>();
+    private List<Review> reviews = new ArrayList<>();
+
+    @OneToMany(mappedBy = "cloudKitchen")
+    @JsonManagedReference
+    private List<DeliveryPerson> deliveryPersons;
 }

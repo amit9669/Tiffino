@@ -3,7 +3,7 @@ package com.tiffino.service.impl;
 import com.tiffino.entity.*;
 import com.tiffino.entity.request.CreateOrderRequest;
 import com.tiffino.entity.request.ReviewRequest;
-import com.tiffino.entity.response.DeliveryTrackingResponse;
+import com.tiffino.entity.response.*;
 import com.tiffino.exception.CustomException;
 import com.tiffino.repository.*;
 import com.tiffino.service.DataToken;
@@ -61,6 +61,10 @@ public class UserService implements IUserService {
     @Autowired
     private DeliveryRepository deliveryRepository;
 
+    @Autowired
+    private UserOfferRepository userOfferRepository;
+
+
     public void registerUser(String name, String email, String password, String phoneNo) {
 
         if (userRepository.findByEmail(email).isPresent()) {
@@ -76,6 +80,53 @@ public class UserService implements IUserService {
 
         userRepository.save(user);
     }
+
+    @Override
+    public Object getAllAvailableMealsGroupedByCuisine() {
+        List<CloudKitchenMeal> availableMeals = cloudKitchenMealRepository.findByAvailableTrue();
+
+        Map<String, Map<Long, MealResponse>> groupedByCuisine = new HashMap<>();
+
+        for (CloudKitchenMeal ckMeal : availableMeals) {
+            String cuisineName = ckMeal.getMeal().getCuisine().getName();
+            Long mealId = ckMeal.getMeal().getMealId();
+
+            groupedByCuisine
+                    .computeIfAbsent(cuisineName, k -> new HashMap<>())
+                    .compute(mealId, (id, mealResp) -> {
+                        if (mealResp == null) {
+                            return MealResponse.builder()
+                                    .mealId(mealId)
+                                    .mealName(ckMeal.getMeal().getName())
+                                    .price(ckMeal.getMeal().getPrice())
+                                    .photos(ckMeal.getMeal().getPhotos())
+                                    .kitchens(new ArrayList<>(List.of(
+                                            CloudKitchenInfo.builder()
+                                                    .cloudKitchenId(ckMeal.getCloudKitchen().getCloudKitchenId())
+                                                    .cloudKitchenName(ckMeal.getCloudKitchen().getCity() + " - " + ckMeal.getCloudKitchen().getDivision())
+                                                    .build()
+                                    )))
+                                    .build();
+                        } else {
+                            mealResp.getKitchens().add(
+                                    CloudKitchenInfo.builder()
+                                            .cloudKitchenId(ckMeal.getCloudKitchen().getCloudKitchenId())
+                                            .cloudKitchenName(ckMeal.getCloudKitchen().getCity() + " - " + ckMeal.getCloudKitchen().getDivision())
+                                            .build()
+                            );
+                            return mealResp;
+                        }
+                    });
+        }
+
+        return groupedByCuisine.entrySet().stream()
+                .map(entry -> CuisineMealsResponse.builder()
+                        .cuisine(entry.getKey())
+                        .meals(new ArrayList<>(entry.getValue().values()))
+                        .build())
+                .toList();
+    }
+
 
     @Override
     public Object getAllSubscriptionPlan() {
@@ -101,9 +152,9 @@ public class UserService implements IUserService {
 
         if (userSubscriptionRepository
                 .existsByUser_UserIdAndIsSubscribedTrue(user.getUserId())) {
-             UserSubscription userSubscription = userSubscriptionRepository.findByUser_UserIdAndIsSubscribedTrue(user.getUserId());
+            UserSubscription userSubscription = userSubscriptionRepository.findByUser_UserIdAndIsSubscribedTrue(user.getUserId());
             return "User already has " + userSubscription.getPlan().getSubName() + " this active subscription! " +
-                    "Please wait for expired date "+userSubscription.getExpiryDate();
+                    "Please wait for expired date " + userSubscription.getExpiryDate();
         }
 
         UserSubscription userSubscription = UserSubscription.builder()
@@ -119,6 +170,39 @@ public class UserService implements IUserService {
         userRepository.save(user);
 
         return "Subscribed Successfully!!!";
+    }
+
+    @Override
+    @Transactional
+    public Object redeemOffer(Long offerId) {
+        User user = (User) dataToken.getCurrentUserProfile();
+        Optional<UserOffer> userOfferOptional = userOfferRepository.findByUser_UserIdAndOffer_OfferId(user.getUserId(), offerId);
+
+        if (!userOfferOptional.isPresent()) {
+            return "Offer not assigned";
+        }
+
+        UserOffer userOffer = userOfferOptional.get();
+
+        if (Boolean.TRUE.equals(userOffer.getIsRedeemed())) {
+            return "Offer already redeemed";
+        }
+
+        userOffer.setIsRedeemed(true);
+        userOffer.setRedeemedAt(LocalDateTime.now());
+
+        return UserOfferResponse.fromEntity(userOfferRepository.save(userOffer));
+    }
+
+
+    @Override
+    public List<UserOfferResponse> getUserAllOffers() {
+        User user = (User) dataToken.getCurrentUserProfile();
+
+        return userOfferRepository.findByUser_UserId(user.getUserId())
+                .stream()
+                .map(UserOfferResponse::fromEntity)
+                .toList();
     }
 
     @Scheduled(cron = "0 0 0 * * ?")
@@ -156,6 +240,7 @@ public class UserService implements IUserService {
     }
 
 
+    @Transactional
     @Override
     public Object updateCurrentUser(UserUpdationRequest req) {
         User user = (User) dataToken.getCurrentUserProfile();
@@ -164,42 +249,46 @@ public class UserService implements IUserService {
         user.setDietaryNeeds(req.getDietaryNeeds());
         user.setMealPreference(req.getMealPreference());
         user.setPhoneNo(req.getPhoneNo());
-        userRepository.save(user);
         return "Updated Successfully!!";
     }
+
 
     @Override
     @Transactional
     public Object createOrder(CreateOrderRequest request) {
         User user = (User) dataToken.getCurrentUserProfile();
 
-        CloudKitchen cloudKitchen = cloudKitchenRepository.findById(request.getCloudKitchenId())
-                .orElseThrow(() -> new RuntimeException("CloudKitchen not found"));
+        Optional<CloudKitchen> cloudKitchenOptional = cloudKitchenRepository.findByCloudKitchenIdAndIsDeletedFalse(request.getCloudKitchenId());
+
+        if (!cloudKitchenOptional.isPresent()) {
+            return "CloudKItchen Not Found";
+        }
+
+        CloudKitchen cloudKitchen = cloudKitchenOptional.get();
 
         List<CloudKitchenMeal> kitchenMeals = cloudKitchenMealRepository
                 .findByCloudKitchenAndAvailableTrue(cloudKitchen);
 
-        Map<Long, Meal> availableMeals = kitchenMeals.stream()
-                .map(CloudKitchenMeal::getMeal)
-                .collect(Collectors.toMap(Meal::getMealId, m -> m));
+        Map<Long, CloudKitchenMeal> availableMeals = kitchenMeals.stream()
+                .collect(Collectors.toMap(cm -> cm.getMeal().getMealId(), cm -> cm));
 
-        List<Meal> meals = new ArrayList<>();
+        List<CloudKitchenMeal> orderedMeals = new ArrayList<>();
         for (Long mealId : request.getMealIds()) {
             if (!availableMeals.containsKey(mealId)) {
-                throw new RuntimeException("Meal ID " + mealId + " not available in this kitchen");
+                return "Meal ID " + mealId + " not available in this kitchen";
             }
-            meals.add(availableMeals.get(mealId));
+            orderedMeals.add(availableMeals.get(mealId));
         }
 
-        double totalCost = meals.stream()
-                .mapToDouble(Meal::getPrice)
+        double totalCost = orderedMeals.stream()
+                .mapToDouble(cm -> cm.getMeal().getPrice())
                 .sum();
 
         Order order = Order.builder()
                 .user(user)
                 .cloudKitchen(cloudKitchen)
-                .meals(meals)
-                .orderStatus("PENDING")
+                .ckMeals(orderedMeals)
+                .orderStatus(String.valueOf(DeliveryStatus.PENDING))
                 .deliveryDetails(request.getDeliveryDetails())
                 .totalCost(totalCost)
                 .build();
@@ -209,23 +298,33 @@ public class UserService implements IUserService {
     }
 
 
-    public Object getOrderById(Long orderId) {
-        return orderRepository.findById(orderId).map(order -> {
-            if (order.getMeals() == null || order.getMeals().isEmpty()) {
-                System.out.println("Meals are empty for order: " + orderId);
-                throw new CustomException("Order has no meals");
-            }
-            return order;
-        }).orElseThrow(() -> {
-            System.out.println("Order not found for ID: " + orderId);
-            return new CustomException("Order not found");
-        });
-    }
-
     @Override
     public Object getAllOrders() {
-        return orderRepository.findAll();
+        User user = (User) dataToken.getCurrentUserProfile();
+
+        List<Order> orders = orderRepository.findAllByUser_UserId(user.getUserId());
+
+        return orders.stream()
+                .map(order -> {
+                    String orderDate = order.getCreatedAt().toLocalDate().toString();
+                    String orderTime = order.getCreatedAt().toLocalTime().toString();
+
+                    List<String> mealNames = order.getCkMeals().stream()
+                            .map(item -> item.getMeal().getName())
+                            .toList();
+
+                    return OrderResponse.builder()
+                            .orderId(order.getOrderId())
+                            .orderStatus(order.getOrderStatus())
+                            .totalCost(order.getTotalCost())
+                            .orderDate(orderDate)
+                            .orderTime(orderTime)
+                            .mealName(mealNames)
+                            .build();
+                })
+                .toList();
     }
+
 
     @Override
     public void deleteOrder(Long orderId) {
@@ -241,14 +340,30 @@ public class UserService implements IUserService {
     public Object createReview(ReviewRequest request) {
         User user = (User) dataToken.getCurrentUserProfile();
 
-        CloudKitchen cloudKitchen = cloudKitchenRepository.findById(request.getCloudKitchenId())
-                .orElseThrow(() -> new RuntimeException("CloudKitchen not found"));
+        Order order = orderRepository.findByOrderIdAndUser_UserId(request.getOrderId(), user.getUserId()).get();
+
+        Optional<Delivery> deliveryOptional = deliveryRepository.findByOrder_OrderId(order.getOrderId());
+
+        if(!deliveryOptional.isPresent()){
+            return "Delivery not found for this order";
+        }
+
+        Delivery delivery = deliveryOptional.get();
+
+        if (delivery.getStatus() != DeliveryStatus.DELIVERED) {
+            return "You can only review after the order has been delivered";
+        }
+
+        if (reviewRepository.existsByOrder_OrderId(order.getOrderId())) {
+            return "You have already reviewed this order";
+        }
 
         Review review = Review.builder()
                 .comment(request.getComment())
                 .rating(request.getRating())
                 .user(user)
-                .cloudKitchen(cloudKitchen)
+                .cloudKitchen(order.getCloudKitchen())
+                .order(order)
                 .build();
 
         reviewRepository.save(review);
@@ -262,24 +377,6 @@ public class UserService implements IUserService {
     }
 
     @Override
-    public Object getReviewById(Long reviewId) {
-        return reviewRepository.findById(reviewId)
-                .orElseThrow(() -> new RuntimeException("Review not found with id: " + reviewId));
-    }
-
-    @Override
-    public Object getAllReviews() {
-        return reviewRepository.findAll();
-    }
-
-
-    @Override
-    public Object getReviewsByUserId() {
-        User user = (User) dataToken.getCurrentUserProfile();
-        return reviewRepository.findByUserUserId(user.getUserId());
-    }
-
-    @Override
     public boolean checkUserExistsByEmail(String email) {
         return userRepository.existsByEmail(email);
     }
@@ -290,29 +387,50 @@ public class UserService implements IUserService {
 
         List<Delivery> deliveries = deliveryRepository.findAllByOrder_User_UserId(user.getUserId());
 
-        if (deliveries.isEmpty()) {
-            throw new RuntimeException("No pending deliveries found for this user");
+        if (!deliveries.isEmpty()) {
+            return deliveries.stream()
+                    .map(delivery -> DeliveryTrackingResponse.builder()
+                            .orderId(delivery.getOrder().getOrderId())
+                            .orderStatus(delivery.getOrder().getOrderStatus())
+                            .deliveryId(delivery.getDeliveryId())
+                            .deliveryStatus(delivery.getStatus())
+                            .deliveryPersonName(delivery.getDeliveryPerson() != null ? delivery.getDeliveryPerson().getName() : "Not Assigned")
+                            .deliveryPersonPhone(delivery.getDeliveryPerson() != null ? delivery.getDeliveryPerson().getPhoneNo() : "N/A")
+                            .assignedAt(delivery.getAssignedAt())
+                            .pickedUpAt(delivery.getPickedUpAt())
+                            .deliveredAt(delivery.getDeliveredAt())
+                            .build())
+                    .toList();
         }
-        return deliveries.stream()
-                .map(delivery -> DeliveryTrackingResponse.builder()
-                        .orderId(delivery.getOrder().getOrderId())
-                        .orderStatus(delivery.getOrder().getOrderStatus())
-                        .deliveryId(delivery.getDeliveryId())
-                        .deliveryStatus(delivery.getStatus())
-                        .deliveryPersonName(delivery.getDeliveryPerson() != null ? delivery.getDeliveryPerson().getName() : "Not Assigned")
-                        .deliveryPersonPhone(delivery.getDeliveryPerson() != null ? delivery.getDeliveryPerson().getPhoneNo() : "N/A")
-                        .assignedAt(delivery.getAssignedAt())
-                        .pickedUpAt(delivery.getPickedUpAt())
-                        .deliveredAt(delivery.getDeliveredAt())
-                        .build())
-                .toList();
+
+        List<Order> pendingOrders = orderRepository.findAllByUser_UserIdAndOrderStatus(user.getUserId(), "PENDING");
+
+        if (!pendingOrders.isEmpty()) {
+            return pendingOrders.stream()
+                    .map(order -> DeliveryTrackingResponse.builder()
+                            .orderId(order.getOrderId())
+                            .orderStatus(order.getOrderStatus())
+                            .deliveryId(null)
+                            .deliveryStatus(DeliveryStatus.PENDING)
+                            .deliveryPersonName("Not Assigned")
+                            .deliveryPersonPhone("N/A")
+                            .assignedAt(null)
+                            .pickedUpAt(null)
+                            .deliveredAt(null)
+                            .build())
+                    .toList();
+        }
+
+        return "No pending deliveries found for this user";
     }
+
 
     @Override
     public void updatePasswordByEmail(String email, String newPassword) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
         user.setPassword(passwordEncoder.encode(newPassword));
+        user.setRole(Role.USER);
         userRepository.save(user);
     }
 }

@@ -3,15 +3,18 @@ package com.tiffino.service;
 import com.tiffino.entity.Offer;
 import com.tiffino.entity.request.*;
 
+import java.io.IOException;
 import java.util.List;
 
 public interface ISuperAdminService {
 
-    Object saveOrUpdateAdmin(SuperAdminRequest superAdminRequest);
+    Object updateAdmin(SuperAdminRequest superAdminRequest);
 
-    Object saveOrUpdateManager(ManagerRequest managerRequest);
+    Object saveManager(ManagerRequest managerRequest);
 
-    Object saveOrUpdateCloudKitchen(CloudKitchenRequest kitchenRequest);
+    Object getAllManagersWithCloudKitchen();
+
+    Object saveCloudKitchen(CloudKitchenRequest kitchenRequest);
 
     Object deleteCloudKitchen(String kitchenId);
 
@@ -21,7 +24,25 @@ public interface ISuperAdminService {
 
     Object saveOrUpdateSubscriptionPlan(SubscriptionRequest subscriptionRequest);
 
+    Object getAllSubscription();
+
     Object saveOrUpdateDeliveryPerson(DeliveryPersonRequest personRequest);
 
-    Object listOfIsAvailable();
+    Object saveOrUpdateCuisine(CuisineRequest cuisineRequest) throws IOException;
+
+    Object saveOrUpdateMeal(MealRequest mealRequest);
+
+    Object createOffer(OfferRequest offerRequest);
+
+    Object getAllOffers();
+
+    Object assignOffersToEligibleUsers(Long offerId);
+
+    Object getAllOffersWithRedeemUsers();
+
+    Object getAllSubscribedUser();
+
+    Object getAllCloudKItchenAndReviews();
+
+    Object getAllCuisines();
 }

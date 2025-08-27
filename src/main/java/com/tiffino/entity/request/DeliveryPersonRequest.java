@@ -10,10 +10,8 @@ import lombok.NoArgsConstructor;
 public class DeliveryPersonRequest {
 
     private Long deliveryPersonId;
-
     private String name;
-
     private String email;
-
     private String phoneNo;
+    private String cloudKitchenId;
 }

@@ -32,14 +32,14 @@ public class Order {
 
     @ManyToMany
     @JoinTable(
-            name = "order_meals",
+            name = "order_ck_meals",
             joinColumns = @JoinColumn(name = "order_id"),
-            inverseJoinColumns = @JoinColumn(name = "meal_id")
+            inverseJoinColumns = @JoinColumn(name = "ck_meal_id")
     )
-    private List<Meal> meals = new ArrayList<>();
+    private List<CloudKitchenMeal> ckMeals = new ArrayList<>();
 
     @Embedded
-    private DeliveryDetails deliveryDetails;  // ✅ Embedded object
+    private DeliveryDetails deliveryDetails;
 
     private String orderStatus;
     private double totalCost;

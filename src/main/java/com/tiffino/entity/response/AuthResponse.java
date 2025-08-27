@@ -1,4 +1,4 @@
-package com.tiffino.entity.request;
+package com.tiffino.entity.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,9 +9,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class CloudKitchenRequest {
+public class AuthResponse {
 
-    private String state;
-    private String city;
-    private String division;
+    private String jwtToken;
+    private String role;
+    private String message;
 }

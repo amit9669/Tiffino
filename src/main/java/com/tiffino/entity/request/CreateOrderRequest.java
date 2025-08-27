@@ -13,5 +13,4 @@ public class CreateOrderRequest {
     private String cloudKitchenId;
     private List<Long> mealIds;
     private DeliveryDetails deliveryDetails;
-    private String Status;
 }

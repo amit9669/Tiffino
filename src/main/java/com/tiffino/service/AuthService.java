@@ -2,6 +2,8 @@ package com.tiffino.service;
 
 import com.tiffino.config.JwtService;
 import com.tiffino.entity.*;
+import com.tiffino.entity.response.AuthResponse;
+import com.tiffino.repository.DeliveryPersonRepository;
 import com.tiffino.repository.ManagerRepository;
 import com.tiffino.repository.SuperAdminRepository;
 import com.tiffino.repository.UserRepository;
@@ -32,39 +34,61 @@ public class AuthService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private DeliveryPersonRepository deliveryPersonRepository;
 
-    public String login(String emailOrId, String password) {
+
+    public AuthResponse login(String emailOrId, String password) {
+
+        Optional<User> user = userRepository.findByEmail(emailOrId);
+        if (user.isPresent()) {
+            if (passwordEncoder.matches(password, user.get().getPassword())) {
+                return new AuthResponse(jwtService.generateToken(user.get().getEmail(), Role.USER.name()),
+                        Role.USER.name(),
+                        "Login successful");
+            }
+            return new AuthResponse(null, null, "Invalid User credentials");
+        }
 
         Optional<SuperAdmin> superAdmin = superAdminRepo.findByEmail(emailOrId);
-        if (superAdmin.isPresent() && passwordEncoder.matches(password, superAdmin.get().getPassword())) {
-            return jwtService.generateToken(emailOrId, Role.SUPER_ADMIN.name());
+        if (superAdmin.isPresent()) {
+            if (passwordEncoder.matches(password, superAdmin.get().getPassword())) {
+                return new AuthResponse(jwtService.generateToken(superAdmin.get().getEmail(), Role.SUPER_ADMIN.name()),
+                        Role.SUPER_ADMIN.name(),
+                        "Login successful");
+            }
+            return new AuthResponse(null, null, "Invalid SuperAdmin credentials");
         }
-        System.out.println("Email 1"+emailOrId);
 
-        if (managerRepo.existsByManagerEmail(emailOrId)) {
-            System.out.println("Email 2"+emailOrId);
-            Optional<Manager> manager = managerRepo.findByManagerEmail(emailOrId);
-            if (manager.isPresent() && passwordEncoder.matches(password, manager.get().getPassword())) {
-                return jwtService.generateToken(emailOrId, Role.MANAGER.name());
-            } else {
-                return "Invalid Manager Credentials";
+        Optional<Manager> manager = managerRepo.findByManagerEmail(emailOrId);
+        if (manager.isPresent()) {
+            if (passwordEncoder.matches(password, manager.get().getPassword())) {
+                return new AuthResponse(jwtService.generateToken(manager.get().getManagerEmail(), Role.MANAGER.name()),
+                        Role.MANAGER.name(),
+                        "Login successful");
             }
-        } else if (managerRepo.existsById(emailOrId)) {
-            System.out.println("Email 3"+emailOrId);
+            return new AuthResponse(null, null, "Invalid Manager credentials");
+        }
 
-            Optional<Manager> managerId = managerRepo.findById(emailOrId);
-            if (managerId.isPresent() && passwordEncoder.matches(password, managerId.get().getPassword())) {
-                return jwtService.generateToken(managerId.get().getManagerEmail(), Role.MANAGER.name());
-            } else {
-                return "Manager Id Incorrect!";
+        Optional<Manager> managerById = managerRepo.findById(emailOrId);
+        if (managerById.isPresent()) {
+            if (passwordEncoder.matches(password, managerById.get().getPassword())) {
+                return new AuthResponse(jwtService.generateToken(managerById.get().getManagerEmail(), Role.MANAGER.name()),
+                        Role.MANAGER.name(),
+                        "Login successful");
             }
-        }else if(userRepository.existsByEmail(emailOrId)){
-            Optional<User> user = userRepository.findByEmail(emailOrId);
-            if(user.isPresent() && passwordEncoder.matches(password, user.get().getPassword())){
-                return jwtService.generateToken(user.get().getEmail(),Role.USER.name());
+            return new AuthResponse(null, null, "Invalid Manager ID credentials");
+        }
+
+        Optional<DeliveryPerson> deliveryPerson = deliveryPersonRepository.findByEmail(emailOrId);
+        if (deliveryPerson.isPresent()) {
+            if (passwordEncoder.matches(password, deliveryPerson.get().getPassword())) {
+                return new AuthResponse(jwtService.generateToken(deliveryPerson.get().getEmail(), Role.DELIVERY_PERSON.name()),
+                        Role.DELIVERY_PERSON.name(), "LogIn Successfully!");
             }
         }
-        return "Invalid credentials";
+
+        return new AuthResponse(null, null, "Invalid credentials");
     }
 
 

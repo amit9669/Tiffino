@@ -3,6 +3,10 @@ package com.tiffino.service.impl;
 import com.tiffino.config.AuthenticationService;
 import com.tiffino.config.JwtService;
 import com.tiffino.entity.*;
+import com.tiffino.entity.response.CuisineWithMealsResponse;
+import com.tiffino.entity.response.DataOfCloudKitchenResponse;
+import com.tiffino.entity.response.OrderResponseForManager;
+import com.tiffino.entity.response.ReviewResponse;
 import com.tiffino.exception.CustomException;
 import com.tiffino.repository.*;
 import com.tiffino.service.DataToken;
@@ -11,19 +15,16 @@ import com.tiffino.service.OtpService;
 import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -99,7 +100,7 @@ public class ManagerService implements IManagerService {
             session.setAttribute("email", email);
             return "Check email for OTP verification!";
         } else {
-            return "This Email not exists!! First Create account!!";
+            return "This Email not exists!!";
         }
     }
 
@@ -120,6 +121,21 @@ public class ManagerService implements IManagerService {
         }
     }
 
+    @Override
+    public Object getAllCuisinesAndMeals() {
+        List<Cuisine> cuisines = cuisineRepository.findAll();
+
+        return cuisines.stream()
+                .map(cuisine -> new CuisineWithMealsResponse(
+                        cuisine.getName(),
+                        cuisine.getMeals()
+                                .stream()
+                                .map(Meal::getName)
+                                .collect(Collectors.toList())
+                ))
+                .collect(Collectors.toList());
+    }
+
     public void sendEmail(String to, String subject, String message) {
         try {
             SimpleMailMessage email = new SimpleMailMessage();
@@ -135,8 +151,19 @@ public class ManagerService implements IManagerService {
     @Override
     public Object getDataOfCloudKitchen() {
         Manager manager = (Manager) dataToken.getCurrentUserProfile();
-        System.out.println(manager);
-        return kitchenRepository.findById(manager.getCloudKitchen().getCloudKitchenId()).get();
+        CloudKitchen cloudKitchen = kitchenRepository.findByCloudKitchenIdAndIsDeletedFalse(manager.getCloudKitchen().getCloudKitchenId()).get();
+
+        List<ReviewResponse> reviewResponses = cloudKitchen.getReviews().stream()
+                .map(review -> new ReviewResponse(review.getComment(), review.getRating()))
+                .collect(Collectors.toList());
+
+        return DataOfCloudKitchenResponse.builder()
+                .cloudKitchenId(cloudKitchen.getCloudKitchenId())
+                .division(cloudKitchen.getDivision())
+                .city(cloudKitchen.getCity())
+                .managerId(manager.getManagerId())
+                .reviews(reviewResponses)
+                .build();
     }
 
     @Override
@@ -145,11 +172,14 @@ public class ManagerService implements IManagerService {
 
         CloudKitchen cloudKitchen = manager.getCloudKitchen();
 
-        List<CloudKitchenMeal> results = new ArrayList<>();
-
         for (Long mealId : mealIds) {
-            Meal meal = mealRepository.findById(mealId)
-                    .orElseThrow(() -> new RuntimeException("Meal not found: " + mealId));
+            Optional<Meal> mealOptional = mealRepository.findById(mealId);
+
+            if (!mealOptional.isPresent()){
+                return "Meal not found: " + mealId;
+            }
+
+            Meal meal = mealOptional.get();
 
             Optional<CloudKitchenMeal> existing = cloudKitchenMealRepository.findByCloudKitchenAndMeal(cloudKitchen, meal);
             CloudKitchenMeal cloudKitchenMeal = existing.orElse(new CloudKitchenMeal());
@@ -158,20 +188,42 @@ public class ManagerService implements IManagerService {
             cloudKitchenMeal.setMeal(meal);
             cloudKitchenMeal.setAvailable(true);
             cloudKitchenMeal.setUnavailable(false);
-            results.add(cloudKitchenMealRepository.save(cloudKitchenMeal));
+            cloudKitchenMealRepository.save(cloudKitchenMeal);
         }
-        return results;
+        return "Add Meals "+mealIds;
     }
 
     @Override
-    public void disableMealForKitchen(List<Long> mealIds) {
+    public Object getAllCloudKitchenMealIsAvailable() {
+        Manager manager = (Manager) dataToken.getCurrentUserProfile();
+        List<CloudKitchenMeal> aTrue = cloudKitchenMealRepository.findByCloudKitchenAndAvailableTrue(manager.getCloudKitchen());
+        List<Meal> meals = new ArrayList<>();
+        for (CloudKitchenMeal meal : aTrue) {
+            Meal meal1 = new Meal();
+            meal1.setMealId(meal.getMeal().getMealId());
+            meal1.setName(meal.getMeal().getName());
+            meal1.setPhotos(meal.getMeal().getPhotos());
+            meal1.setPrice(meal.getMeal().getPrice());
+            meal1.setDescription(meal.getMeal().getDescription());
+            meals.add(meal1);
+        }
+        return meals;
+    }
+
+    @Override
+    public Object disableMealForKitchen(List<Long> mealIds) {
         Manager manager = (Manager) dataToken.getCurrentUserProfile();
 
         CloudKitchen cloudKitchen = manager.getCloudKitchen();
 
         for (Long mealId : mealIds) {
-            Meal meal = mealRepository.findById(mealId)
-                    .orElseThrow(() -> new RuntimeException("Meal not found: " + mealId));
+            Optional<Meal> mealOptional = mealRepository.findById(mealId);
+
+            if (!mealOptional.isPresent()){
+                return "Meal not found: " + mealId;
+            }
+
+            Meal meal = mealOptional.get();
 
             CloudKitchenMeal cloudKitchenMeal = cloudKitchenMealRepository
                     .findByCloudKitchenAndMeal(cloudKitchen, meal)
@@ -181,26 +233,38 @@ public class ManagerService implements IManagerService {
             cloudKitchenMeal.setUnavailable(true);
             cloudKitchenMealRepository.save(cloudKitchenMeal);
         }
+        return "Disable Meal for Cloud-Kitchen";
     }
 
     @Override
     public Object assignOrderToDeliveryPerson(Long orderId, Long deliveryPersonId) {
+
+        Manager manager = (Manager) dataToken.getCurrentUserProfile();
+
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found"));
 
         if (!order.getOrderStatus().equals("PENDING") && !order.getOrderStatus().equals("CONFIRMED")) {
-            throw new RuntimeException("Order already assigned or processed");
+            return "Order already assigned or processed";
         }
 
         DeliveryPerson dp = deliveryPersonRepository.findById(deliveryPersonId)
                 .orElseThrow(() -> new RuntimeException("Delivery person not found"));
 
+        CloudKitchen managerCK = managerRepository.findById(manager.getManagerId())
+                .orElseThrow(() -> new RuntimeException("Manager not found"))
+                .getCloudKitchen();
+
+        if (!dp.getCloudKitchen().getCloudKitchenId().equals(managerCK.getCloudKitchenId())) {
+            return "You can only assign delivery persons of your CloudKitchen";
+        }
+
         if (!dp.getIsAvailable()) {
-            throw new RuntimeException("Delivery person not available");
+            return "Delivery person not available";
         }
 
         dp.setIsAvailable(false);
-        deliveryPersonRepository.save(dp);
+        DeliveryPerson savedDeliveryPerson = deliveryPersonRepository.save(dp);
 
         Delivery delivery = Delivery.builder()
                 .order(order)
@@ -214,6 +278,42 @@ public class ManagerService implements IManagerService {
 
         deliveryRepository.save(delivery);
 
+        this.sendEmail(savedDeliveryPerson.getEmail(),"Assign Order by Manager "+manager.getManagerId(),
+                "You have assigned order and Order Id is "+orderId);
+
         return "assign an Order To DeliveryPerson, Name is " + dp.getName();
+    }
+
+    @Override
+    public Object getAllOrders() {
+        Manager manager = (Manager) dataToken.getCurrentUserProfile();
+
+        List<Order> orders = orderRepository.findAll().stream()
+                .filter(order -> manager.getCloudKitchen().getCloudKitchenId()
+                        .equals(order.getCloudKitchen().getCloudKitchenId()))
+                .toList();
+
+        return orders.stream()
+                .map(order -> OrderResponseForManager.builder()
+                        .orderId(order.getOrderId())
+                        .orderStatus(order.getOrderStatus())
+                        .totalCost(order.getTotalCost())
+                        .address(order.getDeliveryDetails().getAddress())
+                        .orderDate(String.valueOf(order.getCreatedAt().toLocalDate()))
+                        .orderTime(String.valueOf(order.getCreatedAt().toLocalTime()))
+                        .userName(order.getUser().getUserName())
+                        .build()
+                )
+                .toList();
+    }
+
+    @Override
+    public Object listOfDeliveryPersonIsAvailable() {
+        Manager manager = (Manager) dataToken.getCurrentUserProfile();
+        List<DeliveryPerson> deliveryPeople = deliveryPersonRepository.findByIsAvailableTrue();
+
+        return deliveryPeople.stream()
+                .filter(dp -> dp.getCloudKitchen().getCloudKitchenId()
+                        .equals(manager.getCloudKitchen().getCloudKitchenId())).toList();
     }
 }

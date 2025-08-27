@@ -41,6 +41,7 @@ public class SecurityConfiguration {
                         .requestMatchers("/superAdmin/**").hasRole("SUPER_ADMIN")
                         .requestMatchers("/manager/**").hasRole("MANAGER")
                         .requestMatchers("/user/**").hasRole("USER")
+                        .requestMatchers("/delivery-person/**").hasRole("DELIVERY_PERSON")
                 )
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
