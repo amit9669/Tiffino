@@ -52,7 +52,6 @@ public class SuperAdminController {
         return new ResponseEntity<>(iSuperAdminService.deleteCloudKitchen(kitchenId), HttpStatus.OK);
     }
 
-    //    catch with deleteManager
     @PostMapping("/deleteManager/{managerId}")
     public ResponseEntity<?> deleteManager(@PathVariable String managerId) {
         return new ResponseEntity<>(iSuperAdminService.deleteManager(managerId), HttpStatus.OK);
