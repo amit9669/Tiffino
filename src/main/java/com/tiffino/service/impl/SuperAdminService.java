@@ -5,14 +5,13 @@ import com.tiffino.config.JwtService;
 import com.tiffino.entity.*;
 import com.tiffino.entity.request.*;
 import com.tiffino.entity.response.*;
-import com.tiffino.exception.CustomException;
 import com.tiffino.repository.*;
+import com.tiffino.service.EmailService;
 import com.tiffino.service.ISuperAdminService;
 import com.tiffino.service.ImageUploadService;
 import com.tiffino.service.OtpService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -86,6 +85,9 @@ public class SuperAdminService implements ISuperAdminService {
     @Value("${twilio.phone.number}")
     private String FROM_NUMBER;
 */
+    @Autowired
+    private EmailService emailService;
+
     private final Map<String, Integer> cityPrefixCounter = new HashMap<>();
 
     private final Map<String, Integer> cityDivisionCounter = new HashMap<>();
@@ -125,6 +127,9 @@ public class SuperAdminService implements ISuperAdminService {
             Manager manager = new Manager();
             manager.setManagerId(this.createManagerId(managerRequest.getCity()));
             manager.setManagerName(managerRequest.getManagerName());
+            if (!emailService.isDeliverableEmail(managerRequest.getManagerEmail())) {
+                return "Invalid or undeliverable email: " + managerRequest.getManagerEmail();
+            }
             manager.setManagerEmail(managerRequest.getManagerEmail());
             manager.setCity(managerRequest.getCity());
             manager.setCurrentAddress(managerRequest.getCurrentAddress());
@@ -137,7 +142,7 @@ public class SuperAdminService implements ISuperAdminService {
             manager.setCloudKitchen(cloudKitchen);
             Manager savedManager = managerRepository.save(manager);
 //                this.sendSMS(manager.getPhoneNo());
-            this.sendEmail(manager.getManagerEmail(), "Tiffino Manager Credential",
+            emailService.sendEmail(manager.getManagerEmail(), "Tiffino Manager Credential",
                     "Now You are the manager of " + cloudKitchen.getCloudKitchenId() + " this Cloud Kitchen and your Id is : "
                             + savedManager.getManagerId() + " and your One Time Password is : " + otpService.generateOTP(savedManager.getManagerEmail()));
             log.info("this is manager save api : {}", otpService.getOtp(savedManager.getManagerEmail()));
@@ -153,27 +158,25 @@ public class SuperAdminService implements ISuperAdminService {
     }
 
     @Override
-    public Object getAllManagersWithCloudKitchen() {
-        List<Manager> managers = managerRepository.findByIsDeletedFalse();
+    public List<ManagerWithCKResponse> getAllManagersWithCloudKitchen() {
+        List<CloudKitchen> cloudKitchens = kitchenRepository.findAllByIsDeletedFalse();
         List<ManagerWithCKResponse> managerWithCKResponses = new ArrayList<>();
 
-        for (Manager manager : managers) {
-            CloudKitchen cloudKitchen = manager.getCloudKitchen(); // may be null
+        for (CloudKitchen cloudKitchen : cloudKitchens) {
+            Manager manager = cloudKitchen.getManager(); // may be null
 
             ManagerWithCKResponse response = new ManagerWithCKResponse();
-            response.setManagerId(manager.getManagerId());
 
-            if (cloudKitchen != null) {
-                response.setCloudKitchenId(cloudKitchen.getCloudKitchenId());
-                response.setCloudKitchenDivision(cloudKitchen.getDivision());
-                response.setCloudKitchenCity(cloudKitchen.getCity());
-                response.setCloudKitchenState(cloudKitchen.getState());
+            if (manager != null) {
+                response.setManagerId(manager.getManagerId());
             } else {
-                response.setCloudKitchenId(null);
-                response.setCloudKitchenDivision("Not Assigned");
-                response.setCloudKitchenCity("Not Assigned");
-                response.setCloudKitchenState("Not Assigned");
+                response.setManagerId("Not Assigned");
             }
+
+            response.setCloudKitchenId(cloudKitchen.getCloudKitchenId());
+            response.setCloudKitchenDivision(cloudKitchen.getDivision());
+            response.setCloudKitchenCity(cloudKitchen.getCity());
+            response.setCloudKitchenState(cloudKitchen.getState());
 
             managerWithCKResponses.add(response);
         }
@@ -212,18 +215,6 @@ public class SuperAdminService implements ISuperAdminService {
         String formattedCount = String.format("%03d", count);
 
         return cityPrefix + divisionPrefix + formattedCount;  // PUNKAT001 = Pune + Katraj + 001
-    }
-
-    public void sendEmail(String to, String subject, String message) {
-        try {
-            SimpleMailMessage email = new SimpleMailMessage();
-            email.setTo(to);
-            email.setSubject(subject);
-            email.setText(message);
-            javaMailSender.send(email);
-        } catch (CustomException e) {
-            log.error("Exception while send Email ", e);
-        }
     }
 
 
@@ -336,6 +327,12 @@ public class SuperAdminService implements ISuperAdminService {
     }
 
     @Override
+    public Object deleteSubscriptionPlan(Long subId) {
+        subscriptionRepository.deleteById(subId);
+        return "Subscription Plan has Deleted!!";
+    }
+
+    @Override
     public Object saveOrUpdateDeliveryPerson(DeliveryPersonRequest personRequest) {
         Optional<CloudKitchen> cloudKitchen = kitchenRepository.findByCloudKitchenIdAndIsDeletedFalse(personRequest.getCloudKitchenId());
         if (!cloudKitchen.isPresent()) {
@@ -343,12 +340,17 @@ public class SuperAdminService implements ISuperAdminService {
         }
         if (deliveryPersonRepository.existsById(personRequest.getDeliveryPersonId())) {
             DeliveryPerson deliveryPerson = deliveryPersonRepository.findById(personRequest.getDeliveryPersonId()).get();
+
+            if (!emailService.isDeliverableEmail(personRequest.getEmail())) {
+                return "Invalid or undeliverable email: " + personRequest.getEmail();
+            }
+
             deliveryPerson.setEmail(personRequest.getEmail());
             deliveryPerson.setPhoneNo(personRequest.getPhoneNo());
             deliveryPerson.setName(personRequest.getName());
             deliveryPerson.setCloudKitchen(cloudKitchen.get());
             DeliveryPerson deliveryPersonSaved = deliveryPersonRepository.save(deliveryPerson);
-            this.sendEmail(deliveryPerson.getEmail(), "Tiffino Delivery Partner Credential",
+            emailService.sendEmail(deliveryPerson.getEmail(), "Tiffino Delivery Partner Credential",
                     "Now You are the Delivery Partner of this " + deliveryPerson.getCloudKitchen().getCloudKitchenId()
                             + " cloudKitchen and your One Time Password is : " + otpService.generateOTP(deliveryPerson.getEmail()));
             deliveryPersonSaved.setPassword(passwordEncoder.encode(otpService.getOtp(deliveryPerson.getEmail()) + ""));
@@ -357,12 +359,17 @@ public class SuperAdminService implements ISuperAdminService {
             return "Updated Successfully!!!";
         } else {
             DeliveryPerson deliveryPerson = new DeliveryPerson();
+
+            if (!emailService.isDeliverableEmail(personRequest.getEmail())) {
+                return "Invalid or undeliverable email: " + personRequest.getEmail();
+            }
+
             deliveryPerson.setEmail(personRequest.getEmail());
             deliveryPerson.setPhoneNo(personRequest.getPhoneNo());
             deliveryPerson.setName(personRequest.getName());
             deliveryPerson.setCloudKitchen(cloudKitchen.get());
             DeliveryPerson deliveryPersonSaved = deliveryPersonRepository.save(deliveryPerson);
-            this.sendEmail(deliveryPerson.getEmail(), "Tiffino Delivery Partner Credential",
+            emailService.sendEmail(deliveryPerson.getEmail(), "Tiffino Delivery Partner Credential",
                     "Now You are the Delivery Partner of this " + deliveryPerson.getCloudKitchen().getCloudKitchenId()
                             + " cloudKitchen and your One Time Password is : " + otpService.generateOTP(deliveryPerson.getEmail()));
             deliveryPersonSaved.setPassword(passwordEncoder.encode(otpService.getOtp(deliveryPerson.getEmail()) + ""));

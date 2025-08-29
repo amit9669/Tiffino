@@ -29,8 +29,9 @@ public class UserController {
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody UserRegistrationRequest userRegistrationRequest) {
 
-        iUserService.registerUser(userRegistrationRequest.getName(), userRegistrationRequest.getEmail(), userRegistrationRequest.getPassword(), userRegistrationRequest.getPhoneNo());
-        return ResponseEntity.ok("User registered successfully");
+        return new ResponseEntity<>(iUserService.registerUser(userRegistrationRequest.getName(),
+                userRegistrationRequest.getEmail(),
+                userRegistrationRequest.getPassword(), userRegistrationRequest.getPhoneNo()), HttpStatus.OK);
     }
 
     @PostMapping("/forgot-password")
@@ -41,7 +42,7 @@ public class UserController {
 
         int otp = otpService.generateOTP(email);
 
-        emailService.sendOtpEmail(email, otp); // actual email send
+        emailService.sendOtpEmail(email, otp);
 
         return ResponseEntity.ok("OTP has been sent to your email");
     }

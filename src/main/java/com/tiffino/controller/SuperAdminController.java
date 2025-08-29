@@ -73,6 +73,11 @@ public class SuperAdminController {
         return new ResponseEntity<>(iSuperAdminService.getAllSubscription(), HttpStatus.OK);
     }
 
+    @DeleteMapping("/deleteSubscriptionPlan/{subId}")
+    public ResponseEntity<?> deleteSubscriptionPlan(@PathVariable Long subId) {
+        return new ResponseEntity<>(iSuperAdminService.deleteSubscriptionPlan(subId), HttpStatus.OK);
+    }
+
     @PostMapping("/saveOrUpdateDeliveryPerson")
     public ResponseEntity<?> saveOrUpdateDeliveryPerson(@RequestBody DeliveryPersonRequest personRequest) {
         return new ResponseEntity<>(iSuperAdminService.saveOrUpdateDeliveryPerson(personRequest), HttpStatus.OK);

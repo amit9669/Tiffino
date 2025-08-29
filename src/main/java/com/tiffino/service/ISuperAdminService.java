@@ -26,6 +26,8 @@ public interface ISuperAdminService {
 
     Object getAllSubscription();
 
+    Object deleteSubscriptionPlan(Long subId);
+
     Object saveOrUpdateDeliveryPerson(DeliveryPersonRequest personRequest);
 
     Object saveOrUpdateCuisine(CuisineRequest cuisineRequest) throws IOException;

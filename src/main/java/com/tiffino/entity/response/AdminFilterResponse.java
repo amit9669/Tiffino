@@ -18,6 +18,7 @@ public class AdminFilterResponse {
     private Boolean cloudKitchenIsDeleted;
     private LocalDateTime cloudKitchenCreatedAt;
     private String managerId;
+    private String managerName;
     private Boolean managerIsActive;
     private Boolean managerIsDeleted;
     private LocalDateTime managerCreatedAt;

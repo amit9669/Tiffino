@@ -15,7 +15,7 @@ public interface ManagerRepository extends JpaRepository<Manager, String> {
 
     @Query("SELECT new com.tiffino.entity.response.AdminFilterResponse(" +
             " ck.cloudKitchenId, ck.city, ck.division, ck.isActive, ck.isDeleted, ck.createdAt," +
-            " man.managerId, man.isActive, man.isDeleted, man.createdAt) " +
+            " man.managerId, man.managerName, man.isActive, man.isDeleted, man.createdAt) " +
             "FROM CloudKitchen ck " +
             "LEFT JOIN Manager man ON man.cloudKitchen.cloudKitchenId = ck.cloudKitchenId " +
             "WHERE man.isDeleted = false AND ck.isDeleted = false " +
@@ -34,6 +34,4 @@ public interface ManagerRepository extends JpaRepository<Manager, String> {
     Manager findByCloudKitchen_CloudKitchenId(String cloudKitchenId);
 
     boolean existsByManagerIdAndIsDeletedFalse(String managerId);
-
-    List<Manager> findByIsDeletedFalse();
 }

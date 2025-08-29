@@ -10,6 +10,7 @@ import com.tiffino.service.DataToken;
 import com.tiffino.entity.User;
 import com.tiffino.entity.request.UserUpdationRequest;
 import com.tiffino.repository.UserRepository;
+import com.tiffino.service.EmailService;
 import com.tiffino.service.IUserService;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
@@ -64,11 +65,18 @@ public class UserService implements IUserService {
     @Autowired
     private UserOfferRepository userOfferRepository;
 
+    @Autowired
+    private EmailService emailService;
 
-    public void registerUser(String name, String email, String password, String phoneNo) {
+
+    public Object registerUser(String name, String email, String password, String phoneNo) {
 
         if (userRepository.findByEmail(email).isPresent()) {
-            throw new IllegalArgumentException("User already exits");
+            return "User already exits";
+        }
+
+        if (!emailService.isDeliverableEmail(email)) {
+            return "Invalid or undeliverable email: " + email;
         }
 
         User user = User.builder()
@@ -79,6 +87,7 @@ public class UserService implements IUserService {
                 .build();
 
         userRepository.save(user);
+        return "User Save Successfully!!";
     }
 
     @Override
@@ -344,7 +353,7 @@ public class UserService implements IUserService {
 
         Optional<Delivery> deliveryOptional = deliveryRepository.findByOrder_OrderId(order.getOrderId());
 
-        if(!deliveryOptional.isPresent()){
+        if (!deliveryOptional.isPresent()) {
             return "Delivery not found for this order";
         }
 

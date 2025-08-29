@@ -7,7 +7,7 @@ import com.tiffino.entity.request.UserUpdationRequest;
 
 public interface IUserService {
 
-    public void registerUser(String name, String email, String password, String phoneNo);
+    public Object registerUser(String name, String email, String password, String phoneNo);
 
     Object getAllAvailableMealsGroupedByCuisine();
 
