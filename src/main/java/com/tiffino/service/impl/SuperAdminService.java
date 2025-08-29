@@ -124,6 +124,9 @@ public class SuperAdminService implements ISuperAdminService {
     public Object saveManager(ManagerRequest managerRequest) {
         CloudKitchen cloudKitchen = kitchenRepository.findById(managerRequest.getCloudKitchenId()).get();
         if (kitchenRepository.existsById(cloudKitchen.getCloudKitchenId())) {
+            if(cloudKitchen.getManager()!=null){
+                return "cloud kitchen has manager";
+            }
             Manager manager = new Manager();
             manager.setManagerId(this.createManagerId(managerRequest.getCity()));
             manager.setManagerName(managerRequest.getManagerName());
