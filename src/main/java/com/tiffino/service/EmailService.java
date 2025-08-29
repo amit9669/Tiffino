@@ -15,8 +15,6 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDate;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
 @Service
@@ -48,27 +46,8 @@ public class EmailService {
         }
     }
 
-
-    private final AtomicInteger apiUsageCounter = new AtomicInteger(0);
-    private LocalDate lastResetDate = LocalDate.now();
-
     public boolean isDeliverableEmail(String email) {
         try {
-
-            LocalDate now = LocalDate.now();
-            if (!now.getMonth().equals(lastResetDate.getMonth())) {
-                apiUsageCounter.set(0);
-                lastResetDate = now;
-            }
-
-            int currentUsage = apiUsageCounter.incrementAndGet();
-
-            int API_LIMIT = 1000;
-            if (currentUsage > API_LIMIT) {
-                log.warn("MailboxLayer API monthly limit reached!");
-                throw new RuntimeException("MailboxLayer API limit expired for this month");
-            }
-
             String apiKey = MAIL_API_KEY;
 
             String url = String.format(
@@ -87,13 +66,6 @@ public class EmailService {
             ObjectMapper mapper = new ObjectMapper();
             JsonNode json = mapper.readTree(res.body());
 
-            if (json.has("success") && !json.get("success").asBoolean()) {
-                String errorType = json.path("error").path("type").asText();
-                if ("usage_limit_reached".equals(errorType)) {
-                    throw new RuntimeException("MailboxLayer API limit expired (from provider)");
-                }
-            }
-
             boolean formatValid = json.path("format_valid").asBoolean();
             boolean mxFound = json.path("mx_found").asBoolean();
             boolean smtpCheck = json.path("smtp_check").asBoolean();
@@ -107,6 +79,7 @@ public class EmailService {
             return false;
         }
     }
+
 
     public void sendOtpEmail(String to, int otp) {
         SimpleMailMessage message = new SimpleMailMessage();
