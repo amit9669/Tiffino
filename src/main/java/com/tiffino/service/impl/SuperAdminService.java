@@ -124,7 +124,7 @@ public class SuperAdminService implements ISuperAdminService {
     public Object saveManager(ManagerRequest managerRequest) {
         CloudKitchen cloudKitchen = kitchenRepository.findById(managerRequest.getCloudKitchenId()).get();
         if (kitchenRepository.existsById(cloudKitchen.getCloudKitchenId())) {
-            if(cloudKitchen.getManager()!=null){
+            if (cloudKitchen.getManager() != null) {
                 return "cloud kitchen has manager";
             }
             Manager manager = new Manager();
@@ -166,22 +166,18 @@ public class SuperAdminService implements ISuperAdminService {
         List<ManagerWithCKResponse> managerWithCKResponses = new ArrayList<>();
 
         for (CloudKitchen cloudKitchen : cloudKitchens) {
-            Manager manager = cloudKitchen.getManager(); // may be null
+            Manager manager = cloudKitchen.getManager();
 
             ManagerWithCKResponse response = new ManagerWithCKResponse();
 
-            if (manager != null) {
-                response.setManagerId(manager.getManagerId());
-            } else {
+            if (manager == null) {
                 response.setManagerId("Not Assigned");
+                response.setCloudKitchenId(cloudKitchen.getCloudKitchenId());
+                response.setCloudKitchenDivision(cloudKitchen.getDivision());
+                response.setCloudKitchenCity(cloudKitchen.getCity());
+                response.setCloudKitchenState(cloudKitchen.getState());
+                managerWithCKResponses.add(response);
             }
-
-            response.setCloudKitchenId(cloudKitchen.getCloudKitchenId());
-            response.setCloudKitchenDivision(cloudKitchen.getDivision());
-            response.setCloudKitchenCity(cloudKitchen.getCity());
-            response.setCloudKitchenState(cloudKitchen.getState());
-
-            managerWithCKResponses.add(response);
         }
 
         return managerWithCKResponses;
