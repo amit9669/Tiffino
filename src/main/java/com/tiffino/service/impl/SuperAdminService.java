@@ -12,6 +12,8 @@ import com.tiffino.service.ImageUploadService;
 import com.tiffino.service.OtpService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -94,7 +96,6 @@ public class SuperAdminService implements ISuperAdminService {
 
     @Override
     public Object updateAdmin(SuperAdminRequest superAdminRequest) {
-        System.out.println(superAdminRequest.getEmail());
         if (superAdminRepository.existsByEmail(superAdminRequest.getEmail())) {
             SuperAdmin superAdmin = superAdminRepository.findByEmail(superAdminRequest.getEmail()).get();
             superAdmin.setAdminName(superAdminRequest.getAdminName());
@@ -132,6 +133,10 @@ public class SuperAdminService implements ISuperAdminService {
             manager.setManagerName(managerRequest.getManagerName());
             if (!emailService.isDeliverableEmail(managerRequest.getManagerEmail())) {
                 return "Invalid or undeliverable email: " + managerRequest.getManagerEmail();
+            }
+
+            if(managerRepository.existsByManagerEmail(managerRequest.getManagerEmail())){
+                return "Email Already Exists!!";
             }
             manager.setManagerEmail(managerRequest.getManagerEmail());
             manager.setCity(managerRequest.getCity());
@@ -185,36 +190,57 @@ public class SuperAdminService implements ISuperAdminService {
 
 
     public String createManagerId(String city) {
-        if (city == null) {
-            return "City Not Added!!";
+        if (city == null || city.isBlank()) {
+            throw new IllegalArgumentException("City must not be null or blank");
         }
-        String cityPrefix = city.substring(0, 3).toUpperCase();
-        int currentCount = cityPrefixCounter.getOrDefault(cityPrefix, 0) + 1;
 
-        cityPrefixCounter.put(cityPrefix, currentCount);
-        String formattedNumber = String.format("%03d", currentCount);
+        String cityPrefix = city.trim().substring(0, Math.min(3, city.length())).toUpperCase();
 
-        return "MAN" + cityPrefix + formattedNumber; // MANPUN001
+        Pageable limitOne = PageRequest.of(0, 1);
+        List<String> lastIds = managerRepository.findLastManagerIdForPrefix("MAN" + cityPrefix, limitOne);
+
+        int nextNumber = 1;
+        if (!lastIds.isEmpty()) {
+            String lastId = lastIds.get(0);
+            String numberPart = lastId.substring(lastId.length() - 3);
+            nextNumber = Integer.parseInt(numberPart) + 1;
+        }
+
+        String formattedNumber = String.format("%03d", nextNumber);
+        return "MAN" + cityPrefix + formattedNumber; // e.g. MANPUN008
     }
+
 
 
     public String createCloudKitchenId(String city, String division) {
         if (city == null || division == null || city.isBlank() || division.isBlank()) {
-            return "City or Division not provided!";
+            throw new IllegalArgumentException("City and Division must not be blank");
         }
+
         String cityPrefix = city.trim().toUpperCase();
-        cityPrefix = cityPrefix.length() >= 3 ? cityPrefix.substring(0, 3) : String.format("%-3s", cityPrefix).replace(' ', 'X');
+        cityPrefix = cityPrefix.length() >= 3 ? cityPrefix.substring(0, 3)
+                : String.format("%-3s", cityPrefix).replace(' ', 'X');
 
         String divisionPrefix = division.trim().toUpperCase();
-        divisionPrefix = divisionPrefix.length() >= 3 ? divisionPrefix.substring(0, 3) : String.format("%-3s", divisionPrefix).replace(' ', 'X');
-        String cityDivision = cityPrefix + divisionPrefix;
+        divisionPrefix = divisionPrefix.length() >= 3 ? divisionPrefix.substring(0, 3)
+                : String.format("%-3s", divisionPrefix).replace(' ', 'X');
 
-        int count = cityDivisionCounter.getOrDefault(cityDivision, 0) + 1;
-        cityDivisionCounter.put(cityDivision, count);
-        String formattedCount = String.format("%03d", count);
+        String cityDivisionPrefix = cityPrefix + divisionPrefix;
 
-        return cityPrefix + divisionPrefix + formattedCount;  // PUNKAT001 = Pune + Katraj + 001
+        Pageable limitOne = PageRequest.of(0, 1);
+        List<String> lastIds = kitchenRepository.findLastCloudKitchenIdForPrefix(cityDivisionPrefix, limitOne);
+
+        int nextNumber = 1;
+        if (!lastIds.isEmpty()) {
+            String lastId = lastIds.get(0);
+            String numberPart = lastId.substring(lastId.length() - 3);
+            nextNumber = Integer.parseInt(numberPart) + 1;
+        }
+
+        String formattedNumber = String.format("%03d", nextNumber);
+        return cityDivisionPrefix + formattedNumber; // e.g. PUNKAT008
     }
+
 
 
     /// /    SMS will get this message :- Sent from your Twilio trial account -Hello! Please check your Email Account!

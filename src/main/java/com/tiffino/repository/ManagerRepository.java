@@ -2,6 +2,7 @@ package com.tiffino.repository;
 
 import com.tiffino.entity.Manager;
 import com.tiffino.entity.response.AdminFilterResponse;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -34,4 +35,9 @@ public interface ManagerRepository extends JpaRepository<Manager, String> {
     Manager findByCloudKitchen_CloudKitchenId(String cloudKitchenId);
 
     boolean existsByManagerIdAndIsDeletedFalse(String managerId);
+
+    @Query("SELECT m.managerId FROM Manager m " +
+            "WHERE m.managerId LIKE CONCAT(:prefix, '%') " +
+            "ORDER BY m.managerId DESC")
+    List<String> findLastManagerIdForPrefix(@Param("prefix") String prefix, Pageable pageable);
 }

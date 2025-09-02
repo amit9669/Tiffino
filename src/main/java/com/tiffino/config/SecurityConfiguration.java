@@ -32,12 +32,17 @@ public class SecurityConfiguration {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .cors(cors -> cors.configurationSource(corsConfigurationSource())) // ✅ enable CORS
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/user/register",
+                                "/user/forgot-password",
+                                "/user/reset-password",
+                                "/manager/updatePassword",
+                                "/manager/forgotPasswordOfManager",
+                                "/manager/changePassword",
                                 "/auth/**",
                                 "/meals/**"
                         ).permitAll()
