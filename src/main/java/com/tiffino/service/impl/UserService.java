@@ -75,15 +75,16 @@ public class UserService implements IUserService {
             return "User already exits";
         }
 
-        if (!emailService.isDeliverableEmail(email)) {
-            return "Invalid or undeliverable email: " + email;
-        }
+//        if (!emailService.isDeliverableEmail(email)) {
+//            return "Invalid or undeliverable email: " + email;
+//        }
 
         User user = User.builder()
                 .userName(name)
                 .email(email)
                 .password(passwordEncoder.encode(password))
                 .phoneNo(phoneNo)
+                .role(Role.USER)
                 .build();
 
         userRepository.save(user);
