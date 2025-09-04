@@ -29,9 +29,7 @@ public class UserController {
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody UserRegistrationRequest userRegistrationRequest) {
 
-        return new ResponseEntity<>(iUserService.registerUser(userRegistrationRequest.getName(),
-                userRegistrationRequest.getEmail(),
-                userRegistrationRequest.getPassword(), userRegistrationRequest.getPhoneNo()), HttpStatus.OK);
+        return new ResponseEntity<>(iUserService.registerUser(userRegistrationRequest), HttpStatus.OK);
     }
 
     @PostMapping("/forgot-password")

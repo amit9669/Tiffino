@@ -3,6 +3,7 @@ package com.tiffino.service.impl;
 import com.tiffino.entity.*;
 import com.tiffino.entity.request.CreateOrderRequest;
 import com.tiffino.entity.request.ReviewRequest;
+import com.tiffino.entity.request.UserRegistrationRequest;
 import com.tiffino.entity.response.*;
 import com.tiffino.exception.CustomException;
 import com.tiffino.repository.*;
@@ -69,21 +70,21 @@ public class UserService implements IUserService {
     private EmailService emailService;
 
 
-    public Object registerUser(String name, String email, String password, String phoneNo) {
+    public Object registerUser(UserRegistrationRequest request) {
 
-        if (userRepository.findByEmail(email).isPresent()) {
+        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
             return "User already exits";
         }
 
-//        if (!emailService.isDeliverableEmail(email)) {
-//            return "Invalid or undeliverable email: " + email;
-//        }
+        if (!emailService.isDeliverableEmail(request.getEmail())) {
+            return "Invalid or undeliverable email: " + request.getEmail();
+        }
 
         User user = User.builder()
-                .userName(name)
-                .email(email)
-                .password(passwordEncoder.encode(password))
-                .phoneNo(phoneNo)
+                .userName(request.getName())
+                .email(request.getEmail())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .phoneNo(request.getPhoneNo())
                 .role(Role.USER)
                 .build();
 

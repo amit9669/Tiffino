@@ -389,6 +389,10 @@ public class SuperAdminService implements ISuperAdminService {
                 return "Invalid or undeliverable email: " + personRequest.getEmail();
             }
 
+            if(deliveryPersonRepository.existsByEmail(personRequest.getEmail())){
+                return "Delivery Partner is already Exists!!!";
+            }
+
             deliveryPerson.setEmail(personRequest.getEmail());
             deliveryPerson.setPhoneNo(personRequest.getPhoneNo());
             deliveryPerson.setName(personRequest.getName());

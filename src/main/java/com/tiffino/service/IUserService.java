@@ -2,12 +2,13 @@ package com.tiffino.service;
 
 import com.tiffino.entity.request.CreateOrderRequest;
 import com.tiffino.entity.request.ReviewRequest;
+import com.tiffino.entity.request.UserRegistrationRequest;
 import com.tiffino.entity.request.UserUpdationRequest;
 
 
 public interface IUserService {
 
-    public Object registerUser(String name, String email, String password, String phoneNo);
+    public Object registerUser(UserRegistrationRequest request);
 
     Object getAllAvailableMealsGroupedByCuisine();
 

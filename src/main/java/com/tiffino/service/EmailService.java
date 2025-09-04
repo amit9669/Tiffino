@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.net.URLEncoder;
@@ -26,6 +27,7 @@ public class EmailService {
     @Value("${mail.api.key}")
     private String MAIL_API_KEY;
 
+    @Async
     public void sendEmail(String to, String subject, String message) {
         try {
             if (!isDeliverableEmail(to)) {
@@ -80,7 +82,7 @@ public class EmailService {
         }
     }
 
-
+    @Async
     public void sendOtpEmail(String to, int otp) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(to);
