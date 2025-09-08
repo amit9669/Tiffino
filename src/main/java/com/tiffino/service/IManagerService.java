@@ -16,11 +16,11 @@ public interface IManagerService {
 
     Object getDataOfCloudKitchen();
 
-    Object enableMealForKitchen(List<Long> mealIds);
+    Object enableMealForKitchen(Long mealId);
 
     Object getAllCloudKitchenMealIsAvailable();
 
-    Object disableMealForKitchen(List<Long> mealIds);
+    Object disableMealForKitchen(Long mealId);
 
     Object assignOrderToDeliveryPerson(Long orderId, Long deliveryPersonId);
 

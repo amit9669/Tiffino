@@ -167,30 +167,28 @@ public class ManagerService implements IManagerService {
     }
 
     @Override
-    public Object enableMealForKitchen(List<Long> mealIds) {
+    public Object enableMealForKitchen(Long mealId) {
         Manager manager = (Manager) dataToken.getCurrentUserProfile();
 
         CloudKitchen cloudKitchen = manager.getCloudKitchen();
 
-        for (Long mealId : mealIds) {
-            Optional<Meal> mealOptional = mealRepository.findById(mealId);
+        Optional<Meal> mealOptional = mealRepository.findById(mealId);
 
-            if (!mealOptional.isPresent()){
-                return "Meal not found: " + mealId;
-            }
-
-            Meal meal = mealOptional.get();
-
-            Optional<CloudKitchenMeal> existing = cloudKitchenMealRepository.findByCloudKitchenAndMeal(cloudKitchen, meal);
-            CloudKitchenMeal cloudKitchenMeal = existing.orElse(new CloudKitchenMeal());
-
-            cloudKitchenMeal.setCloudKitchen(cloudKitchen);
-            cloudKitchenMeal.setMeal(meal);
-            cloudKitchenMeal.setAvailable(true);
-            cloudKitchenMeal.setUnavailable(false);
-            cloudKitchenMealRepository.save(cloudKitchenMeal);
+        if (!mealOptional.isPresent()) {
+            return "Meal not found: " + mealId;
         }
-        return "Add Meals "+mealIds;
+
+        Meal meal = mealOptional.get();
+
+        Optional<CloudKitchenMeal> existing = cloudKitchenMealRepository.findByCloudKitchenAndMeal(cloudKitchen, meal);
+        CloudKitchenMeal cloudKitchenMeal = existing.orElse(new CloudKitchenMeal());
+
+        cloudKitchenMeal.setCloudKitchen(cloudKitchen);
+        cloudKitchenMeal.setMeal(meal);
+        cloudKitchenMeal.setAvailable(true);
+        cloudKitchenMeal.setUnavailable(false);
+        cloudKitchenMealRepository.save(cloudKitchenMeal);
+        return "Add Meals " + mealId;
     }
 
     @Override
@@ -211,29 +209,27 @@ public class ManagerService implements IManagerService {
     }
 
     @Override
-    public Object disableMealForKitchen(List<Long> mealIds) {
+    public Object disableMealForKitchen(Long mealId) {
         Manager manager = (Manager) dataToken.getCurrentUserProfile();
 
         CloudKitchen cloudKitchen = manager.getCloudKitchen();
 
-        for (Long mealId : mealIds) {
-            Optional<Meal> mealOptional = mealRepository.findById(mealId);
+        Optional<Meal> mealOptional = mealRepository.findById(mealId);
 
-            if (!mealOptional.isPresent()){
-                return "Meal not found: " + mealId;
-            }
-
-            Meal meal = mealOptional.get();
-
-            CloudKitchenMeal cloudKitchenMeal = cloudKitchenMealRepository
-                    .findByCloudKitchenAndMeal(cloudKitchen, meal)
-                    .orElseThrow(() -> new RuntimeException("Meal not assigned to this kitchen: " + mealId));
-
-            cloudKitchenMeal.setAvailable(false);
-            cloudKitchenMeal.setUnavailable(true);
-            cloudKitchenMealRepository.save(cloudKitchenMeal);
+        if (!mealOptional.isPresent()) {
+            return "Meal not found: " + mealId;
         }
-        return "Disable Meal for Cloud-Kitchen";
+
+        Meal meal = mealOptional.get();
+
+        CloudKitchenMeal cloudKitchenMeal = cloudKitchenMealRepository
+                .findByCloudKitchenAndMeal(cloudKitchen, meal)
+                .orElseThrow(() -> new RuntimeException("Meal not assigned to this kitchen: " + mealId));
+
+        cloudKitchenMeal.setAvailable(false);
+        cloudKitchenMeal.setUnavailable(true);
+        cloudKitchenMealRepository.save(cloudKitchenMeal);
+        return "Disable Meal for Cloud-Kitchen"+mealId;
     }
 
     @Override
@@ -278,8 +274,8 @@ public class ManagerService implements IManagerService {
 
         deliveryRepository.save(delivery);
 
-        this.sendEmail(savedDeliveryPerson.getEmail(),"Assign Order by Manager "+manager.getManagerId(),
-                "You have assigned order and Order Id is "+orderId);
+        this.sendEmail(savedDeliveryPerson.getEmail(), "Assign Order by Manager " + manager.getManagerId(),
+                "You have assigned order and Order Id is " + orderId);
 
         return "assign an Order To DeliveryPerson, Name is " + dp.getName();
     }

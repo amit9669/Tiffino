@@ -45,9 +45,9 @@ public class ManagerController {
         return new ResponseEntity<>(iManagerService.getDataOfCloudKitchen(), HttpStatus.OK);
     }
 
-    @PostMapping("/enableMealForKitchen")
-    public ResponseEntity<?> enableMealForKitchen(@RequestBody List<Long> mealsIds) {
-        return new ResponseEntity<>(iManagerService.enableMealForKitchen(mealsIds), HttpStatus.OK);
+    @PostMapping("/enableMealForKitchen/{mealId}")
+    public ResponseEntity<?> enableMealForKitchen(@PathVariable Long mealId) {
+        return new ResponseEntity<>(iManagerService.enableMealForKitchen(mealId), HttpStatus.OK);
     }
 
     @GetMapping("/getAllCloudKitchenMealIsAvailable")
@@ -55,9 +55,9 @@ public class ManagerController {
         return new ResponseEntity<>(iManagerService.getAllCloudKitchenMealIsAvailable(), HttpStatus.OK);
     }
 
-    @PostMapping("/disableMealForKitchen")
-    public ResponseEntity<?> disableMealForKitchen(@RequestBody List<Long> mealsIds) {
-        return new ResponseEntity<>(iManagerService.disableMealForKitchen(mealsIds), HttpStatus.OK);
+    @PostMapping("/disableMealForKitchen/{mealId}")
+    public ResponseEntity<?> disableMealForKitchen(@PathVariable Long mealId) {
+        return new ResponseEntity<>(iManagerService.disableMealForKitchen(mealId), HttpStatus.OK);
     }
 
     @PostMapping("/assignOrderToDeliveryPerson")
