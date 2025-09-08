@@ -123,4 +123,9 @@ public class UserController {
     public ResponseEntity<?> trackOrder() {
         return new ResponseEntity<>(iUserService.trackOrder(), HttpStatus.OK);
     }
+
+    @GetMapping("/getAllMealsByCuisineName/{cuisineName}")
+    public ResponseEntity<?> getAllMealsByCuisineName(@PathVariable String cuisineName){
+        return new ResponseEntity<>(iUserService.getAllMealsByCuisineName(cuisineName),HttpStatus.OK);
+    }
 }

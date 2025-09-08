@@ -37,5 +37,7 @@ public interface IUserService {
     boolean checkUserExistsByEmail(String email);
 
     Object trackOrder();
+
+    Object getAllMealsByCuisineName(String cuisineName);
 }
 

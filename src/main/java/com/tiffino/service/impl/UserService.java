@@ -69,6 +69,9 @@ public class UserService implements IUserService {
     @Autowired
     private EmailService emailService;
 
+    @Autowired
+    private CuisineRepository cuisineRepository;
+
 
     public Object registerUser(UserRegistrationRequest request) {
 
@@ -433,6 +436,12 @@ public class UserService implements IUserService {
         }
 
         return "No pending deliveries found for this user";
+    }
+
+    @Override
+    public Object getAllMealsByCuisineName(String cuisineName) {
+        Cuisine cuisine = cuisineRepository.findByName(cuisineName);
+        return cuisine.getMeals();
     }
 
 

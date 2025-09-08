@@ -10,4 +10,6 @@ import java.util.List;
 @Repository
 public interface CuisineRepository extends JpaRepository<Cuisine, Long> {
     List<Cuisine> findByCuisineId(Long cuisineId);
+
+    Cuisine findByName(String cuisineName);
 }
