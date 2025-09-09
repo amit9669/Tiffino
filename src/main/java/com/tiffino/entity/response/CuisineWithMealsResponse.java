@@ -12,5 +12,5 @@ import java.util.List;
 public class CuisineWithMealsResponse {
 
     private String cuisineName;
-    private List<String> meals;
+    private List<MealSummaryResponse> meals;
 }

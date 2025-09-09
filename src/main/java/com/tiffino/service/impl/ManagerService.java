@@ -3,10 +3,7 @@ package com.tiffino.service.impl;
 import com.tiffino.config.AuthenticationService;
 import com.tiffino.config.JwtService;
 import com.tiffino.entity.*;
-import com.tiffino.entity.response.CuisineWithMealsResponse;
-import com.tiffino.entity.response.DataOfCloudKitchenResponse;
-import com.tiffino.entity.response.OrderResponseForManager;
-import com.tiffino.entity.response.ReviewResponse;
+import com.tiffino.entity.response.*;
 import com.tiffino.exception.CustomException;
 import com.tiffino.repository.*;
 import com.tiffino.service.DataToken;
@@ -122,18 +119,15 @@ public class ManagerService implements IManagerService {
     }
 
     @Override
-    public Object getAllCuisinesAndMeals() {
-        List<Cuisine> cuisines = cuisineRepository.findAll();
-
-        return cuisines.stream()
+    public List<CuisineWithMealsResponse> getAllCuisinesAndMeals() {
+        return cuisineRepository.findAll().stream()
                 .map(cuisine -> new CuisineWithMealsResponse(
                         cuisine.getName(),
-                        cuisine.getMeals()
-                                .stream()
-                                .map(Meal::getName)
-                                .collect(Collectors.toList())
+                        cuisine.getMeals().stream()
+                                .map(meal -> new MealSummaryResponse(meal.getMealId(), meal.getName()))
+                                .toList()
                 ))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     public void sendEmail(String to, String subject, String message) {
