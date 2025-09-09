@@ -18,5 +18,7 @@ public class DataOfCloudKitchenResponse {
     private String managerId;
     private String city;
     private String division;
+    private String address;
+    private Integer pinCode;
     private List<ReviewResponse> reviews;
 }
