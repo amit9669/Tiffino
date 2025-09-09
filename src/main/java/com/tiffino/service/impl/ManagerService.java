@@ -306,4 +306,44 @@ public class ManagerService implements IManagerService {
                 .filter(dp -> dp.getCloudKitchen().getCloudKitchenId()
                         .equals(manager.getCloudKitchen().getCloudKitchenId())).toList();
     }
+
+    @Override
+    public Object addOrRemoveMeals(Long mealId) {
+        Manager manager = (Manager) dataToken.getCurrentUserProfile();
+
+        CloudKitchen cloudKitchen = manager.getCloudKitchen();
+
+        Optional<Meal> mealOptional = mealRepository.findById(mealId);
+
+        if (!mealOptional.isPresent()) {
+            return "Meal not found: " + mealId;
+        }
+
+        Meal meal = mealOptional.get();
+
+        Optional<CloudKitchenMeal> existing = cloudKitchenMealRepository.findByCloudKitchenAndMeal(cloudKitchen, meal);
+        CloudKitchenMeal cloudKitchenMeal = existing.orElse(null);
+
+        if (cloudKitchenMeal == null) {
+            cloudKitchenMeal = new CloudKitchenMeal();
+            cloudKitchenMeal.setCloudKitchen(cloudKitchen);
+            cloudKitchenMeal.setMeal(meal);
+            cloudKitchenMeal.setAvailable(true);
+            cloudKitchenMeal.setUnavailable(false);
+            cloudKitchenMealRepository.save(cloudKitchenMeal);
+            return "Enable Meal for Cloud-Kitchen " + mealId;
+        } else {
+            if (!cloudKitchenMeal.isAvailable()) {
+                cloudKitchenMeal.setAvailable(true);
+                cloudKitchenMeal.setUnavailable(false);
+                cloudKitchenMealRepository.save(cloudKitchenMeal);
+                return "Enable Meal for Cloud-Kitchen " + mealId;
+            } else {
+                cloudKitchenMeal.setAvailable(false);
+                cloudKitchenMeal.setUnavailable(true);
+                cloudKitchenMealRepository.save(cloudKitchenMeal);
+                return "Disable Meal for Cloud-Kitchen " + mealId;
+            }
+        }
+    }
 }

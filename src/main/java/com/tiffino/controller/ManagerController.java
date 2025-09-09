@@ -74,4 +74,9 @@ public class ManagerController {
     public ResponseEntity<?> getAllOrders() {
         return new ResponseEntity<>(iManagerService.getAllOrders(), HttpStatus.OK);
     }
+
+    @PostMapping("/addOrRemoveMeals/{mealId}")
+    public ResponseEntity<?> addOrRemoveMeals(@PathVariable Long mealId){
+        return new ResponseEntity<>(iManagerService.addOrRemoveMeals(mealId),HttpStatus.OK);
+    }
 }

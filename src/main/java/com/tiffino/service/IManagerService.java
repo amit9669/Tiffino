@@ -27,4 +27,6 @@ public interface IManagerService {
     Object getAllOrders();
 
     Object listOfDeliveryPersonIsAvailable();
+
+    Object addOrRemoveMeals(Long mealId);
 }
