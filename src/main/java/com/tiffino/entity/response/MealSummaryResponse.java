@@ -8,4 +8,5 @@ import lombok.*;
 public class MealSummaryResponse {
     private Long mealId;
     private String mealName;
+    private Boolean isSelected = false;
 }

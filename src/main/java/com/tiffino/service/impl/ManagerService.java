@@ -120,15 +120,27 @@ public class ManagerService implements IManagerService {
 
     @Override
     public List<CuisineWithMealsResponse> getAllCuisinesAndMeals() {
+        Manager manager = (Manager) dataToken.getCurrentUserProfile();
+        CloudKitchen cloudKitchen = manager.getCloudKitchen();
+
         return cuisineRepository.findAll().stream()
                 .map(cuisine -> new CuisineWithMealsResponse(
                         cuisine.getName(),
                         cuisine.getMeals().stream()
-                                .map(meal -> new MealSummaryResponse(meal.getMealId(), meal.getName()))
+                                .map(meal -> {
+                                    boolean available = cloudKitchenMealRepository
+                                            .findByCloudKitchenAndMeal(cloudKitchen, meal)
+                                            .map(CloudKitchenMeal::isAvailable)
+                                            .orElse(false);
+
+                                    MealSummaryResponse msr = new MealSummaryResponse(meal.getMealId(), meal.getName(), available);
+                                    return msr;
+                                })
                                 .toList()
                 ))
                 .toList();
     }
+
 
     public void sendEmail(String to, String subject, String message) {
         try {
