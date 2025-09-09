@@ -113,6 +113,8 @@ public class SuperAdminService implements ISuperAdminService {
     public Object saveCloudKitchen(CloudKitchenRequest kitchenRequest) {
         CloudKitchen cloudKitchen = new CloudKitchen();
         cloudKitchen.setCloudKitchenId(this.createCloudKitchenId(kitchenRequest.getCity(), kitchenRequest.getDivision()));
+        cloudKitchen.setAddress(kitchenRequest.getAddress());
+        cloudKitchen.setPinCode(kitchenRequest.getPinCode());
         cloudKitchen.setCity(kitchenRequest.getCity());
         cloudKitchen.setState(kitchenRequest.getState());
         cloudKitchen.setDivision(kitchenRequest.getDivision());

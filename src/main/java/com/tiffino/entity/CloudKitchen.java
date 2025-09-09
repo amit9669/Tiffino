@@ -35,6 +35,12 @@ public class CloudKitchen {
     @Column(name = "division")
     private String division;
 
+    @Column(name = "address")
+    private String address;
+
+    @Column(name = "pin_code")
+    private Integer pinCode;
+
     @Column(name = "isActive")
     private Boolean isActive = true;
 

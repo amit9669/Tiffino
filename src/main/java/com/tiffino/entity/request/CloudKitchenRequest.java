@@ -14,4 +14,6 @@ public class CloudKitchenRequest {
     private String state;
     private String city;
     private String division;
+    private String address;
+    private Integer pinCode;
 }
