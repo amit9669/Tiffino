@@ -167,6 +167,7 @@ public class ManagerService implements IManagerService {
                 .cloudKitchenId(cloudKitchen.getCloudKitchenId())
                 .division(cloudKitchen.getDivision())
                 .address(cloudKitchen.getAddress())
+                .state(cloudKitchen.getState())
                 .pinCode(cloudKitchen.getPinCode())
                 .city(cloudKitchen.getCity())
                 .managerId(manager.getManagerId())

@@ -16,6 +16,7 @@ public class DataOfCloudKitchenResponse {
 
     private String cloudKitchenId;
     private String managerId;
+    private String state;
     private String city;
     private String division;
     private String address;

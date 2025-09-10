@@ -595,6 +595,7 @@ public class SuperAdminService implements ISuperAdminService {
                     return DataOfCloudKitchenResponse.builder()
                             .cloudKitchenId(cloudKitchen.getCloudKitchenId())
                             .managerId(cloudKitchen.getManager().getManagerId())
+                            .state(cloudKitchen.getState())
                             .city(cloudKitchen.getCity())
                             .division(cloudKitchen.getDivision())
                             .reviews(reviewResponses)
