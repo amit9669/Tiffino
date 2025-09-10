@@ -40,6 +40,7 @@ public class SecurityConfiguration {
                                 "/user/register",
                                 "/user/forgot-password",
                                 "/user/reset-password",
+                                "/user/getAllAvailableMealsGroupedByCuisine",
                                 "/manager/updatePassword",
                                 "/manager/forgotPasswordOfManager",
                                 "/manager/changePassword",
