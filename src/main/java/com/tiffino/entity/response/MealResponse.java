@@ -13,5 +13,7 @@ public class MealResponse {
     private String mealName;
     private double price;
     private String photos;
+    private String nutritionalInformation;
+    private String description;
     private List<CloudKitchenInfo> kitchens;
 }

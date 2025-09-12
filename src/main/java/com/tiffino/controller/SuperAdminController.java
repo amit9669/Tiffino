@@ -1,8 +1,7 @@
 package com.tiffino.controller;
 
-import com.tiffino.entity.Offer;
 import com.tiffino.entity.request.*;
-import com.tiffino.repository.OfferRepository;
+import com.tiffino.repository.GiftCardsRepository;
 import com.tiffino.service.ISuperAdminService;
 import com.tiffino.service.impl.SuperAdminService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,7 +11,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/superAdmin")
@@ -22,7 +20,7 @@ public class SuperAdminController {
     private ISuperAdminService iSuperAdminService;
 
     @Autowired
-    private OfferRepository offerRepository;
+    private GiftCardsRepository giftCardsRepository;
 
     @Autowired
     private SuperAdminService superAdminService;
@@ -63,21 +61,6 @@ public class SuperAdminController {
                 adminFilterRequest.getCity(), adminFilterRequest.getDivision()), HttpStatus.FOUND);
     }
 
-    @PostMapping("/saveOrUpdateSubscriptionPlan")
-    public ResponseEntity<?> saveOrUpdateSubscriptionPlan(@RequestBody SubscriptionRequest subscriptionRequest) {
-        return new ResponseEntity<>(iSuperAdminService.saveOrUpdateSubscriptionPlan(subscriptionRequest), HttpStatus.CREATED);
-    }
-
-    @GetMapping("/getAllSubscription")
-    public ResponseEntity<?> getAllSubscription() {
-        return new ResponseEntity<>(iSuperAdminService.getAllSubscription(), HttpStatus.OK);
-    }
-
-    @DeleteMapping("/deleteSubscriptionPlan/{subId}")
-    public ResponseEntity<?> deleteSubscriptionPlan(@PathVariable Long subId) {
-        return new ResponseEntity<>(iSuperAdminService.deleteSubscriptionPlan(subId), HttpStatus.OK);
-    }
-
     @PostMapping("/saveOrUpdateDeliveryPerson")
     public ResponseEntity<?> saveOrUpdateDeliveryPerson(@RequestBody DeliveryPersonRequest personRequest) {
         return new ResponseEntity<>(iSuperAdminService.saveOrUpdateDeliveryPerson(personRequest), HttpStatus.OK);
@@ -113,26 +96,6 @@ public class SuperAdminController {
         mealRequest.setPhotos(photos);
 
         return ResponseEntity.ok(iSuperAdminService.saveOrUpdateMeal(mealRequest));
-    }
-
-    @PostMapping("/createOffer")
-    public ResponseEntity<?> createOffer(@RequestBody OfferRequest offerRequest) {
-        return new ResponseEntity<>(iSuperAdminService.createOffer(offerRequest), HttpStatus.OK);
-    }
-
-    @GetMapping("/getAllOffers")
-    public ResponseEntity<?> getAllOffers() {
-        return new ResponseEntity<>(iSuperAdminService.getAllOffers(), HttpStatus.OK);
-    }
-
-    @PostMapping("/assignOffer/{offerId}")
-    public ResponseEntity<?> assignOffer(@PathVariable Long offerId) {
-        return new ResponseEntity<>(iSuperAdminService.assignOffersToEligibleUsers(offerId), HttpStatus.OK);
-    }
-
-    @GetMapping("/getAllOffersWithRedeemUsers")
-    public ResponseEntity<?> getAllOffersWithRedeemUsers() {
-        return new ResponseEntity<>(iSuperAdminService.getAllOffersWithRedeemUsers(), HttpStatus.OK);
     }
 
     @GetMapping("/getAllSubscribedUser")

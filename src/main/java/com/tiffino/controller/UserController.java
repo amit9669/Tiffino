@@ -1,9 +1,6 @@
 package com.tiffino.controller;
 
-import com.tiffino.entity.request.CreateOrderRequest;
-import com.tiffino.entity.request.ReviewRequest;
-import com.tiffino.entity.request.UserRegistrationRequest;
-import com.tiffino.entity.request.UserUpdationRequest;
+import com.tiffino.entity.request.*;
 import com.tiffino.service.EmailService;
 import com.tiffino.service.IUserService;
 import com.tiffino.service.OtpService;
@@ -66,30 +63,15 @@ public class UserController {
         return new ResponseEntity<>(iUserService.getAllAvailableMealsGroupedByCuisine(), HttpStatus.OK);
     }
 
+    @PostMapping("/assignSubscriptionToUser")
+    public ResponseEntity<?> assignSubscriptionToUser(@ModelAttribute SubscriptionRequest subscriptionRequest){
+        return new ResponseEntity<>(iUserService.assignSubscriptionToUser(subscriptionRequest),HttpStatus.OK);
+    }
+
 
     @PostMapping("/updateUser")
     public ResponseEntity<?> updateUser(@Valid @RequestBody UserUpdationRequest req) {
         return new ResponseEntity<>(iUserService.updateCurrentUser(req), HttpStatus.OK);
-    }
-
-    @GetMapping("/getAllSubscriptionPlan")
-    public ResponseEntity<?> getAllSubscriptionPlan() {
-        return new ResponseEntity<>(iUserService.getAllSubscriptionPlan(), HttpStatus.OK);
-    }
-
-    @PostMapping("/assignSubscriptionToUser")
-    public ResponseEntity<?> assignSubscriptionToUser(@RequestParam String name, @RequestParam Double price) {
-        return new ResponseEntity<>(iUserService.assignSubscriptionToUser(name, price), HttpStatus.OK);
-    }
-
-    @PostMapping("/redeemOffer/{offerId}")
-    public ResponseEntity<?> redeemOffer(@PathVariable Long offerId) {
-        return ResponseEntity.ok(iUserService.redeemOffer(offerId));
-    }
-
-    @GetMapping("/getUserAllOffers")
-    public ResponseEntity<?> getUserAllOffers() {
-        return new ResponseEntity<>(iUserService.getUserAllOffers(), HttpStatus.OK);
     }
 
     @PostMapping("/orders")

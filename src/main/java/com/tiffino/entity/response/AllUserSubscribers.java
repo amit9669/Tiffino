@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Set;
+
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
@@ -16,7 +18,7 @@ public class AllUserSubscribers {
     private String userEmail;
     private String subscriptionName;
     private Double price;
-    private DurationType durationType;
+    private Set<String> mealsTime;
     private String expiryDate;
     private String expiryTime;
 }

@@ -5,6 +5,7 @@ import com.tiffino.entity.UserSubscription;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface UserSubscriptionRepository extends JpaRepository<UserSubscription, Long> {
@@ -14,7 +15,7 @@ public interface UserSubscriptionRepository extends JpaRepository<UserSubscripti
 
     UserSubscription findByUser_UserIdAndIsSubscribedTrue(Long userId);
 
-    @Query("SELECT DISTINCT s.user FROM UserSubscription s " +
-            "WHERE s.isSubscribed = true AND s.isDeleted = false AND s.expiryDate > CURRENT_TIMESTAMP")
-    List<User> findActiveSubscribers();
+    List<UserSubscription> findAllByIsSubscribedTrueAndExpiryDateBefore(LocalDateTime now);
+
+    long countByUser_UserId(Long userId);
 }

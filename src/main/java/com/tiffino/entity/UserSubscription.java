@@ -5,11 +5,13 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 @Data
-@AllArgsConstructor
-@NoArgsConstructor
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity
 @Table(name = "user_subscription")
 public class UserSubscription {
@@ -19,6 +21,10 @@ public class UserSubscription {
     @Column(name = "user_sub_id")
     private Long userSubId;
 
+    @Column(name = "subscription_plan")
+    @Enumerated(EnumType.STRING)
+    private DurationType durationType;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     @ToString.Exclude
@@ -26,19 +32,28 @@ public class UserSubscription {
     @JsonBackReference
     private User user;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "plan_id")
-    private Subscription plan;
-
     @Column(name = "is_subscribed")
-    private Boolean isSubscribed = true;
-
-    @Column(name = "is_deleted")
-    private Boolean isDeleted = false;
+    private Boolean isSubscribed;
 
     @Column(name = "start_date")
     private LocalDateTime startDate = LocalDateTime.now();
 
     @Column(name = "expiry_date")
     private LocalDateTime expiryDate;
+
+    @ElementCollection
+    @CollectionTable(name = "user_sub_mealtimes", joinColumns = @JoinColumn(name = "user_sub_id"))
+    @Column(name = "meal_time")
+    private Set<String> mealTimes = new HashSet<>();
+
+    @ElementCollection
+    @CollectionTable(name = "user_sub_allergies", joinColumns = @JoinColumn(name = "user_sub_id"))
+    @Column(name = "allergy")
+    private Set<String> allergies = new HashSet<>();
+
+    @Column(name = "final_price")
+    private Double finalPrice;
+
+    @Column(name = "dietary_file")
+    private String dietaryFilePath;
 }

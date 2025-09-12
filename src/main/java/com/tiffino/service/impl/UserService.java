@@ -1,18 +1,12 @@
 package com.tiffino.service.impl;
 
 import com.tiffino.entity.*;
-import com.tiffino.entity.request.CreateOrderRequest;
-import com.tiffino.entity.request.ReviewRequest;
-import com.tiffino.entity.request.UserRegistrationRequest;
+import com.tiffino.entity.request.*;
 import com.tiffino.entity.response.*;
-import com.tiffino.exception.CustomException;
 import com.tiffino.repository.*;
-import com.tiffino.service.DataToken;
+import com.tiffino.service.*;
 import com.tiffino.entity.User;
-import com.tiffino.entity.request.UserUpdationRequest;
 import com.tiffino.repository.UserRepository;
-import com.tiffino.service.EmailService;
-import com.tiffino.service.IUserService;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,13 +31,13 @@ public class UserService implements IUserService {
     private PasswordEncoder passwordEncoder;
 
     @Autowired
-    private SubscriptionRepository subscriptionRepository;
-
-    @Autowired
     private UserSubscriptionRepository userSubscriptionRepository;
 
     @Autowired
     private OrderRepository orderRepository;
+
+    @Autowired
+    private ImageUploadService imageUploadService;
 
     @Autowired
     private MealRepository mealRepository;
@@ -64,13 +58,19 @@ public class UserService implements IUserService {
     private DeliveryRepository deliveryRepository;
 
     @Autowired
-    private UserOfferRepository userOfferRepository;
+    private UserGiftCardRepository userGiftCardRepository;
+
+    @Autowired
+    private GiftCardsRepository giftCardsRepository;
 
     @Autowired
     private EmailService emailService;
 
     @Autowired
     private CuisineRepository cuisineRepository;
+
+    @Autowired
+    private PriceCalculatorService priceCalculatorService;
 
 
     public Object registerUser(UserRegistrationRequest request) {
@@ -114,6 +114,8 @@ public class UserService implements IUserService {
                                     .mealName(ckMeal.getMeal().getName())
                                     .price(ckMeal.getMeal().getPrice())
                                     .photos(ckMeal.getMeal().getPhotos())
+                                    .description(ckMeal.getMeal().getDescription())
+                                    .nutritionalInformation(ckMeal.getMeal().getNutritionalInformation())
                                     .kitchens(new ArrayList<>(List.of(
                                             CloudKitchenInfo.builder()
                                                     .cloudKitchenId(ckMeal.getCloudKitchen().getCloudKitchenId())
@@ -139,118 +141,6 @@ public class UserService implements IUserService {
                         .meals(new ArrayList<>(entry.getValue().values()))
                         .build())
                 .toList();
-    }
-
-
-    @Override
-    public Object getAllSubscriptionPlan() {
-        return subscriptionRepository.findAll();
-    }
-
-    @Override
-    @Transactional
-    public Object assignSubscriptionToUser(String name, Double price) {
-        User user = (User) dataToken.getCurrentUserProfile();
-
-        boolean alreadySubscribed = user.getSubscriptions().stream()
-                .anyMatch(s -> s.getPlan().getSubName().equals(name)
-                        && s.getPlan().getPrice().equals(price)
-                        && Boolean.TRUE.equals(s.getIsSubscribed()));
-
-        if (alreadySubscribed) {
-            return "User already has this active subscription!";
-        }
-
-        Subscription plan = subscriptionRepository.findBySubNameAndPrice(name, price)
-                .orElseThrow(() -> new CustomException("Subscription plan not available!!"));
-
-        if (userSubscriptionRepository
-                .existsByUser_UserIdAndIsSubscribedTrue(user.getUserId())) {
-            UserSubscription userSubscription = userSubscriptionRepository.findByUser_UserIdAndIsSubscribedTrue(user.getUserId());
-            return "User already has " + userSubscription.getPlan().getSubName() + " this active subscription! " +
-                    "Please wait for expired date " + userSubscription.getExpiryDate();
-        }
-
-        UserSubscription userSubscription = UserSubscription.builder()
-                .user(user)
-                .plan(plan)
-                .isSubscribed(true)
-                .isDeleted(false)
-                .startDate(LocalDateTime.now())
-                .expiryDate(this.calculateExpiryDate(plan.getDurationType()))
-                .build();
-
-        user.getSubscriptions().add(userSubscription);
-        userRepository.save(user);
-
-        return "Subscribed Successfully!!!";
-    }
-
-    @Override
-    @Transactional
-    public Object redeemOffer(Long offerId) {
-        User user = (User) dataToken.getCurrentUserProfile();
-        Optional<UserOffer> userOfferOptional = userOfferRepository.findByUser_UserIdAndOffer_OfferId(user.getUserId(), offerId);
-
-        if (!userOfferOptional.isPresent()) {
-            return "Offer not assigned";
-        }
-
-        UserOffer userOffer = userOfferOptional.get();
-
-        if (Boolean.TRUE.equals(userOffer.getIsRedeemed())) {
-            return "Offer already redeemed";
-        }
-
-        userOffer.setIsRedeemed(true);
-        userOffer.setRedeemedAt(LocalDateTime.now());
-
-        return UserOfferResponse.fromEntity(userOfferRepository.save(userOffer));
-    }
-
-
-    @Override
-    public List<UserOfferResponse> getUserAllOffers() {
-        User user = (User) dataToken.getCurrentUserProfile();
-
-        return userOfferRepository.findByUser_UserId(user.getUserId())
-                .stream()
-                .map(UserOfferResponse::fromEntity)
-                .toList();
-    }
-
-    @Scheduled(cron = "0 0 0 * * ?")
-    @Transactional
-    public void expireSubscriptions() {
-        List<UserSubscription> activeSubs = userSubscriptionRepository.findByIsSubscribedTrue();
-        LocalDateTime now = LocalDateTime.now();
-
-        for (UserSubscription us : activeSubs) {
-            if (us.getExpiryDate().isBefore(now)) {
-                us.setIsSubscribed(false);
-                us.setIsDeleted(true);
-                userSubscriptionRepository.save(us);
-                System.out.println("Subscription expired for userId=" + us.getUser().getUserId());
-            }
-        }
-    }
-
-    private LocalDateTime calculateExpiryDate(DurationType durationType) {
-        LocalDateTime now = LocalDateTime.now();
-        switch (durationType) {
-            case ONE_DAY:
-                return now.plusDays(1);
-            case WEEKLY:
-                return now.plusWeeks(1);
-            case MONTHLY:
-                return now.plusMonths(1);
-            case QUARTERLY:
-                return now.plusMonths(3);
-            case YEARLY:
-                return now.plusYears(1);
-            default:
-                throw new CustomException("Invalid subscription duration type!");
-        }
     }
 
 
@@ -453,4 +343,172 @@ public class UserService implements IUserService {
         user.setRole(Role.USER);
         userRepository.save(user);
     }
+
+    @Override
+    @Transactional
+    public Object assignSubscriptionToUser(SubscriptionRequest request) {
+        User user = (User) dataToken.getCurrentUserProfile();
+
+        if (userSubscriptionRepository.existsByUser_UserIdAndIsSubscribedTrue(user.getUserId())) {
+           return "User already has active subscription!! Please wait for it to expire.";
+        }
+
+        boolean isFile = request.getDietaryFilePath() != null;
+        double originalPrice = priceCalculatorService.calculatePrice(
+                request.getDurationType(),
+                request.getMealTimes(),
+                request.getAllergies(),
+                request.getCaloriesPerMeal(),
+                isFile
+        );
+
+        double finalPrice = originalPrice;
+        double appliedDiscountPercent = 0.0;
+
+        if (request.getGiftCardCodeInput() != null && !request.getGiftCardCodeInput().isBlank()) {
+            UserGiftCards userGiftCards = userGiftCardRepository
+                    .findByGiftCardCodeAndUser_UserIdAndIsRedeemedFalse(request.getGiftCardCodeInput(), user.getUserId()).get();
+            if(userGiftCards==null){
+                return "Invalid or expired offer code!";
+            }
+
+            if (userGiftCards.getValidForPlan() != request.getDurationType()) {
+                throw new RuntimeException("Offer code only valid for " + userGiftCards.getValidForPlan());
+            }
+
+            finalPrice = applyOffer(originalPrice, userGiftCards);
+            appliedDiscountPercent = userGiftCards.getDiscountPercent();
+
+            userGiftCards.setIsRedeemed(true);
+            userGiftCards.setRedeemedAt(LocalDateTime.now());
+            userGiftCardRepository.save(userGiftCards);
+        }
+
+        UserSubscription subscription = UserSubscription.builder()
+                .user(user)
+                .durationType(request.getDurationType())
+                .mealTimes(request.getMealTimes())
+                .allergies(request.getAllergies())
+                .startDate(LocalDateTime.now())
+                .expiryDate(calculateExpiryDate(request.getDurationType()))
+                .isSubscribed(true)
+                .dietaryFilePath(imageUploadService.uploadImage(request.getDietaryFilePath()))
+                .finalPrice(finalPrice)
+                .build();
+
+        userSubscriptionRepository.save(subscription);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", appliedDiscountPercent > 0 ? "Subscribed Successfully with Discount!" : "Subscribed Successfully!");
+        response.put("subscription", Map.of(
+                "userSubId", subscription.getUserSubId(),
+                "planType", subscription.getDurationType(),
+                "startDate", subscription.getStartDate(),
+                "expiryDate", subscription.getExpiryDate(),
+                "originalPrice", originalPrice,
+                "appliedDiscountPercent", appliedDiscountPercent,
+                "finalPrice", finalPrice
+        ));
+
+        return response;
+    }
+
+    private LocalDateTime calculateExpiryDate(DurationType durationType) {
+        return switch (durationType) {
+            case DAILY -> LocalDateTime.now().plusDays(1);
+            case WEEKLY -> LocalDateTime.now().plusWeeks(1);
+            case MONTHLY -> LocalDateTime.now().plusMonths(1);
+            case QUARTERLY -> LocalDateTime.now().plusMonths(3);
+        };
+    }
+
+    @Scheduled(cron = "0 0 2 * * ?")
+    @Transactional
+    public void checkExpiredSubscriptions() {
+        List<UserSubscription> expiredSubs =
+                userSubscriptionRepository.findAllByIsSubscribedTrueAndExpiryDateBefore(LocalDateTime.now());
+
+        for (UserSubscription sub : expiredSubs) {
+            sub.setIsSubscribed(false);
+            userSubscriptionRepository.save(sub);
+
+            generateOrUpdateOfferForExpiredSubscription(sub.getDurationType(), sub.getUser());
+        }
+    }
+
+    public void generateOrUpdateOfferForExpiredSubscription(DurationType expiredPlanType, User user) {
+
+        List<String> offerTypes = Arrays.asList("LOYALTY", "WELCOME_BACK", "SURPRISE");
+        String selectedType = offerTypes.get(new Random().nextInt(offerTypes.size()));
+
+
+        GiftCards giftCards = giftCardsRepository.findByTypeAndIsActiveTrue(selectedType)
+                .orElseGet(() -> {
+                    GiftCards newGiftCard = GiftCards.builder()
+                            .type(selectedType)
+                            .description(getOfferDescription(selectedType))
+                            .isActive(true)
+                            .createdAt(LocalDateTime.now())
+                            .updatedAt(LocalDateTime.now())
+                            .build();
+                    return giftCardsRepository.save(newGiftCard);
+                });
+
+        Optional<UserGiftCards> existingOfferOpt = userGiftCardRepository
+                .findByUser_UserIdAndValidForPlanAndIsRedeemedFalse(user.getUserId(), expiredPlanType);
+
+        double discount = calculateDiscount(selectedType, user);
+
+        String code = UUID.randomUUID().toString().substring(0, 6).toUpperCase();
+
+        UserGiftCards userGiftCards;
+        if (existingOfferOpt.isPresent()) {
+            userGiftCards = existingOfferOpt.get();
+            userGiftCards.setGiftCards(giftCards);
+            userGiftCards.setDiscountPercent(discount);
+            userGiftCards.setExpiryDate(LocalDateTime.now().plusDays(30));
+            userGiftCards.setGiftCardCode(code);
+        } else {
+            userGiftCards = UserGiftCards.builder()
+                    .user(user)
+                    .giftCards(giftCards)
+                    .validForPlan(expiredPlanType)
+                    .giftCardCode(code)
+                    .discountPercent(discount)
+                    .expiryDate(LocalDateTime.now().plusDays(30))
+                    .isRedeemed(false)
+                    .build();
+        }
+
+        userGiftCardRepository.save(userGiftCards);
+    }
+
+    private double calculateDiscount(String type, User user) {
+        long subscriptionCount = userSubscriptionRepository.countByUser_UserId(user.getUserId());
+        Random random = new Random();
+
+        return switch (type) {
+            case "LOYALTY" -> (subscriptionCount <= 5)
+                    ? subscriptionCount * 10.0
+                    : 20 + random.nextInt(21);
+            case "WELCOME_BACK" -> 25.0;
+            case "SURPRISE" -> 10 + random.nextInt(31);
+            default -> 15.0;
+        };
+    }
+
+    private String getOfferDescription(String type) {
+        return switch (type) {
+            case "LOYALTY" -> "Loyalty discount for your continued support!";
+            case "WELCOME_BACK" -> "Welcome back! Enjoy 25% off your next plan.";
+            case "SURPRISE" -> "Surprise! A random discount just for you.";
+            default -> "Special discount offer.";
+        };
+    }
+
+    public double applyOffer(double originalPrice, UserGiftCards userOffer) {
+        double discounted = originalPrice - (originalPrice * (userOffer.getDiscountPercent() / 100));
+        return Math.round(discounted * 100.0) / 100.0;
+    }
+
 }

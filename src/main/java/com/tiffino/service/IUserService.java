@@ -1,9 +1,6 @@
 package com.tiffino.service;
 
-import com.tiffino.entity.request.CreateOrderRequest;
-import com.tiffino.entity.request.ReviewRequest;
-import com.tiffino.entity.request.UserRegistrationRequest;
-import com.tiffino.entity.request.UserUpdationRequest;
+import com.tiffino.entity.request.*;
 
 
 public interface IUserService {
@@ -11,14 +8,6 @@ public interface IUserService {
     public Object registerUser(UserRegistrationRequest request);
 
     Object getAllAvailableMealsGroupedByCuisine();
-
-    Object getAllSubscriptionPlan();
-
-    Object assignSubscriptionToUser(String name, Double price);
-
-    Object redeemOffer(Long offerId);
-
-    Object getUserAllOffers();
 
     Object updateCurrentUser(UserUpdationRequest req);
 
@@ -39,5 +28,7 @@ public interface IUserService {
     Object trackOrder();
 
     Object getAllMealsByCuisineName(String cuisineName);
+
+    Object assignSubscriptionToUser(SubscriptionRequest subscriptionRequest);
 }
 

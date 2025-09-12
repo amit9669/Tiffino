@@ -13,15 +13,4 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByEmail(String email);
 
     boolean existsByEmail(String email);
-
-    @Query("SELECT DISTINCT u FROM User u LEFT JOIN FETCH u.subscriptions")
-    List<User> findAllWithSubscriptions();
-
-    Optional<User> findByPhoneNo(@Pattern(regexp = "^[0-9]{10}$", message = "Phone number must be 10 digits") String phoneNo);
-
-
-    @Query("SELECT u FROM User u WHERE NOT EXISTS (" +
-            "SELECT s FROM UserSubscription s " +
-            "WHERE s.user = u AND s.isSubscribed = true AND s.isDeleted = false AND s.expiryDate > CURRENT_TIMESTAMP)")
-    List<User> findUsersWithoutActiveSubscription();
 }

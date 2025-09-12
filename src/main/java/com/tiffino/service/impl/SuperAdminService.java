@@ -58,16 +58,13 @@ public class SuperAdminService implements ISuperAdminService {
     private OtpService otpService;
 
     @Autowired
-    private SubscriptionRepository subscriptionRepository;
-
-    @Autowired
     private UserSubscriptionRepository userSubscriptionRepository;
 
     @Autowired
-    private OfferRepository offerRepository;
+    private GiftCardsRepository giftCardsRepository;
 
     @Autowired
-    private UserOfferRepository userOfferRepository;
+    private UserGiftCardRepository userGiftCardRepository;
 
     @Autowired
     private DeliveryPersonRepository deliveryPersonRepository;
@@ -328,38 +325,6 @@ public class SuperAdminService implements ISuperAdminService {
     }
 
     @Override
-    public Object saveOrUpdateSubscriptionPlan(SubscriptionRequest subscriptionRequest) {
-        if (subscriptionRepository.existsById(subscriptionRequest.getId())) {
-            Subscription subscription = subscriptionRepository.findById(subscriptionRequest.getId()).get();
-            subscription.setPrice(subscriptionRequest.getPrice());
-            subscription.setSubName(subscriptionRequest.getName());
-            subscription.setDescription(subscriptionRequest.getDescription());
-            subscription.setDurationType(subscriptionRequest.getDurationType());
-            subscriptionRepository.save(subscription);
-            return "updated Successfully";
-        } else {
-            Subscription subscription = new Subscription();
-            subscription.setPrice(subscriptionRequest.getPrice());
-            subscription.setSubName(subscriptionRequest.getName());
-            subscription.setDescription(subscriptionRequest.getDescription());
-            subscription.setDurationType(subscriptionRequest.getDurationType());
-            subscriptionRepository.save(subscription);
-            return "Inserted Successfully";
-        }
-    }
-
-    @Override
-    public Object getAllSubscription() {
-        return subscriptionRepository.findAll();
-    }
-
-    @Override
-    public Object deleteSubscriptionPlan(Long subId) {
-        subscriptionRepository.deleteById(subId);
-        return "Subscription Plan has Deleted!!";
-    }
-
-    @Override
     public Object saveOrUpdateDeliveryPerson(DeliveryPersonRequest personRequest) {
         Optional<CloudKitchen> cloudKitchen = kitchenRepository.findByCloudKitchenIdAndIsDeletedFalse(personRequest.getCloudKitchenId());
         if (!cloudKitchen.isPresent()) {
@@ -482,88 +447,6 @@ public class SuperAdminService implements ISuperAdminService {
 
     }
 
-    @Override
-    public Object createOffer(OfferRequest request) {
-        Offer offer = new Offer();
-        offer.setType(request.getType());
-        offer.setDescription(request.getDescription());
-        offer.setTermsAndConditions(request.getTermsAndConditions());
-        offer.setIsActive(request.getIsActive());
-        offer.setTargetGroup(request.getTargetGroup());
-
-        if (request.getSubscriptionId() != null) {
-            Subscription plan = subscriptionRepository.findById(request.getSubscriptionId())
-                    .orElseThrow(() -> new RuntimeException("Subscription not found"));
-            offer.setApplicablePlan(plan);
-        }
-        offerRepository.save(offer);
-        return "Offer Created Successfully!!!";
-    }
-
-    @Override
-    public Object getAllOffers() {
-        return offerRepository.findAll();
-    }
-
-    @Override
-    public Object assignOffersToEligibleUsers(Long offerId) {
-        Optional<Offer> offerOptional = offerRepository.findById(offerId);
-
-        if (!offerOptional.isPresent()) {
-            return "Offer Not Found!!";
-        }
-
-        Offer offer = offerOptional.get();
-
-        List<User> eligibleUsers = getEligibleUsers(offer);
-
-        List<UserOffer> newUserOffers = new ArrayList<>();
-
-        for (User user : eligibleUsers) {
-            boolean alreadyAssigned = userOfferRepository
-                    .existsByUser_UserIdAndOffer_OfferId(user.getUserId(), offerId);
-
-            if (!alreadyAssigned) {
-                UserOffer uo = new UserOffer();
-                uo.setUser(user);
-                uo.setOffer(offer);
-                uo.setIsRedeemed(false);
-                newUserOffers.add(uo);
-            }
-        }
-        userOfferRepository.saveAll(newUserOffers);
-        return "Assign Offers to eligible User";
-    }
-
-    private List<User> getEligibleUsers(Offer offer) {
-        return switch (offer.getTargetGroup()) {
-            case SUBSCRIBED -> userSubscriptionRepository.findActiveSubscribers();
-            case UNSUBSCRIBED -> userRepository.findUsersWithoutActiveSubscription();
-            case ALL -> userRepository.findAll();
-        };
-    }
-
-    @Override
-    public Object getAllOffersWithRedeemUsers() {
-        List<UserOffer> userOfferList = userOfferRepository.findAll();
-
-        return userOfferList.stream()
-                .map(userOffer -> {
-                    LocalDateTime redeemedAt = userOffer.getRedeemedAt();
-
-                    String redeemedDate = redeemedAt != null ? redeemedAt.toLocalDate().toString() : null;
-                    String redeemedTime = redeemedAt != null ? redeemedAt.toLocalTime().toString() : null;
-
-                    return new UserRedeemOfferResponse(
-                            userOffer.getUser().getUserName(),
-                            userOffer.getOffer().getType(),
-                            redeemedDate,
-                            redeemedTime
-                    );
-                })
-                .collect(Collectors.toList());
-    }
-
 
     @Override
     public Object getAllSubscribedUser() {
@@ -572,9 +455,9 @@ public class SuperAdminService implements ISuperAdminService {
         return allSubscribers.stream()
                 .map(userSubscription -> AllUserSubscribers.builder()
                         .userName(userSubscription.getUser().getUserName())
-                        .price(userSubscription.getPlan().getPrice())
-                        .subscriptionName(userSubscription.getPlan().getSubName())
-                        .durationType(userSubscription.getPlan().getDurationType())
+                        .price(userSubscription.getFinalPrice())
+                        .subscriptionName(userSubscription.getDurationType().name())
+                        .mealsTime(userSubscription.getMealTimes())
                         .userEmail(userSubscription.getUser().getEmail())
                         .expiryDate(String.valueOf(userSubscription.getExpiryDate().toLocalDate()))
                         .expiryTime(String.valueOf(userSubscription.getExpiryDate().toLocalTime()))

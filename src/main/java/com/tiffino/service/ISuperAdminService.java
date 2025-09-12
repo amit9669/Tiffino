@@ -1,6 +1,5 @@
 package com.tiffino.service;
 
-import com.tiffino.entity.Offer;
 import com.tiffino.entity.request.*;
 
 import java.io.IOException;
@@ -22,25 +21,11 @@ public interface ISuperAdminService {
 
     Object searchFilterForAdmin(List<String> state, List<String> city, List<String> division);
 
-    Object saveOrUpdateSubscriptionPlan(SubscriptionRequest subscriptionRequest);
-
-    Object getAllSubscription();
-
-    Object deleteSubscriptionPlan(Long subId);
-
     Object saveOrUpdateDeliveryPerson(DeliveryPersonRequest personRequest);
 
     Object saveOrUpdateCuisine(CuisineRequest cuisineRequest) throws IOException;
 
     Object saveOrUpdateMeal(MealRequest mealRequest);
-
-    Object createOffer(OfferRequest offerRequest);
-
-    Object getAllOffers();
-
-    Object assignOffersToEligibleUsers(Long offerId);
-
-    Object getAllOffersWithRedeemUsers();
 
     Object getAllSubscribedUser();
 
