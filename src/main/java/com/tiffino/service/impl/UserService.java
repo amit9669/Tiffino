@@ -511,4 +511,22 @@ public class UserService implements IUserService {
         return Math.round(discounted * 100.0) / 100.0;
     }
 
+    @Override
+    public Object getAllGiftCardsOfUser() {
+        User user = (User) dataToken.getCurrentUserProfile();
+        List<UserGiftCards> giftCards = userGiftCardRepository.findByUser_UserIdAndIsRedeemedFalse(user.getUserId());
+
+        return giftCards.stream()
+                .map(gc -> GiftCardResponse.builder()
+                        .userGiftCardId(gc.getUserGiftCardId())
+                        .giftCardCode(gc.getGiftCardCode())
+                        .discountPercent(gc.getDiscountPercent().intValue()+"%")
+                        .validForPlan(gc.getValidForPlan())
+                        .description(gc.getGiftCards().getDescription())
+                        .build()
+                )
+                .toList();
+    }
+
+
 }

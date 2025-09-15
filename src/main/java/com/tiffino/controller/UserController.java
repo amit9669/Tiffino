@@ -68,6 +68,10 @@ public class UserController {
         return new ResponseEntity<>(iUserService.assignSubscriptionToUser(subscriptionRequest),HttpStatus.OK);
     }
 
+    @GetMapping("/getAllGiftCardsOfUser")
+    public ResponseEntity<?> getAllGiftCardsOfUser(){
+        return new ResponseEntity<>(iUserService.getAllGiftCardsOfUser(),HttpStatus.OK);
+    }
 
     @PostMapping("/updateUser")
     public ResponseEntity<?> updateUser(@Valid @RequestBody UserUpdationRequest req) {

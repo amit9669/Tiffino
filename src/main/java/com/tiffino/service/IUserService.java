@@ -30,5 +30,7 @@ public interface IUserService {
     Object getAllMealsByCuisineName(String cuisineName);
 
     Object assignSubscriptionToUser(SubscriptionRequest subscriptionRequest);
+
+    Object getAllGiftCardsOfUser();
 }
 
