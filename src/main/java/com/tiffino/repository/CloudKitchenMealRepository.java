@@ -14,4 +14,6 @@ public interface CloudKitchenMealRepository extends JpaRepository<CloudKitchenMe
     List<CloudKitchenMeal> findByCloudKitchenAndAvailableTrue(CloudKitchen cloudKitchen);
 
     List<CloudKitchenMeal> findByAvailableTrue();
+
+    List<CloudKitchenMeal> findByCloudKitchenAndMeal_MealIdInAndAvailableTrue(CloudKitchen cloudKitchen, List<Long> mealIds);
 }

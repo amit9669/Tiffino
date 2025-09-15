@@ -1,5 +1,6 @@
 package com.tiffino.service;
 
+import com.tiffino.entity.DeliveryDetails;
 import com.tiffino.entity.request.*;
 
 
@@ -11,7 +12,7 @@ public interface IUserService {
 
     Object updateCurrentUser(UserUpdationRequest req);
 
-    Object createOrder(CreateOrderRequest request);
+    Object createOrder(DeliveryDetails deliveryDetails);
 
     Object getAllOrders();
 
@@ -32,5 +33,11 @@ public interface IUserService {
     Object assignSubscriptionToUser(SubscriptionRequest subscriptionRequest);
 
     Object getAllGiftCardsOfUser();
+
+    Object addMealsToCart(CartRequest request);
+
+    Object removeMealFromCart(Long mealId);
+
+    Object viewCart();
 }
 

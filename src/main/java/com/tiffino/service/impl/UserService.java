@@ -72,6 +72,12 @@ public class UserService implements IUserService {
     @Autowired
     private PriceCalculatorService priceCalculatorService;
 
+    @Autowired
+    private CartRepository cartRepository;
+
+    @Autowired
+    private CartItemRepository cartItemRepository;
+
 
     public Object registerUser(UserRegistrationRequest request) {
 
@@ -159,45 +165,35 @@ public class UserService implements IUserService {
 
     @Override
     @Transactional
-    public Object createOrder(CreateOrderRequest request) {
+    public Object createOrder(DeliveryDetails deliveryDetails) {
         User user = (User) dataToken.getCurrentUserProfile();
 
-        Optional<CloudKitchen> cloudKitchenOptional = cloudKitchenRepository.findByCloudKitchenIdAndIsDeletedFalse(request.getCloudKitchenId());
+        Cart cart = cartRepository.findByUser(user)
+                .orElseThrow(() -> new RuntimeException("No cart found"));
 
-        if (!cloudKitchenOptional.isPresent()) {
-            return "CloudKItchen Not Found";
+        if (cart.getItems().isEmpty()) {
+            throw new RuntimeException("Cart is empty");
         }
 
-        CloudKitchen cloudKitchen = cloudKitchenOptional.get();
+        List<CloudKitchenMeal> orderedMeals = cart.getItems().stream()
+                .map(CartItem::getCloudKitchenMeal)
+                .collect(Collectors.toList());
 
-        List<CloudKitchenMeal> kitchenMeals = cloudKitchenMealRepository
-                .findByCloudKitchenAndAvailableTrue(cloudKitchen);
-
-        Map<Long, CloudKitchenMeal> availableMeals = kitchenMeals.stream()
-                .collect(Collectors.toMap(cm -> cm.getMeal().getMealId(), cm -> cm));
-
-        List<CloudKitchenMeal> orderedMeals = new ArrayList<>();
-        for (Long mealId : request.getMealIds()) {
-            if (!availableMeals.containsKey(mealId)) {
-                return "Meal ID " + mealId + " not available in this kitchen";
-            }
-            orderedMeals.add(availableMeals.get(mealId));
-        }
-
-        double totalCost = orderedMeals.stream()
-                .mapToDouble(cm -> cm.getMeal().getPrice())
-                .sum();
+        double totalCost = cart.getTotalPrice();
 
         Order order = Order.builder()
                 .user(user)
-                .cloudKitchen(cloudKitchen)
+                .cloudKitchen(cart.getCloudKitchen())
                 .ckMeals(orderedMeals)
                 .orderStatus(String.valueOf(DeliveryStatus.PENDING))
-                .deliveryDetails(request.getDeliveryDetails())
+                .deliveryDetails(deliveryDetails)
                 .totalCost(totalCost)
                 .build();
 
         orderRepository.save(order);
+
+        cartRepository.delete(cart);
+
         return "Order placed successfully!";
     }
 
@@ -528,5 +524,131 @@ public class UserService implements IUserService {
                 .toList();
     }
 
+    @Override
+    @Transactional
+    public Object addMealsToCart(CartRequest request) {
+        User user = (User) dataToken.getCurrentUserProfile();
 
+        CloudKitchen cloudKitchen = cloudKitchenRepository
+                .findByCloudKitchenIdAndIsDeletedFalse(request.getCloudKitchenId())
+                .orElseThrow(() -> new RuntimeException("CloudKitchen Not Found"));
+
+        Cart cart = cartRepository.findByUser(user)
+                .orElseGet(() -> {
+                    Cart c = new Cart();
+                    c.setUser(user);
+                    c.setCloudKitchen(cloudKitchen);
+                    return c;
+                });
+
+        if (cart.getCloudKitchen() != null &&
+                !cart.getCloudKitchen().getCloudKitchenId().equals(request.getCloudKitchenId())) {
+            return "You can only add meals from one CloudKitchen at a time";
+        }
+
+        Map<Long, CartItem> existingMap = cart.getItems().stream()
+                .collect(Collectors.toMap(
+                        item -> item.getCloudKitchenMeal().getId(),
+                        item -> item
+                ));
+
+        List<Long> mealIds = request.getMeals().stream()
+                .map(CartRequest.CartMealItem::getMealId)
+                .toList();
+
+        List<CloudKitchenMeal> availableMeals = cloudKitchenMealRepository
+                .findByCloudKitchenAndMeal_MealIdInAndAvailableTrue(cloudKitchen, mealIds);
+
+        Map<Long, CloudKitchenMeal> mealMap = availableMeals.stream()
+                .collect(Collectors.toMap(cm -> cm.getMeal().getMealId(), cm -> cm));
+
+        for (CartRequest.CartMealItem itemReq : request.getMeals()) {
+            CloudKitchenMeal ckm = mealMap.get(itemReq.getMealId());
+            if (ckm == null) {
+                throw new RuntimeException("Meal ID " + itemReq.getMealId() + " not available");
+            }
+
+            Optional<CartItem> existing = cart.getItems().stream()
+                    .filter(i -> i.getCloudKitchenMeal().getId().equals(ckm.getId()))
+                    .findFirst();
+
+            if (existing.isPresent()) {
+                CartItem ci = existing.get();
+                ci.setQuantity(ci.getQuantity() + itemReq.getQuantity());
+                ci.setPrice(ci.getCloudKitchenMeal().getMeal().getPrice() * ci.getQuantity());
+            } else {
+                CartItem newItem = new CartItem();
+                newItem.setCart(cart);
+                newItem.setCloudKitchenMeal(ckm);
+                newItem.setQuantity(itemReq.getQuantity());
+                newItem.setPrice(ckm.getMeal().getPrice() * itemReq.getQuantity());
+                cart.getItems().add(newItem);
+            }
+        }
+
+        cart.setTotalPrice(
+                cart.getItems().stream().mapToDouble(CartItem::getPrice).sum()
+        );
+        cartRepository.save(cart);
+        return "Add to Cart";
+    }
+
+    @Override
+    @Transactional
+    public Object removeMealFromCart(Long mealId) {
+        User user = (User) dataToken.getCurrentUserProfile();
+        Cart cart = cartRepository.findByUser(user).get();
+
+        if(cart ==null){
+            return "Cart Not Found";
+        }
+
+        cart.getItems().removeIf(item ->
+                item.getCloudKitchenMeal().getMeal().getMealId().equals(mealId)
+        );
+
+        if (cart.getItems().isEmpty()) {
+            cartRepository.delete(cart);
+            return null;
+        }
+
+        cart.setTotalPrice(
+                cart.getItems().stream().mapToDouble(CartItem::getPrice).sum()
+        );
+
+        cartRepository.save(cart);
+
+        return "Remove Meal :- "+mealId;
+    }
+
+    @Override
+    public Object viewCart() {
+        User user = (User) dataToken.getCurrentUserProfile();
+
+        Cart cart = cartRepository.findByUser(user).orElse(null);
+        if (cart == null) {
+            return "Cart is empty";
+        }
+
+        List<CartResponse.CartMealInfo> mealInfos = cart.getItems().stream()
+                .map(item -> new CartResponse.CartMealInfo(
+                        item.getCloudKitchenMeal().getMeal().getMealId(),
+                        item.getCloudKitchenMeal().getMeal().getName(),
+                        item.getCloudKitchenMeal().getMeal().getPrice(),
+                        item.getQuantity(),
+                        item.getCloudKitchenMeal().getMeal().getPrice() * item.getQuantity()
+                ))
+                .toList();
+
+        if (mealInfos.isEmpty()) {
+            return "Cart is empty";
+        }
+
+        return new CartResponse(
+                cart.getId(),
+                cart.getCloudKitchen().getCloudKitchenId(),
+                cart.getTotalPrice(),
+                mealInfos
+        );
+    }
 }

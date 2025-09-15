@@ -1,5 +1,6 @@
 package com.tiffino.controller;
 
+import com.tiffino.entity.DeliveryDetails;
 import com.tiffino.entity.request.*;
 import com.tiffino.service.EmailService;
 import com.tiffino.service.IUserService;
@@ -79,8 +80,8 @@ public class UserController {
     }
 
     @PostMapping("/orders")
-    public ResponseEntity<?> createOrder(@RequestBody CreateOrderRequest request) {
-        return new ResponseEntity<>(iUserService.createOrder(request), HttpStatus.OK);
+    public ResponseEntity<?> createOrder(@RequestBody DeliveryDetails deliveryDetails) {
+        return new ResponseEntity<>(iUserService.createOrder(deliveryDetails), HttpStatus.OK);
     }
 
     @DeleteMapping("/deleteOrder/{orderId}")
@@ -114,4 +115,20 @@ public class UserController {
     public ResponseEntity<?> getAllMealsByCuisineName(@PathVariable String cuisineName){
         return new ResponseEntity<>(iUserService.getAllMealsByCuisineName(cuisineName),HttpStatus.OK);
     }
+
+    @PostMapping("/addCart")
+    public ResponseEntity<?> addMultipleMeals(@RequestBody CartRequest request) {
+        return ResponseEntity.ok(iUserService.addMealsToCart(request));
+    }
+
+    @DeleteMapping("/removeMeal/{mealId}")
+    public ResponseEntity<?> removeMeal(@PathVariable Long mealId) {
+        return ResponseEntity.ok(iUserService.removeMealFromCart(mealId));
+    }
+
+    @GetMapping("/viewCart")
+    public ResponseEntity<?> viewCart() {
+        return ResponseEntity.ok(iUserService.viewCart());
+    }
+
 }
