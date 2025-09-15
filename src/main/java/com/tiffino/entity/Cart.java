@@ -47,4 +47,7 @@ public class Cart {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+
+
 }
