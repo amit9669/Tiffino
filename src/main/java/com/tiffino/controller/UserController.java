@@ -1,6 +1,7 @@
 package com.tiffino.controller;
 
 import com.tiffino.entity.DeliveryDetails;
+import com.tiffino.entity.DurationType;
 import com.tiffino.entity.request.*;
 import com.tiffino.service.EmailService;
 import com.tiffino.service.IUserService;
@@ -10,6 +11,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.Set;
 
 @RestController
 @RequestMapping("/user")
@@ -65,13 +69,30 @@ public class UserController {
     }
 
     @PostMapping("/assignSubscriptionToUser")
-    public ResponseEntity<?> assignSubscriptionToUser(@ModelAttribute SubscriptionRequest subscriptionRequest){
-        return new ResponseEntity<>(iUserService.assignSubscriptionToUser(subscriptionRequest),HttpStatus.OK);
+    public ResponseEntity<?> assignSubscriptionToUser(
+            @RequestParam("durationType") DurationType durationType,
+            @RequestParam("mealTimes") Set<String> mealTimes,
+            @RequestParam(value = "allergies", required = false) Set<String> allergies,
+            @RequestParam(value = "caloriesPerMeal", required = false) Integer caloriesPerMeal,
+            @RequestParam(value = "dietaryFilePath", required = false) MultipartFile dietaryFilePath,
+            @RequestParam(value = "giftCardCodeInput", required = false) String giftCardCodeInput) {
+
+        SubscriptionRequest subscriptionRequest = new SubscriptionRequest();
+        subscriptionRequest.setDurationType(durationType);
+        subscriptionRequest.setMealTimes(mealTimes);
+        subscriptionRequest.setAllergies(allergies);
+        subscriptionRequest.setCaloriesPerMeal(caloriesPerMeal);
+        subscriptionRequest.setGiftCardCodeInput(giftCardCodeInput);
+        subscriptionRequest.setDietaryFilePath(dietaryFilePath);
+
+        return ResponseEntity.ok(iUserService.assignSubscriptionToUser(subscriptionRequest));
     }
 
+
+
     @GetMapping("/getAllGiftCardsOfUser")
-    public ResponseEntity<?> getAllGiftCardsOfUser(){
-        return new ResponseEntity<>(iUserService.getAllGiftCardsOfUser(),HttpStatus.OK);
+    public ResponseEntity<?> getAllGiftCardsOfUser() {
+        return new ResponseEntity<>(iUserService.getAllGiftCardsOfUser(), HttpStatus.OK);
     }
 
     @PostMapping("/updateUser")
@@ -112,8 +133,8 @@ public class UserController {
     }
 
     @GetMapping("/getAllMealsByCuisineName/{cuisineName}")
-    public ResponseEntity<?> getAllMealsByCuisineName(@PathVariable String cuisineName){
-        return new ResponseEntity<>(iUserService.getAllMealsByCuisineName(cuisineName),HttpStatus.OK);
+    public ResponseEntity<?> getAllMealsByCuisineName(@PathVariable String cuisineName) {
+        return new ResponseEntity<>(iUserService.getAllMealsByCuisineName(cuisineName), HttpStatus.OK);
     }
 
     @PostMapping("/addCart")

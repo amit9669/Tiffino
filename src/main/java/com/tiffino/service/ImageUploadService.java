@@ -18,6 +18,10 @@ public class ImageUploadService {
     private static final String API_KEY = "4b13c7f9a6d506df9b7988d9dd2db7eb";
 
     public String uploadImage(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            System.out.println("ImageUploadService ");
+            return null;
+        }
         try {
             // Convert file to Base64
             String base64Image = Base64.getEncoder().encodeToString(file.getBytes());
