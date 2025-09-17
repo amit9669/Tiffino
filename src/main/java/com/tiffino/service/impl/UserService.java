@@ -493,12 +493,6 @@ public class UserService implements IUserService {
             return "You can only add meals from one CloudKitchen at a time";
         }
 
-        Map<Long, CartItem> existingMap = cart.getItems().stream()
-                .collect(Collectors.toMap(
-                        item -> item.getCloudKitchenMeal().getId(),
-                        item -> item
-                ));
-
         List<Long> mealIds = request.getMeals().stream()
                 .map(CartRequest.CartMealItem::getMealId)
                 .toList();
@@ -515,30 +509,29 @@ public class UserService implements IUserService {
                 throw new RuntimeException("Meal ID " + itemReq.getMealId() + " not available");
             }
 
-            Optional<CartItem> existing = cart.getItems().stream()
-                    .filter(i -> i.getCloudKitchenMeal().getId().equals(ckm.getId()))
-                    .findFirst();
+            boolean exists = cart.getItems().stream()
+                    .anyMatch(i -> i.getCloudKitchenMeal().getId().equals(ckm.getId()));
 
-            if (existing.isPresent()) {
-                CartItem ci = existing.get();
-                ci.setQuantity(ci.getQuantity() + itemReq.getQuantity());
-                ci.setPrice(ci.getCloudKitchenMeal().getMeal().getPrice() * ci.getQuantity());
-            } else {
+            if (!exists) {
                 CartItem newItem = new CartItem();
                 newItem.setCart(cart);
                 newItem.setCloudKitchenMeal(ckm);
-                newItem.setQuantity(itemReq.getQuantity());
-                newItem.setPrice(ckm.getMeal().getPrice() * itemReq.getQuantity());
+                newItem.setQuantity(0);
+                newItem.setPrice(ckm.getMeal().getPrice());
                 cart.getItems().add(newItem);
             }
         }
 
-        cart.setTotalPrice(
-                cart.getItems().stream().mapToDouble(CartItem::getPrice).sum()
-        );
+        double totalUnitPrice = cart.getItems().stream()
+                .mapToDouble(item -> item.getCloudKitchenMeal().getMeal().getPrice())
+                .sum();
+        cart.setTotalPrice(totalUnitPrice);
+
         cartRepository.save(cart);
-        return "Add to Cart";
+        return "Meals added to cart without quantity. Total base price: " + totalUnitPrice;
     }
+
+
 
     @Override
     @Transactional
@@ -581,6 +574,7 @@ public class UserService implements IUserService {
                 .map(item -> new CartResponse.CartMealInfo(
                         item.getCloudKitchenMeal().getMeal().getMealId(),
                         item.getCloudKitchenMeal().getMeal().getName(),
+                        item.getCloudKitchenMeal().getMeal().getPhotos(),
                         item.getCloudKitchenMeal().getMeal().getPrice(),
                         item.getQuantity(),
                         item.getCloudKitchenMeal().getMeal().getPrice() * item.getQuantity()
@@ -597,5 +591,34 @@ public class UserService implements IUserService {
                 cart.getTotalPrice(),
                 mealInfos
         );
+    }
+
+    @Override
+    @Transactional
+    public Object updateCartQuantities(UpdateQuantityRequest request) {
+        User user = (User) dataToken.getCurrentUserProfile();
+        Cart cart = cartRepository.findByUser(user)
+                .orElseThrow(() -> new RuntimeException("Cart Not Found"));
+
+        Map<Long, Integer> quantityMap = request.getItems().stream()
+                .collect(Collectors.toMap(UpdateQuantityRequest.ItemQuantity::getMealId,
+                        UpdateQuantityRequest.ItemQuantity::getQuantity));
+
+        for (CartItem item : cart.getItems()) {
+            Integer newQty = quantityMap.get(item.getCloudKitchenMeal().getMeal().getMealId());
+            if (newQty != null && newQty >= 0) {
+                item.setQuantity(newQty);
+                item.setPrice(item.getCloudKitchenMeal().getMeal().getPrice() * newQty);
+            }
+        }
+
+        double total = cart.getItems().stream()
+                .mapToDouble(CartItem::getPrice)
+                .sum();
+
+        cart.setTotalPrice(total);
+        cartRepository.save(cart);
+
+        return "Cart updated with quantities. Total Price: " + total;
     }
 }

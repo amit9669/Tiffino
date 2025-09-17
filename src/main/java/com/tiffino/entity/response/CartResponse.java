@@ -19,6 +19,7 @@ public class CartResponse {
     public static class CartMealInfo {
         private Long mealId;
         private String mealName;
+        private String mealPhotos;
         private double unitPrice;
         private int quantity;
         private double lineTotal;

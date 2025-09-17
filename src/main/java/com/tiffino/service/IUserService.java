@@ -39,5 +39,7 @@ public interface IUserService {
     Object removeMealFromCart(Long mealId);
 
     Object viewCart();
+
+   Object updateCartQuantities(UpdateQuantityRequest request);
 }
 

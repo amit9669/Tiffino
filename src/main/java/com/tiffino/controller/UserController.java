@@ -152,4 +152,9 @@ public class UserController {
         return ResponseEntity.ok(iUserService.viewCart());
     }
 
+    @PostMapping("/updateCartQuantities")
+    public ResponseEntity<?> updateCartQuantities(@RequestBody UpdateQuantityRequest request){
+        return new ResponseEntity<>(iUserService.updateCartQuantities(request),HttpStatus.OK);
+    }
+
 }
