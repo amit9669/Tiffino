@@ -2,6 +2,7 @@ package com.tiffino.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
@@ -9,7 +10,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.Base64;
+import java.io.IOException;
 
 @Service
 public class ImageUploadService {
@@ -19,25 +20,24 @@ public class ImageUploadService {
 
     public String uploadImage(MultipartFile file) {
         if (file == null || file.isEmpty()) {
-            System.out.println("ImageUploadService ");
+            System.out.println("No file provided");
             return null;
         }
         try {
-            // Convert file to Base64
-            String base64Image = Base64.getEncoder().encodeToString(file.getBytes());
-
-            // Prepare form data
-            MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-            params.add("key", API_KEY);
-            params.add("image", base64Image);
-
             HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+            headers.setContentType(MediaType.MULTIPART_FORM_DATA);
 
-            HttpEntity<MultiValueMap<String, String>> requestEntity =
-                    new HttpEntity<>(params, headers);
+            MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+            body.add("key", API_KEY);
+            body.add("image", new ByteArrayResource(file.getBytes()) {
+                @Override
+                public String getFilename() {
+                    return file.getOriginalFilename();
+                }
+            });
 
-            // Send request
+            HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
+
             RestTemplate restTemplate = new RestTemplate();
             ResponseEntity<String> response = restTemplate.exchange(
                     IMGBB_API_URL,
@@ -46,7 +46,7 @@ public class ImageUploadService {
                     String.class
             );
 
-            // Parse response
+            System.out.println("Response Body: " + response.getBody());
             return parseImageUrlFromResponse(response.getBody());
 
         } catch (Exception e) {
@@ -55,20 +55,9 @@ public class ImageUploadService {
         }
     }
 
-    private String parseImageUrlFromResponse(String response) {
-        try {
-            ObjectMapper objectMapper = new ObjectMapper();
-            JsonNode jsonResponse = objectMapper.readTree(response);
-
-            if (jsonResponse.has("data")) {
-                return jsonResponse.get("data").get("url").asText();
-            } else {
-                System.err.println("Invalid response: " + response);
-                return null;
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
+    private String parseImageUrlFromResponse(String response) throws IOException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode jsonResponse = objectMapper.readTree(response);
+        return jsonResponse.path("data").path("url").asText(null);
     }
 }
