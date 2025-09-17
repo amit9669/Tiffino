@@ -516,7 +516,7 @@ public class UserService implements IUserService {
                 CartItem newItem = new CartItem();
                 newItem.setCart(cart);
                 newItem.setCloudKitchenMeal(ckm);
-                newItem.setQuantity(0);
+                newItem.setQuantity(1);
                 newItem.setPrice(ckm.getMeal().getPrice());
                 cart.getItems().add(newItem);
             }
