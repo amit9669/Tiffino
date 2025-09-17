@@ -588,6 +588,7 @@ public class UserService implements IUserService {
         return new CartResponse(
                 cart.getId(),
                 cart.getCloudKitchen().getCloudKitchenId(),
+                cart.getCloudKitchen().getCity() + "-" + cart.getCloudKitchen().getDivision(),
                 cart.getTotalPrice(),
                 mealInfos
         );

@@ -10,6 +10,7 @@ import java.util.List;
 public class CartResponse {
     private Long cartId;
     private String cloudKitchenId;
+    private String cloudKitchenName;
     private double totalPrice;
     private List<CartMealInfo> meals;
 
