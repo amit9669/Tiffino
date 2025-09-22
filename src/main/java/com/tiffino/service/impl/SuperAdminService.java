@@ -367,6 +367,9 @@ public class SuperAdminService implements ISuperAdminService {
             deliveryPerson.setPhoneNo(personRequest.getPhoneNo());
             deliveryPerson.setName(personRequest.getName());
             deliveryPerson.setCloudKitchen(cloudKitchen.get());
+            deliveryPerson.setAdharCard(this.imageUploadService.uploadImage(personRequest.getAdharCard()));
+            deliveryPerson.setInsurance(this.imageUploadService.uploadImage(personRequest.getInsurance()));
+            deliveryPerson.setLicences(this.imageUploadService.uploadImage(personRequest.getLicences()));
             DeliveryPerson deliveryPersonSaved = deliveryPersonRepository.save(deliveryPerson);
             emailService.sendEmail(deliveryPerson.getEmail(), "Tiffino Delivery Partner Credential",
                     "Now You are the Delivery Partner of this " + deliveryPerson.getCloudKitchen().getCloudKitchenId()
