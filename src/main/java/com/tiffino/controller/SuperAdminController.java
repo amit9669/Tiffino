@@ -127,4 +127,9 @@ public class SuperAdminController {
     public ResponseEntity<?> getAllCloudKItchenAndReviews() {
         return new ResponseEntity<>(iSuperAdminService.getAllCloudKItchenAndReviews(), HttpStatus.OK);
     }
+
+    @GetMapping("/getAllCloudKitchenData")
+    public ResponseEntity<?> getAllCloudKitchenData(){
+        return new ResponseEntity<>(iSuperAdminService.getAllCloudKitchenData(), HttpStatus.FOUND);
+    }
 }

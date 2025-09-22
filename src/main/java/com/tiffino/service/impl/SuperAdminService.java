@@ -494,4 +494,9 @@ public class SuperAdminService implements ISuperAdminService {
     public Object getAllCuisines() {
         return cuisineRepository.findAll();
     }
+
+    @Override
+    public Object getAllCloudKitchenData() {
+        return kitchenRepository.findAll();
+    }
 }
