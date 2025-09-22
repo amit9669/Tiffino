@@ -130,6 +130,6 @@ public class SuperAdminController {
 
     @GetMapping("/getAllCloudKitchenData")
     public ResponseEntity<?> getAllCloudKitchenData(){
-        return new ResponseEntity<>(iSuperAdminService.getAllCloudKitchenData(), HttpStatus.FOUND);
+        return new ResponseEntity<>(iSuperAdminService.getAllCloudKitchenData(), HttpStatus.OK);
     }
 }
