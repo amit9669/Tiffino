@@ -37,9 +37,9 @@ public class TiffinoApplication implements CommandLineRunner {
             superAdmin.setEmail("admin@gmail.com");
             superAdmin.setPassword(passwordEncoder.encode("admin"));
             superAdminRepository.save(superAdmin);
-            System.out.println("Default super admin created ✅");
+            System.out.println("Default super admin created!!!");
         } else {
-            System.out.println("Super admin already exists ⚠️");
+            System.out.println("Super admin already exists!!!");
         }
     }
 }

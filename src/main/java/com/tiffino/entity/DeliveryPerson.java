@@ -7,7 +7,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Data
@@ -44,6 +43,15 @@ public class DeliveryPerson {
     @Enumerated(EnumType.STRING)
     @Column(name = "role")
     private Role role = Role.DELIVERY_PERSON;
+
+    @Column(name = "licences")
+    private String licences;
+
+    @Column(name = "adhar_card")
+    private String adharCard;
+
+    @Column(name = "insurance")
+    private String insurance;
 
     @OneToMany(mappedBy = "deliveryPerson")
     @JsonIgnore

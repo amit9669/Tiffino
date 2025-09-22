@@ -62,9 +62,29 @@ public class SuperAdminController {
     }
 
     @PostMapping("/saveOrUpdateDeliveryPerson")
-    public ResponseEntity<?> saveOrUpdateDeliveryPerson(@RequestBody DeliveryPersonRequest personRequest) {
+    public ResponseEntity<?> saveOrUpdateDeliveryPerson(
+            @RequestParam(value = "deliveryPersonId", required = false) Long deliveryPersonId,
+            @RequestParam("name") String name,
+            @RequestParam("email") String email,
+            @RequestParam("phoneNo") String phoneNo,
+            @RequestParam(value = "adharCard") MultipartFile adharCard,
+            @RequestParam(value = "insurance") MultipartFile insurance,
+            @RequestParam(value = "licences") MultipartFile licences,
+            @RequestParam("cloudKitchenId") String cloudKitchenId) {
+
+        DeliveryPersonRequest personRequest = new DeliveryPersonRequest();
+        personRequest.setDeliveryPersonId(deliveryPersonId);
+        personRequest.setName(name);
+        personRequest.setEmail(email);
+        personRequest.setPhoneNo(phoneNo);
+        personRequest.setAdharCard(adharCard);
+        personRequest.setInsurance(insurance);
+        personRequest.setLicences(licences);
+        personRequest.setCloudKitchenId(cloudKitchenId);
+
         return new ResponseEntity<>(iSuperAdminService.saveOrUpdateDeliveryPerson(personRequest), HttpStatus.OK);
     }
+
 
     @PostMapping("/saveOrUpdateCuisine")
     public ResponseEntity<?> saveOrUpdateCuisine(@RequestBody CuisineRequest cuisineRequest) throws IOException {
