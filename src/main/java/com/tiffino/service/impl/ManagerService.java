@@ -18,6 +18,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -305,7 +306,7 @@ public class ManagerService implements IManagerService {
                         .totalCost(order.getTotalCost())
                         .address(order.getDeliveryDetails().getAddress())
                         .orderDate(String.valueOf(order.getCreatedAt().toLocalDate()))
-                        .orderTime(String.valueOf(order.getCreatedAt().toLocalTime()))
+                        .orderTime(String.valueOf(order.getCreatedAt().toLocalTime().truncatedTo(ChronoUnit.SECONDS)))
                         .userName(order.getUser().getUserName())
                         .build()
                 )
