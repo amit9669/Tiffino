@@ -210,9 +210,12 @@ public class UserService implements IUserService {
                     String orderDate = order.getCreatedAt().toLocalDate().toString();
                     String orderTime = order.getCreatedAt().toLocalTime().toString();
 
-                    List<String> mealNames = order.getCkMeals().stream()
+                    List<String> mealNames = order.getCkMeals().
+                            stream()
                             .map(item -> item.getMeal().getName())
                             .toList();
+
+                    List<String> mealPhotos = order.getCkMeals().stream().map(photo -> photo.getMeal().getPhotos()).toList();
 
                     return OrderResponse.builder()
                             .orderId(order.getOrderId())
@@ -221,6 +224,7 @@ public class UserService implements IUserService {
                             .orderDate(orderDate)
                             .orderTime(orderTime)
                             .mealName(mealNames)
+                            .mealPhotos(mealPhotos)
                             .build();
                 })
                 .toList();

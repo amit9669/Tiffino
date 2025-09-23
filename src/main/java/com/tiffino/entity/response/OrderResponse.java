@@ -15,4 +15,5 @@ public class OrderResponse {
     private String orderDate;
     private String orderTime;
     private List<String> mealName;
+    private List<String> mealPhotos;
 }
