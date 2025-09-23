@@ -172,7 +172,7 @@ public class ManagerService implements IManagerService {
                 .pinCode(cloudKitchen.getPinCode())
                 .city(cloudKitchen.getCity())
                 .managerId(manager.getManagerId())
-                .reviews(reviewResponses)
+                .reviews(reviewResponses)//-------------------------remaining
                 .build();
     }
 

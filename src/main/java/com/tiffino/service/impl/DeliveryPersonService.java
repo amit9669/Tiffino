@@ -100,7 +100,7 @@ public class DeliveryPersonService implements IDeliveryPersonService {
 
     @Override
     public Object pickupOrder(Long deliveryId) {
-        Delivery delivery = deliveryRepository.findById(deliveryId)
+        Delivery delivery = deliveryRepository.findByOrder_OrderId(deliveryId)
                 .orElseThrow(() -> new RuntimeException("Delivery not found"));
 
         if (delivery.getStatus() != DeliveryStatus.ASSIGNED) {
@@ -118,7 +118,7 @@ public class DeliveryPersonService implements IDeliveryPersonService {
 
     @Override
     public Object deliverOrder(Long deliveryId) {
-        Delivery delivery = deliveryRepository.findById(deliveryId)
+        Delivery delivery = deliveryRepository.findByOrder_OrderId(deliveryId)
                 .orElseThrow(() -> new RuntimeException("Delivery not found"));
 
         if (delivery.getStatus() != DeliveryStatus.PICKED_UP) {
