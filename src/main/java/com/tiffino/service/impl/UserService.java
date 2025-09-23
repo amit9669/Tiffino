@@ -15,6 +15,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 import java.time.LocalDateTime;
@@ -208,14 +209,17 @@ public class UserService implements IUserService {
         return orders.stream()
                 .map(order -> {
                     String orderDate = order.getCreatedAt().toLocalDate().toString();
-                    String orderTime = order.getCreatedAt().toLocalTime().toString();
+                    String orderTime = order.getCreatedAt().toLocalTime().truncatedTo(ChronoUnit.SECONDS).toString();
 
-                    List<String> mealNames = order.getCkMeals().
-                            stream()
-                            .map(item -> item.getMeal().getName())
+                    // Map each meal to OrderMealsResponse
+                    List<OrderResponse.OrderMealsResponse> orderMealsResponses = order.getCkMeals().stream()
+                            .map(item -> {
+                                OrderResponse.OrderMealsResponse response = new OrderResponse().new OrderMealsResponse();
+                                response.setMealName(item.getMeal().getName());
+                                response.setMealPhotos(item.getMeal().getPhotos());
+                                return response;
+                            })
                             .toList();
-
-                    List<String> mealPhotos = order.getCkMeals().stream().map(photo -> photo.getMeal().getPhotos()).toList();
 
                     return OrderResponse.builder()
                             .orderId(order.getOrderId())
@@ -223,12 +227,12 @@ public class UserService implements IUserService {
                             .totalCost(order.getTotalCost())
                             .orderDate(orderDate)
                             .orderTime(orderTime)
-                            .mealName(mealNames)
-                            .mealPhotos(mealPhotos)
+                            .orderMealsResponses(orderMealsResponses)
                             .build();
                 })
                 .toList();
     }
+
 
 
     @Override

@@ -14,6 +14,13 @@ public class OrderResponse {
     private Double totalCost;
     private String orderDate;
     private String orderTime;
-    private List<String> mealName;
-    private List<String> mealPhotos;
+    private List<OrderMealsResponse> orderMealsResponses;
+
+    @Data
+    public class OrderMealsResponse {
+
+        private String mealName;
+        private String mealPhotos;
+    }
+
 }
