@@ -196,7 +196,6 @@ public class UserService implements IUserService {
 
         order.setItems(orderItems);
         orderRepository.save(order);
-
         cartRepository.delete(cart);
         return "Order placed successfully!";
     }
