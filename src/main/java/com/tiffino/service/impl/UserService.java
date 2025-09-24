@@ -165,11 +165,10 @@ public class UserService implements IUserService {
     }
 
 
-    @Override
     @Transactional
+    @Override
     public Object createOrder(DeliveryDetails deliveryDetails) {
         User user = (User) dataToken.getCurrentUserProfile();
-
         Cart cart = cartRepository.findByUser(user)
                 .orElseThrow(() -> new RuntimeException("No cart found"));
 
@@ -177,27 +176,30 @@ public class UserService implements IUserService {
             throw new RuntimeException("Cart is empty");
         }
 
-        List<CloudKitchenMeal> orderedMeals = cart.getItems().stream()
-                .map(CartItem::getCloudKitchenMeal)
-                .collect(Collectors.toList());
-
-        double totalCost = cart.getTotalPrice();
-
         Order order = Order.builder()
                 .user(user)
                 .cloudKitchen(cart.getCloudKitchen())
-                .ckMeals(orderedMeals)
                 .orderStatus(String.valueOf(DeliveryStatus.PENDING))
                 .deliveryDetails(deliveryDetails)
-                .totalCost(totalCost)
+                .totalCost(cart.getTotalPrice())
                 .build();
 
+        List<OrderItem> orderItems = cart.getItems().stream()
+                .map(ci -> OrderItem.builder()
+                        .order(order)
+                        .cloudKitchenMeal(ci.getCloudKitchenMeal())
+                        .quantity(ci.getQuantity())
+                        .price(ci.getPrice())
+                        .build())
+                .toList();
+
+        order.setItems(orderItems);
         orderRepository.save(order);
 
         cartRepository.delete(cart);
-
         return "Order placed successfully!";
     }
+
 
 
     @Override
@@ -209,17 +211,21 @@ public class UserService implements IUserService {
         return orders.stream()
                 .map(order -> {
                     String orderDate = order.getCreatedAt().toLocalDate().toString();
-                    String orderTime = order.getCreatedAt().toLocalTime().truncatedTo(ChronoUnit.SECONDS).toString();
+                    String orderTime = order.getCreatedAt().toLocalTime()
+                            .truncatedTo(ChronoUnit.SECONDS).toString();
 
-                    // Map each meal to OrderMealsResponse
-                    List<OrderResponse.OrderMealsResponse> orderMealsResponses = order.getCkMeals().stream()
-                            .map(item -> {
-                                OrderResponse.OrderMealsResponse response = new OrderResponse().new OrderMealsResponse();
-                                response.setMealName(item.getMeal().getName());
-                                response.setMealPhotos(item.getMeal().getPhotos());
-                                return response;
-                            })
-                            .toList();
+                    List<OrderResponse.OrderMealsResponse> mealsResponses =
+                            order.getItems().stream()
+                                    .map(item -> {
+                                        OrderResponse.OrderMealsResponse r =
+                                                new OrderResponse().new OrderMealsResponse();
+                                        r.setMealName(item.getCloudKitchenMeal().getMeal().getName());
+                                        r.setMealPhotos(item.getCloudKitchenMeal().getMeal().getPhotos());
+                                        r.setMealQuantity(item.getQuantity());
+                                        r.setMealPrice(item.getPrice());
+                                        return r;
+                                    })
+                                    .toList();
 
                     return OrderResponse.builder()
                             .orderId(order.getOrderId())
@@ -227,11 +233,12 @@ public class UserService implements IUserService {
                             .totalCost(order.getTotalCost())
                             .orderDate(orderDate)
                             .orderTime(orderTime)
-                            .orderMealsResponses(orderMealsResponses)
+                            .orderMealsResponses(mealsResponses)
                             .build();
                 })
                 .toList();
     }
+
 
 
 

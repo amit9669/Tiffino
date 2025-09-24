@@ -21,6 +21,8 @@ public class OrderResponse {
 
         private String mealName;
         private String mealPhotos;
+        private Integer mealQuantity;
+        private Double mealPrice;
     }
 
 }
