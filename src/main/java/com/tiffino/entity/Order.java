@@ -47,6 +47,9 @@ public class Order {
     @CreationTimestamp
     private LocalDateTime createdAt;
 
+    @Column(name = "is_available")
+    private Boolean isAvailable = true;
+
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 

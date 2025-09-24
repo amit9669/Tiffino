@@ -240,14 +240,15 @@ public class UserService implements IUserService {
     }
 
 
-
-
     @Override
     public void deleteOrder(Long orderId) {
         if (!orderRepository.existsById(orderId)) {
             throw new RuntimeException("Order not found with ID: " + orderId);
         }
-        orderRepository.deleteById(orderId);
+        Order order = orderRepository.findById(orderId).get();
+        order.setOrderStatus("CANCELLED");
+        order.setIsAvailable(false);
+        orderRepository.save(order);
     }
 
 
