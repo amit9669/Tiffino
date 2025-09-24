@@ -294,7 +294,7 @@ public class ManagerService implements IManagerService {
     public Object getAllOrders() {
         Manager manager = (Manager) dataToken.getCurrentUserProfile();
 
-        List<Order> orders = orderRepository.findByIsAvailableTrue().stream()
+        List<Order> orders = orderRepository.findAllByIsAvailableTrue().stream()
                 .filter(order -> manager.getCloudKitchen().getCloudKitchenId()
                         .equals(order.getCloudKitchen().getCloudKitchenId()))
                 .toList();
