@@ -242,10 +242,19 @@ public class UserService implements IUserService {
 
     @Override
     public void deleteOrder(Long orderId) {
-        if (!orderRepository.existsById(orderId)) {
-            throw new RuntimeException("Order not found with ID: " + orderId);
+        User user = (User) dataToken.getCurrentUserProfile();
+
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found with ID: " + orderId));
+
+        if (!order.getUser().getUserId().equals(user.getUserId())) {
+            throw new RuntimeException("You are not allowed to cancel this order");
         }
-        Order order = orderRepository.findById(orderId).get();
+
+        if ("DELIVERED".equalsIgnoreCase(order.getOrderStatus())) {
+            throw new RuntimeException("Delivered orders cannot be cancelled");
+        }
+
         order.setOrderStatus("CANCELLED");
         order.setIsAvailable(false);
         orderRepository.save(order);
@@ -299,47 +308,53 @@ public class UserService implements IUserService {
     }
 
     @Override
-    public Object trackOrder() {
+    public Object trackOrder(Long orderId) {
         User user = (User) dataToken.getCurrentUserProfile();
 
-        List<Delivery> deliveries = deliveryRepository.findAllByOrder_User_UserId(user.getUserId());
+        Optional<Delivery> deliveryOpt =
+                deliveryRepository.findByOrder_OrderIdAndOrder_User_UserId(orderId, user.getUserId());
 
-        if (!deliveries.isEmpty()) {
-            return deliveries.stream()
-                    .map(delivery -> DeliveryTrackingResponse.builder()
-                            .orderId(delivery.getOrder().getOrderId())
-                            .orderStatus(delivery.getOrder().getOrderStatus())
-                            .deliveryId(delivery.getDeliveryId())
-                            .deliveryStatus(delivery.getStatus())
-                            .deliveryPersonName(delivery.getDeliveryPerson() != null ? delivery.getDeliveryPerson().getName() : "Not Assigned")
-                            .deliveryPersonPhone(delivery.getDeliveryPerson() != null ? delivery.getDeliveryPerson().getPhoneNo() : "N/A")
-                            .assignedAt(delivery.getAssignedAt())
-                            .pickedUpAt(delivery.getPickedUpAt())
-                            .deliveredAt(delivery.getDeliveredAt())
-                            .build())
-                    .toList();
+        if (deliveryOpt.isPresent()) {
+            Delivery d = deliveryOpt.get();
+            return DeliveryTrackingResponse.builder()
+                    .orderId(d.getOrder().getOrderId())
+                    .orderStatus(d.getOrder().getOrderStatus())
+                    .deliveryId(d.getDeliveryId())
+                    .deliveryStatus(d.getStatus())
+                    .deliveryPersonName(d.getDeliveryPerson() != null
+                            ? d.getDeliveryPerson().getName() : "Not Assigned")
+                    .deliveryPersonPhone(d.getDeliveryPerson() != null
+                            ? d.getDeliveryPerson().getPhoneNo() : "N/A")
+                    .assignedAt(d.getAssignedAt())
+                    .pickedUpAt(d.getPickedUpAt())
+                    .deliveredAt(d.getDeliveredAt())
+                    .build();
         }
 
-        List<Order> pendingOrders = orderRepository.findAllByUser_UserIdAndOrderStatus(user.getUserId(), "PENDING");
+        Order order = orderRepository.findByOrderIdAndUser_UserId(orderId, user.getUserId())
+                .orElseThrow(() -> new RuntimeException("Order not found for this user"));
 
-        if (!pendingOrders.isEmpty()) {
-            return pendingOrders.stream()
-                    .map(order -> DeliveryTrackingResponse.builder()
-                            .orderId(order.getOrderId())
-                            .orderStatus(order.getOrderStatus())
-                            .deliveryId(null)
-                            .deliveryStatus(DeliveryStatus.PENDING)
-                            .deliveryPersonName("Not Assigned")
-                            .deliveryPersonPhone("N/A")
-                            .assignedAt(null)
-                            .pickedUpAt(null)
-                            .deliveredAt(null)
-                            .build())
-                    .toList();
+        if ("PENDING".equalsIgnoreCase(order.getOrderStatus())) {
+            return DeliveryTrackingResponse.builder()
+                    .orderId(order.getOrderId())
+                    .orderStatus(order.getOrderStatus())
+                    .deliveryId(null)
+                    .deliveryStatus(DeliveryStatus.PENDING)
+                    .deliveryPersonName("Not Assigned")
+                    .deliveryPersonPhone("N/A")
+                    .assignedAt(null)
+                    .pickedUpAt(null)
+                    .deliveredAt(null)
+                    .build();
         }
 
-        return "No pending deliveries found for this user";
+        if("CANCELLED".equalsIgnoreCase(order.getOrderStatus())){
+            return "Order has Cancelled!!!";
+        }
+
+        return "No delivery or pending status found for orderId: " + orderId;
     }
+
 
     @Override
     public Object getAllMealsByCuisineName(String cuisineName) {

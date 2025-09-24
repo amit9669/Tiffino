@@ -127,9 +127,9 @@ public class UserController {
         return ResponseEntity.ok("Review deleted successfully");
     }
 
-    @GetMapping("/trackOrder")
-    public ResponseEntity<?> trackOrder() {
-        return new ResponseEntity<>(iUserService.trackOrder(), HttpStatus.OK);
+    @GetMapping("/trackOrder/{orderId}")
+    public ResponseEntity<?> trackOrder(@PathVariable Long orderId) {
+        return new ResponseEntity<>(iUserService.trackOrder(orderId), HttpStatus.OK);
     }
 
     @GetMapping("/getAllMealsByCuisineName/{cuisineName}")

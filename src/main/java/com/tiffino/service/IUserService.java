@@ -26,7 +26,7 @@ public interface IUserService {
 
     boolean checkUserExistsByEmail(String email);
 
-    Object trackOrder();
+    public Object trackOrder(Long orderId);
 
     Object getAllMealsByCuisineName(String cuisineName);
 
