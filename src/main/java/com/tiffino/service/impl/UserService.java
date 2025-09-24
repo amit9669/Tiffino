@@ -182,6 +182,7 @@ public class UserService implements IUserService {
                 .orderStatus(String.valueOf(DeliveryStatus.PENDING))
                 .deliveryDetails(deliveryDetails)
                 .totalCost(cart.getTotalPrice())
+                .isAvailable(true)
                 .build();
 
         List<OrderItem> orderItems = cart.getItems().stream()
