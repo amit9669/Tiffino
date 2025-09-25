@@ -678,7 +678,7 @@ public class UserService implements IUserService {
         }
 
         try {
-            Document doc = new Document(PageSize.A4, 50, 50, 50, 50);
+            Document doc = new Document(PageSize.A2, 50, 50, 50, 50);
             PdfWriter.getInstance(doc, out);
             doc.open();
 
