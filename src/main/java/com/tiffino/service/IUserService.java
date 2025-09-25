@@ -3,6 +3,8 @@ package com.tiffino.service;
 import com.tiffino.entity.DeliveryDetails;
 import com.tiffino.entity.request.*;
 
+import java.io.OutputStream;
+
 
 public interface IUserService {
 
@@ -41,5 +43,7 @@ public interface IUserService {
     Object viewCart();
 
    Object updateCartQuantities(UpdateQuantityRequest request);
+
+    void viewInvoice(Long orderId, OutputStream out);
 }
 

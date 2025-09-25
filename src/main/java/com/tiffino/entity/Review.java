@@ -27,7 +27,7 @@ public class Review {
 
     @Lob
     @Column(nullable = false)
-    private String comment;
+    private String cloudKitchenReview;
 
     @Column(nullable = false)
     private Integer rating;

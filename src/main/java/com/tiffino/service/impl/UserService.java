@@ -1,5 +1,14 @@
 package com.tiffino.service.impl;
 
+import com.itextpdf.text.BaseColor;
+import com.lowagie.text.Font;
+import com.lowagie.text.Image;
+import com.lowagie.text.PageSize;
+import com.lowagie.text.*;
+import com.lowagie.text.Rectangle;
+import com.lowagie.text.pdf.PdfPCell;
+import com.lowagie.text.pdf.PdfPTable;
+import com.lowagie.text.pdf.PdfWriter;
 import com.tiffino.entity.*;
 import com.tiffino.entity.request.*;
 import com.tiffino.entity.response.*;
@@ -15,12 +24,16 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.awt.*;
+import java.io.OutputStream;
+import java.net.URL;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Slf4j
 @Service
@@ -79,6 +92,9 @@ public class UserService implements IUserService {
 
     @Autowired
     private CartItemRepository cartItemRepository;
+
+    @Autowired
+    private OrderItemRepository orderItemRepository;
 
 
     public Object registerUser(UserRegistrationRequest request) {
@@ -201,7 +217,6 @@ public class UserService implements IUserService {
     }
 
 
-
     @Override
     public Object getAllOrders() {
         User user = (User) dataToken.getCurrentUserProfile();
@@ -285,7 +300,7 @@ public class UserService implements IUserService {
         }
 
         Review review = Review.builder()
-                .comment(request.getComment())
+                .cloudKitchenReview(request.getComment())
                 .rating(request.getRating())
                 .user(user)
                 .cloudKitchen(order.getCloudKitchen())
@@ -348,7 +363,7 @@ public class UserService implements IUserService {
                     .build();
         }
 
-        if("CANCELLED".equalsIgnoreCase(order.getOrderStatus())){
+        if ("CANCELLED".equalsIgnoreCase(order.getOrderStatus())) {
             return "Order has Cancelled!!!";
         }
 
@@ -563,7 +578,6 @@ public class UserService implements IUserService {
     }
 
 
-
     @Override
     @Transactional
     public Object removeMealFromCart(Long mealId) {
@@ -625,6 +639,7 @@ public class UserService implements IUserService {
         );
     }
 
+
     @Override
     @Transactional
     public Object updateCartQuantities(UpdateQuantityRequest request) {
@@ -653,4 +668,180 @@ public class UserService implements IUserService {
 
         return "Cart updated with quantities. Total Price: " + total;
     }
+
+    @Override
+    public void viewInvoice(Long orderId, OutputStream out) {
+        User user = (User) dataToken.getCurrentUserProfile();
+        List<OrderItem> orderItems = orderItemRepository.findAllByOrder_OrderId(orderId);
+        if (orderItems.isEmpty()) {
+            throw new IllegalArgumentException("No items found for order " + orderId);
+        }
+
+        try {
+            Document doc = new Document(PageSize.A4, 50, 50, 50, 50);
+            PdfWriter.getInstance(doc, out);
+            doc.open();
+
+            // === Colors ===
+            Color shidhoriOrange = new Color(255, 102, 0);
+            /*Color headerBg1 = new Color(255, 178, 102);*/
+            Color headerBg2 = new Color(255, 153, 51);
+            Color grayBg = new Color(245, 245, 245);
+
+            // === Add Logo ===
+            Image logo = Image.getInstance("C:\\Users\\amitc\\Downloads\\ChatGPT Image Sep 11, 2025, 12_42_02 PM.png");
+            logo.scaleToFit(100, 100);
+            logo.setAlignment(Element.ALIGN_CENTER);
+            doc.add(logo);
+
+            // === Title ===
+            Font kitchenFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 26, shidhoriOrange);
+            Paragraph kitchenTitle = new Paragraph("Shidhori Kitchen", kitchenFont);
+            kitchenTitle.setAlignment(Element.ALIGN_CENTER);
+            doc.add(kitchenTitle);
+
+            Font invoiceFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14, Color.GRAY);
+            Paragraph invoiceLabel = new Paragraph("Invoice", invoiceFont);
+            invoiceLabel.setAlignment(Element.ALIGN_CENTER);
+            doc.add(invoiceLabel);
+            doc.add(Chunk.NEWLINE);
+
+            // === Customer Info ===
+            Font normalFont = FontFactory.getFont(FontFactory.HELVETICA, 11, Color.DARK_GRAY);
+            PdfPTable customerTable = new PdfPTable(1);
+            customerTable.setWidthPercentage(100);
+
+            PdfPCell customerCell = new PdfPCell();
+            customerCell.setBackgroundColor(grayBg);
+            customerCell.setPadding(10f);
+            Paragraph customerDetails = new Paragraph(
+                    "Customer: " + user.getUserName() + "\n" +
+                            "Email: " + user.getEmail() + "\n" +
+                            "Phone No: " + user.getPhoneNo() + "\n" +
+                            "Date: " + java.time.LocalDate.now(),
+                    normalFont
+            );
+            customerDetails.setAlignment(Element.ALIGN_LEFT);
+            customerCell.addElement(customerDetails);
+            customerTable.addCell(customerCell);
+            doc.add(customerTable);
+            doc.add(Chunk.NEWLINE);
+
+            // === Table ===
+            PdfPTable table = new PdfPTable(4);
+            table.setWidthPercentage(100);
+            table.setWidths(new float[]{4f, 1.5f, 1.5f, 1.5f});
+            table.setSpacingBefore(10f);
+            table.setSpacingAfter(10f);
+
+            // === Table Header ===
+            Font headerFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12, Color.WHITE);
+
+            Stream.of("Meal", "Price", "Quantity", "Total").forEach(columnTitle -> {
+                PdfPCell header = new PdfPCell(new Phrase(columnTitle, headerFont));
+                header.setBackgroundColor(headerBg2);
+                header.setHorizontalAlignment(Element.ALIGN_CENTER);
+                header.setPadding(8f);
+                table.addCell(header);
+            });
+
+
+            double grandTotal = 0.0;
+
+            // === Table Data ===
+            for (OrderItem item : orderItems) {
+                CloudKitchenMeal meal = cloudKitchenMealRepository
+                        .findById(item.getCloudKitchenMeal().getId())
+                        .orElseThrow(() -> new IllegalArgumentException("Meal not found"));
+
+                String mealName = meal.getMeal().getName();
+                String mealPhotoUrl = meal.getMeal().getPhotos();
+                double price = meal.getMeal().getPrice();
+                int quantity = item.getQuantity();
+                double lineTotal = item.getPrice();
+                grandTotal += lineTotal;
+
+                // === Meal (Image + Name)
+                PdfPCell mealCell = createMealCell(mealName, mealPhotoUrl, normalFont, shidhoriOrange);
+                table.addCell(mealCell);
+
+                // === Price
+                PdfPCell priceCell = new PdfPCell(new Phrase(String.format("₹ %.2f", price), normalFont));
+                priceCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                priceCell.setPadding(6f);
+                table.addCell(priceCell);
+
+                // === Quantity
+                PdfPCell qtyCell = new PdfPCell(new Phrase(String.valueOf(quantity), normalFont));
+                qtyCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                qtyCell.setPadding(6f);
+                table.addCell(qtyCell);
+
+                // === Total
+                PdfPCell totalCell = new PdfPCell(new Phrase(String.format("₹ %.2f", lineTotal), normalFont));
+                totalCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                totalCell.setPadding(6f);
+                table.addCell(totalCell);
+            }
+
+            doc.add(table);
+
+            // === Grand Total ===
+            Font totalFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14, Color.BLACK);
+            Paragraph totalParagraph = new Paragraph("Grand Total: ₹ " + String.format("%.2f", grandTotal), totalFont);
+            totalParagraph.setAlignment(Element.ALIGN_RIGHT);
+            totalParagraph.setSpacingBefore(10f);
+            doc.add(totalParagraph);
+
+            // === Thank You Footer ===
+            Font thankFont = FontFactory.getFont(FontFactory.HELVETICA_OBLIQUE, 12, shidhoriOrange);
+            Paragraph thankYou = new Paragraph("Thanks for dining with Shidhori Kitchen ❤️", thankFont);
+            thankYou.setAlignment(Element.ALIGN_CENTER);
+            thankYou.setSpacingBefore(30f);
+            doc.add(thankYou);
+
+            doc.close();
+        } catch (Exception e) {
+            throw new RuntimeException("Error creating invoice PDF", e);
+        }
+    }
+
+
+    private PdfPCell createMealCell(String mealName, String mealPhotoUrl, Font font, Color borderColor) {
+        try {
+            Image mealImage = Image.getInstance(new URL(mealPhotoUrl));
+            mealImage.scaleToFit(60, 60);
+            mealImage.setBorder(Rectangle.BOX);
+            mealImage.setBorderColor(borderColor);
+            mealImage.setSpacingAfter(5f);
+
+            Font mealNameFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10, Color.DARK_GRAY);
+            Paragraph mealInfo = new Paragraph(mealName, mealNameFont);
+            mealInfo.setAlignment(Element.ALIGN_CENTER);
+
+            PdfPTable innerTable = new PdfPTable(1);
+            innerTable.setWidthPercentage(100);
+
+            PdfPCell imageCell = new PdfPCell(mealImage);
+            imageCell.setBorder(Rectangle.NO_BORDER);
+            imageCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+            innerTable.addCell(imageCell);
+
+            PdfPCell nameCell = new PdfPCell(mealInfo);
+            nameCell.setBorder(Rectangle.NO_BORDER);
+            nameCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+            innerTable.addCell(nameCell);
+
+            PdfPCell mealCell = new PdfPCell(innerTable);
+            mealCell.setPadding(6f);
+            return mealCell;
+
+        } catch (Exception e) {
+            PdfPCell fallbackCell = new PdfPCell(new Phrase(mealName, font));
+            fallbackCell.setPadding(6f);
+            return fallbackCell;
+        }
+    }
+
+
 }

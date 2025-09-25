@@ -6,6 +6,7 @@ import com.tiffino.entity.request.*;
 import com.tiffino.service.EmailService;
 import com.tiffino.service.IUserService;
 import com.tiffino.service.OtpService;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -13,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.Set;
 
 @RestController
@@ -155,6 +157,13 @@ public class UserController {
     @PostMapping("/updateCartQuantities")
     public ResponseEntity<?> updateCartQuantities(@RequestBody UpdateQuantityRequest request){
         return new ResponseEntity<>(iUserService.updateCartQuantities(request),HttpStatus.OK);
+    }
+
+    @GetMapping("/viewInvoice/{orderId}")
+    public void viewInvoice(@PathVariable Long orderId, HttpServletResponse response) throws IOException {
+        response.setContentType("application/pdf");
+        response.setHeader("Content-Disposition", "attachment; filename=invoice-" + orderId + ".pdf");
+        iUserService.viewInvoice(orderId, response.getOutputStream());
     }
 
 }

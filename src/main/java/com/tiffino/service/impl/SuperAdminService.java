@@ -478,7 +478,7 @@ public class SuperAdminService implements ISuperAdminService {
         return cloudKitchenList.stream()
                 .map(cloudKitchen -> {
                     List<ReviewResponse> reviewResponses = cloudKitchen.getReviews().stream()
-                            .map(review -> new ReviewResponse(review.getComment(), review.getRating()))
+                            .map(review -> new ReviewResponse(review.getCloudKitchenReview(), review.getRating()))
                             .collect(Collectors.toList());
 
                     return DataOfCloudKitchenResponse.builder()

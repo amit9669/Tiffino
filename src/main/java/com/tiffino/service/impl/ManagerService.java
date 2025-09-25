@@ -161,7 +161,7 @@ public class ManagerService implements IManagerService {
         CloudKitchen cloudKitchen = kitchenRepository.findByCloudKitchenIdAndIsDeletedFalse(manager.getCloudKitchen().getCloudKitchenId()).get();
 
         List<ReviewResponse> reviewResponses = cloudKitchen.getReviews().stream()
-                .map(review -> new ReviewResponse(review.getComment(), review.getRating()))
+                .map(review -> new ReviewResponse(review.getCloudKitchenReview(), review.getRating()))
                 .collect(Collectors.toList());
 
         return DataOfCloudKitchenResponse.builder()
