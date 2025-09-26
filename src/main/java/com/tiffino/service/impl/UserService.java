@@ -434,14 +434,14 @@ public class UserService implements IUserService {
 
     private LocalDateTime calculateExpiryDate(DurationType durationType) {
         return switch (durationType) {
-            case DAILY -> LocalDateTime.now().plusDays(1);
+            case DAILY -> LocalDateTime.now().plusMinutes(1); //Testing
             case WEEKLY -> LocalDateTime.now().plusWeeks(1);
             case MONTHLY -> LocalDateTime.now().plusMonths(1);
             case QUARTERLY -> LocalDateTime.now().plusMonths(3);
         };
     }
 
-    @Scheduled(cron = "0 0/2 * * * ?")
+    @Scheduled(cron = "0 0/1 * * * ?")
     @Transactional
     public void checkExpiredSubscriptions() {
         List<UserSubscription> expiredSubs = userSubscriptionRepository.findAllByIsSubscribedTrueAndExpiryDateBefore(LocalDateTime.now());
@@ -689,7 +689,7 @@ public class UserService implements IUserService {
             Color grayBg = new Color(245, 245, 245);
 
             // === Add Logo ===
-            Image logo = Image.getInstance("C:\\Users\\amitc\\Downloads\\ChatGPT Image Sep 11, 2025, 12_42_02 PM.png");
+            Image logo = Image.getInstance("D:\\QuantumSoft\\Tiffino\\src\\assets\\images\\shidori_logo1.png");
             logo.scaleToFit(100, 100);
             logo.setAlignment(Element.ALIGN_CENTER);
             doc.add(logo);
