@@ -162,7 +162,7 @@ public class UserController {
     @GetMapping("/viewInvoice/{orderId}")
     public void viewInvoice(@PathVariable Long orderId, HttpServletResponse response) throws IOException {
         response.setContentType("application/pdf");
-        response.setHeader("Content-Disposition", "attachment; filename=invoice-" + orderId + ".pdf");
+        response.setHeader("Content-Disposition", "attachment; filename=invoice.pdf");
         iUserService.viewInvoice(orderId, response.getOutputStream());
     }
 

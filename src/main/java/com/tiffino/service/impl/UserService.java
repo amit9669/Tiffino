@@ -750,6 +750,13 @@ public class UserService implements IUserService {
 
             // === Table Data ===
             for (OrderItem item : orderItems) {
+
+                Order order = orderRepository.findById(item.getOrder().getOrderId()).get();
+
+                if (!order.getOrderStatus().equals("DELIVERED")){
+                    throw new RuntimeException("Status is PENDING Or SOMETHING");
+                }
+
                 CloudKitchenMeal meal = cloudKitchenMealRepository
                         .findById(item.getCloudKitchenMeal().getId())
                         .orElseThrow(() -> new IllegalArgumentException("Meal not found"));
