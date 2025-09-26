@@ -2,7 +2,9 @@ package com.tiffino.controller;
 
 import com.tiffino.entity.DeliveryDetails;
 import com.tiffino.entity.DurationType;
+import com.tiffino.entity.Order;
 import com.tiffino.entity.request.*;
+import com.tiffino.repository.OrderRepository;
 import com.tiffino.service.EmailService;
 import com.tiffino.service.IUserService;
 import com.tiffino.service.OtpService;
@@ -29,6 +31,9 @@ public class UserController {
 
     @Autowired
     private OtpService otpService;
+
+    @Autowired
+    private OrderRepository orderRepository;
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody UserRegistrationRequest userRegistrationRequest) {
@@ -161,8 +166,14 @@ public class UserController {
 
     @GetMapping("/viewInvoice/{orderId}")
     public void viewInvoice(@PathVariable Long orderId, HttpServletResponse response) throws IOException {
+        Order order = orderRepository.findById(orderId).get();
+        if (!order.getOrderStatus().equals("DELIVERED")){
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invoice can only be downloaded after delivery!");
+            return;
+        }
+
         response.setContentType("application/pdf");
-        response.setHeader("Content-Disposition", "attachment; filename=invoice.pdf");
+        response.setHeader("Content-Disposition", "attachment; filename=invoice-" + orderId + ".pdf");
         iUserService.viewInvoice(orderId, response.getOutputStream());
     }
 
