@@ -173,7 +173,7 @@ public class UserController {
         }
 
         response.setContentType("application/pdf");
-        response.setHeader("Content-Disposition", "attachment; filename=invoice-" + orderId + ".pdf");
+        response.setHeader("Content-Disposition", "attachment; filename=invoice.pdf");
         iUserService.viewInvoice(orderId, response.getOutputStream());
     }
 
