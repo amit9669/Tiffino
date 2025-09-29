@@ -434,7 +434,7 @@ public class UserService implements IUserService {
 
     private LocalDateTime calculateExpiryDate(DurationType durationType) {
         return switch (durationType) {
-            case DAILY -> LocalDateTime.now().plusMinutes(1); //Testing
+            case DAILY -> LocalDateTime.now().plusDays(1);
             case WEEKLY -> LocalDateTime.now().plusWeeks(1);
             case MONTHLY -> LocalDateTime.now().plusMonths(1);
             case QUARTERLY -> LocalDateTime.now().plusMonths(3);
