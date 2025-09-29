@@ -9,8 +9,4 @@ public interface IDeliveryPersonService {
     Object deliverOrder(Long deliveryId);
 
     Object updatePassword(String managerId, int otp, String newPassword);
-
-    Object forgotPasswordOfDeliveryPartner(String email, HttpSession session);
-
-    Object changePassword(int otp, String newPassword, String confirmNewPassword, HttpSession session);
 }

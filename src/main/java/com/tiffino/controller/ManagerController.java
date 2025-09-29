@@ -24,17 +24,6 @@ public class ManagerController {
                 passwordRequest.getOtp(), passwordRequest.getNewPassword()), HttpStatus.OK);
     }
 
-    @PostMapping("/forgotPasswordOfManager")
-    public ResponseEntity<?> forgotPasswordOfManager(@RequestParam String email, HttpSession session) {
-        return new ResponseEntity<>(iManagerService.forgotPasswordOfManager(email, session), HttpStatus.OK);
-    }
-
-    @PostMapping("/changePassword")
-    public ResponseEntity<?> changePassword(@RequestBody PasswordRequest passwordRequest, HttpSession session) {
-        return new ResponseEntity<>(iManagerService.changePassword(passwordRequest.getOtp(), passwordRequest.getNewPassword(),
-                passwordRequest.getConfirmNewPassword(), session), HttpStatus.OK);
-    }
-
     @GetMapping("/getAllCuisinesAndMeals")
     public ResponseEntity<?> getAllCuisinesAndMeals() {
         return new ResponseEntity<>(iManagerService.getAllCuisinesAndMeals(), HttpStatus.OK);

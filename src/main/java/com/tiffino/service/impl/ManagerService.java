@@ -90,36 +90,6 @@ public class ManagerService implements IManagerService {
     }
 
     @Override
-    public Object forgotPasswordOfManager(String email, HttpSession session) {
-        System.out.println(email);
-        log.info("Email :-->" + email);
-        if (managerRepository.existsByManagerEmail(email)) {
-            this.sendEmail(email, "For Update Password", "This is your OTP :- " + otpService.generateOTP(email));
-            session.setAttribute("email", email);
-            return "Check email for OTP verification!";
-        } else {
-            return "This Email not exists!!";
-        }
-    }
-
-    @Override
-    public Object changePassword(int otp, String newPassword, String confirmNewPassword, HttpSession session) {
-        if (otpService.getOtp((String) session.getAttribute("email")) == otp) {
-            Manager manager = managerRepository.findByManagerEmail((String) session.getAttribute("email")).get();
-            if (newPassword.equals(confirmNewPassword)) {
-                manager.setPassword(passwordEncoder.encode(newPassword));
-                managerRepository.save(manager);
-                otpService.clearOTP(manager.getManagerEmail());
-                return "Password has changed!!";
-            } else {
-                return "password doesn't match!! Please Try Again!!";
-            }
-        } else {
-            return "OTP not Matched!!!";
-        }
-    }
-
-    @Override
     public List<CuisineWithMealsResponse> getAllCuisinesAndMeals() {
         Manager manager = (Manager) dataToken.getCurrentUserProfile();
         CloudKitchen cloudKitchen = manager.getCloudKitchen();

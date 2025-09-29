@@ -56,36 +56,6 @@ public class DeliveryPersonService implements IDeliveryPersonService {
         }
     }
 
-    @Override
-    public Object forgotPasswordOfDeliveryPartner(String email, HttpSession session) {
-        System.out.println(email);
-        log.info("Email :-->" + email);
-        if (deliveryPersonRepository.existsByEmail(email)) {
-            this.sendEmail(email, "For Update Password", "This is your OTP :- " + otpService.generateOTP(email));
-            session.setAttribute("email", email);
-            return "Check email for OTP verification!";
-        } else {
-            return "This Email not exists!!";
-        }
-    }
-
-    @Override
-    public Object changePassword(int otp, String newPassword, String confirmNewPassword, HttpSession session) {
-        if (otpService.getOtp((String) session.getAttribute("email")) == otp) {
-            DeliveryPerson deliveryPerson = deliveryPersonRepository.findByEmail((String) session.getAttribute("email")).get();
-            if (newPassword.equals(confirmNewPassword)) {
-                deliveryPerson.setPassword(passwordEncoder.encode(newPassword));
-                deliveryPersonRepository.save(deliveryPerson);
-                otpService.clearOTP(deliveryPerson.getEmail());
-                return "Password has changed!!";
-            } else {
-                return "password doesn't match!! Please Try Again!!";
-            }
-        } else {
-            return "OTP not Matched!!!";
-        }
-    }
-
     public void sendEmail(String to, String subject, String message) {
         try {
             SimpleMailMessage email = new SimpleMailMessage();

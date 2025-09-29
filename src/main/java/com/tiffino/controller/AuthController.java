@@ -5,6 +5,7 @@ import com.tiffino.entity.response.LogInResponse;
 import com.tiffino.service.AuthService;
 import com.tiffino.service.TokenBlacklistService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -42,5 +43,15 @@ public class AuthController {
         }
 
         return ResponseEntity.badRequest().body("No token found in request");
+    }
+
+    @PostMapping("/forgotPassword")
+    public ResponseEntity<?> forgotPassword(@RequestParam String emailOrId, HttpSession session){
+        return new ResponseEntity<>(authService.forgotPassword(emailOrId,session),HttpStatus.OK);
+    }
+
+    @PostMapping("/changePassword")
+    public ResponseEntity<?> changePassword(@RequestParam int otp, @RequestParam String newPassword, @RequestParam String confirmNewPassword, HttpSession session){
+        return new ResponseEntity<>(authService.changePassword(otp,newPassword,confirmNewPassword,session),HttpStatus.OK);
     }
 }

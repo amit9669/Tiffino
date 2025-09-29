@@ -7,6 +7,7 @@ import com.tiffino.repository.DeliveryPersonRepository;
 import com.tiffino.repository.ManagerRepository;
 import com.tiffino.repository.SuperAdminRepository;
 import com.tiffino.repository.UserRepository;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -36,6 +37,12 @@ public class AuthService {
 
     @Autowired
     private DeliveryPersonRepository deliveryPersonRepository;
+
+    @Autowired
+    private OtpService otpService;
+
+    @Autowired
+    private EmailService emailService;
 
 
     public AuthResponse login(String emailOrId, String password) {
@@ -94,5 +101,91 @@ public class AuthService {
 
     public Object getProfile() {
         return dataToken.getCurrentUserProfile();
+    }
+
+
+    public Object forgotPassword(String emailOrId, HttpSession session) {
+        Optional<User> user = userRepository.findByEmail(emailOrId);
+        if (user.isPresent()) {
+            System.out.println("user :- " + user.get().getEmail());
+            session.setAttribute("emailOrId", emailOrId);
+            this.emailService.sendEmail(user.get().getEmail(), "OTP for Change Password", "Your OTP is :-" + this.otpService.generateOTP(emailOrId));
+            return "Check your Email!!!";
+        }
+
+        Optional<Manager> manager = managerRepo.findByManagerEmail(emailOrId);
+        if (manager.isPresent()) {
+            System.out.println("manager :- " + manager.get().getManagerEmail());
+            session.setAttribute("emailOrId", emailOrId);
+            this.emailService.sendEmail(manager.get().getManagerEmail(), "OTP for Change Password", "Your OTP is :-" + this.otpService.generateOTP(emailOrId));
+            return "Check your Email!!!";
+        }
+
+        Optional<Manager> managerById = managerRepo.findById(emailOrId);
+        if (managerById.isPresent()) {
+            System.out.println("managerId :- " + managerById.get().getManagerEmail());
+            session.setAttribute("emailOrId", emailOrId);
+            this.emailService.sendEmail(managerById.get().getManagerEmail(), "OTP for Change Password", "Your OTP is :-" + this.otpService.generateOTP(emailOrId));
+            return "Check your Email!!!";
+        }
+
+        Optional<DeliveryPerson> deliveryPerson = deliveryPersonRepository.findByEmail(emailOrId);
+        if (deliveryPerson.isPresent()) {
+            session.setAttribute("emailOrId", emailOrId);
+            this.emailService.sendEmail(deliveryPerson.get().getEmail(), "OTP for Change Password", "Your OTP is :-" + this.otpService.generateOTP(emailOrId));
+            return "Check your Email!!!";
+        }
+        return new AuthResponse("Invalid User credentials");
+    }
+
+
+    public Object changePassword(int otp, String newPassword, String confirmNewPassword, HttpSession session) {
+
+        String emailOrId = (String) session.getAttribute("emailOrId");
+
+        Optional<User> user = userRepository.findByEmail(emailOrId);
+        if (user.isPresent()) {
+            if (newPassword.equals(confirmNewPassword) && otp == this.otpService.getOtp(emailOrId)) {
+                user.get().setPassword(passwordEncoder.encode(confirmNewPassword));
+                userRepository.save(user.get());
+                return "Password has Changed!!!";
+            } else {
+                return "Invalid Credentials";
+            }
+        }
+
+        Optional<Manager> manager = managerRepo.findByManagerEmail(emailOrId);
+        if (manager.isPresent()) {
+            if (newPassword.equals(confirmNewPassword) && otp == this.otpService.getOtp(emailOrId)) {
+                manager.get().setPassword(passwordEncoder.encode(confirmNewPassword));
+                managerRepo.save(manager.get());
+                return "Password has Changed!!!";
+            } else {
+                return "Invalid Credentials";
+            }
+        }
+
+        Optional<Manager> managerById = managerRepo.findById(emailOrId);
+        if (managerById.isPresent()) {
+            if (newPassword.equals(confirmNewPassword) && otp == this.otpService.getOtp(emailOrId)) {
+                managerById.get().setPassword(passwordEncoder.encode(confirmNewPassword));
+                managerRepo.save(managerById.get());
+                return "Password has Changed!!!";
+            } else {
+                return "Invalid Credentials";
+            }
+        }
+
+        Optional<DeliveryPerson> deliveryPerson = deliveryPersonRepository.findByEmail(emailOrId);
+        if (deliveryPerson.isPresent()) {
+            if (newPassword.equals(confirmNewPassword) && otp == this.otpService.getOtp(emailOrId)) {
+                deliveryPerson.get().setPassword(passwordEncoder.encode(confirmNewPassword));
+                deliveryPersonRepository.save(deliveryPerson.get());
+                return "Password has Changed!!!";
+            } else {
+                return "Invalid Credentials";
+            }
+        }
+        return new AuthResponse("Invalid User credentials");
     }
 }

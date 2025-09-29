@@ -41,35 +41,6 @@ public class UserController {
         return new ResponseEntity<>(iUserService.registerUser(userRegistrationRequest), HttpStatus.OK);
     }
 
-    @PostMapping("/forgot-password")
-    public ResponseEntity<String> forgotPassword(@RequestParam String email) {
-        if (!iUserService.checkUserExistsByEmail(email)) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
-        }
-
-        int otp = otpService.generateOTP(email);
-
-        emailService.sendOtpEmail(email, otp);
-
-        return ResponseEntity.ok("OTP has been sent to your email");
-    }
-
-    @PostMapping("/reset-password")
-    public ResponseEntity<String> resetPassword(
-            @RequestParam String email,
-            @RequestParam int otp,
-            @RequestParam String newPassword) {
-
-        int storedOtp = otpService.getOtp(email);
-        if (storedOtp != otp) {
-            return ResponseEntity.badRequest().body("Invalid OTP");
-        }
-
-        iUserService.updatePasswordByEmail(email, newPassword);
-        otpService.clearOTP(email);
-        return ResponseEntity.ok("Password updated successfully");
-    }
-
     @GetMapping("/getAllAvailableMealsGroupedByCuisine")
     public ResponseEntity<?> getAllAvailableMealsGroupedByCuisine() {
         return new ResponseEntity<>(iUserService.getAllAvailableMealsGroupedByCuisine(), HttpStatus.OK);

@@ -24,10 +24,6 @@ public interface IUserService {
 
     void deleteReview(Long reviewId);
 
-    void updatePasswordByEmail(String email, String newPassword);
-
-    boolean checkUserExistsByEmail(String email);
-
     public Object trackOrder(Long orderId);
 
     Object getAllMealsByCuisineName(String cuisineName);

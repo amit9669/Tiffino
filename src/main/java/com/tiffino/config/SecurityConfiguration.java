@@ -10,7 +10,6 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -38,12 +37,11 @@ public class SecurityConfiguration {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/user/register",
-                                "/user/forgot-password",
-                                "/user/reset-password",
+                                "/auth/forgotPassword",
+                                "/auth/changePassword",
                                 "/user/getAllAvailableMealsGroupedByCuisine",
                                 "/manager/updatePassword",
-                                "/manager/forgotPasswordOfManager",
-                                "/manager/changePassword",
+                                "/delivery-person/updatePassword",
                                 "/auth/**",
                                 "/meals/**"
                         ).permitAll()

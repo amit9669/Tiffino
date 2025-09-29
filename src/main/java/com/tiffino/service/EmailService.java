@@ -30,10 +30,10 @@ public class EmailService {
     @Async
     public void sendEmail(String to, String subject, String message) {
         try {
-            if (!isDeliverableEmail(to)) {
-                log.warn("Invalid or undeliverable email: {}", to);
-                return;
-            }
+//            if (!isDeliverableEmail(to)) {
+//                log.warn("Invalid or undeliverable email: {}", to);
+//                return;
+//            }
 
             SimpleMailMessage email = new SimpleMailMessage();
             email.setTo(to);

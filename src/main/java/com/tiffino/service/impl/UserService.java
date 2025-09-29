@@ -318,11 +318,6 @@ public class UserService implements IUserService {
     }
 
     @Override
-    public boolean checkUserExistsByEmail(String email) {
-        return userRepository.existsByEmail(email);
-    }
-
-    @Override
     public Object trackOrder(Long orderId) {
         User user = (User) dataToken.getCurrentUserProfile();
 
@@ -377,16 +372,6 @@ public class UserService implements IUserService {
         return cuisine.getMeals();
     }
 
-
-    @Override
-    public void updatePasswordByEmail(String email, String newPassword) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
-        user.setPassword(passwordEncoder.encode(newPassword));
-        user.setRole(Role.USER);
-        userRepository.save(user);
-    }
-
     @Override
     @Transactional
     public Object assignSubscriptionToUser(SubscriptionRequest request) {
@@ -434,7 +419,7 @@ public class UserService implements IUserService {
 
     private LocalDateTime calculateExpiryDate(DurationType durationType) {
         return switch (durationType) {
-            case DAILY -> LocalDateTime.now().plusMinutes(1); //Testing
+            case DAILY -> LocalDateTime.now().plusDays(1);
             case WEEKLY -> LocalDateTime.now().plusWeeks(1);
             case MONTHLY -> LocalDateTime.now().plusMonths(1);
             case QUARTERLY -> LocalDateTime.now().plusMonths(3);

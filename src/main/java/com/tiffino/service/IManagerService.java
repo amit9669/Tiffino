@@ -8,10 +8,6 @@ public interface IManagerService {
 
     Object updatePassword(String managerId, int otp, String newPassword);
 
-    Object forgotPasswordOfManager(String email, HttpSession session);
-
-    Object changePassword(int otp, String newPassword, String confirmNewPassword, HttpSession session);
-
     Object getAllCuisinesAndMeals();
 
     Object getDataOfCloudKitchen();

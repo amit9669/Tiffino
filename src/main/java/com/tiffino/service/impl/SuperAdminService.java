@@ -481,9 +481,13 @@ public class SuperAdminService implements ISuperAdminService {
                             .map(review -> new ReviewResponse(review.getCloudKitchenReview(), review.getRating()))
                             .collect(Collectors.toList());
 
+                    String managerId = (cloudKitchen.getManager() != null)
+                            ? cloudKitchen.getManager().getManagerId()
+                            : "NOT ASSIGNED";
+
                     return DataOfCloudKitchenResponse.builder()
                             .cloudKitchenId(cloudKitchen.getCloudKitchenId())
-                            .managerId(cloudKitchen.getManager().getManagerId())
+                            .managerId(managerId)
                             .state(cloudKitchen.getState())
                             .city(cloudKitchen.getCity())
                             .division(cloudKitchen.getDivision())
@@ -492,6 +496,7 @@ public class SuperAdminService implements ISuperAdminService {
                 })
                 .collect(Collectors.toList());
     }
+
 
     @Override
     public Object getAllCuisines() {

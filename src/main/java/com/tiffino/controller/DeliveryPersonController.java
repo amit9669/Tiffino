@@ -23,17 +23,6 @@ public class DeliveryPersonController {
                 passwordRequest.getOtp(), passwordRequest.getNewPassword()), HttpStatus.OK);
     }
 
-    @PostMapping("/forgotPasswordOfDeliveryPartner")
-    public ResponseEntity<?> forgotPasswordOfDeliveryPartner(@RequestParam String email, HttpSession session) {
-        return new ResponseEntity<>(iDeliveryPersonService.forgotPasswordOfDeliveryPartner(email, session), HttpStatus.OK);
-    }
-
-    @PostMapping("/changePassword")
-    public ResponseEntity<?> changePassword(@RequestBody PasswordRequest passwordRequest, HttpSession session) {
-        return new ResponseEntity<>(iDeliveryPersonService.changePassword(passwordRequest.getOtp(), passwordRequest.getNewPassword(),
-                passwordRequest.getConfirmNewPassword(), session), HttpStatus.OK);
-    }
-
     @PostMapping("/{deliveryId}/pickup")
     public ResponseEntity<?> pickup(@PathVariable Long deliveryId) {
         return ResponseEntity.ok(iDeliveryPersonService.pickupOrder(deliveryId));
