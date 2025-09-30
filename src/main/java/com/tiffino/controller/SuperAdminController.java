@@ -55,10 +55,10 @@ public class SuperAdminController {
         return new ResponseEntity<>(iSuperAdminService.deleteManager(managerId), HttpStatus.OK);
     }
 
-    @GetMapping("/searchFilterForAdmin")
+    @PostMapping("/searchFilterForAdmin")
     public ResponseEntity<?> searchFilterForAdmin(@RequestBody AdminFilterRequest adminFilterRequest) {
         return new ResponseEntity<>(iSuperAdminService.searchFilterForAdmin(adminFilterRequest.getState(),
-                adminFilterRequest.getCity(), adminFilterRequest.getDivision()), HttpStatus.FOUND);
+                adminFilterRequest.getCity(), adminFilterRequest.getDivision()), HttpStatus.OK);
     }
 
     @PostMapping("/saveOrUpdateDeliveryPerson")
