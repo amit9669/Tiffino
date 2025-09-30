@@ -16,4 +16,5 @@ public class DeliveryDetails {
     private String city;
     private String pinCode;
     private String phoneNo;
+    private String allergies;
 }

@@ -16,6 +16,7 @@ public class DeliveryTrackingResponse {
     private DeliveryStatus deliveryStatus;
     private String deliveryPersonName;
     private String deliveryPersonPhone;
+    private String allergies;
     private LocalDateTime assignedAt;
     private LocalDateTime pickedUpAt;
     private LocalDateTime deliveredAt;

@@ -252,24 +252,31 @@ public class SuperAdminService implements ISuperAdminService {
 //        System.out.println("SMS sent with SID: " + message.getSid());
 //    }
     @Override
-    public Object deleteCloudKitchen(String kitchenId) {
-        if (kitchenRepository.existsByCloudKitchenIdAndIsDeletedFalse(kitchenId)) {
-            CloudKitchen cloudKitchen = kitchenRepository.findById(kitchenId).get();
-            if (cloudKitchen.getIsActive()) {
-                cloudKitchen.setIsDeleted(true);
-                cloudKitchen.setIsActive(false);
-                Manager manager = managerRepository.findByCloudKitchen_CloudKitchenId(cloudKitchen.getCloudKitchenId());
-                manager.setCloudKitchen(null);
-                managerRepository.save(manager);
-                kitchenRepository.save(cloudKitchen);
-                return "Deleted Successfully!!!";
-            } else {
-                return "Already Deleted";
-            }
-        } else {
+    public String deleteCloudKitchen(String kitchenId) {
+        if (!kitchenRepository.existsByCloudKitchenIdAndIsDeletedFalse(kitchenId)) {
             return "Id Not Found!";
         }
+
+        CloudKitchen cloudKitchen = kitchenRepository.findById(kitchenId)
+                .orElseThrow(() -> new RuntimeException("CloudKitchen not found")); // safe guard
+
+        if (!cloudKitchen.getIsActive()) {
+            return "Already Deleted";
+        }
+
+        cloudKitchen.setIsDeleted(true);
+        cloudKitchen.setIsActive(false);
+
+        Manager manager = managerRepository.findByCloudKitchen_CloudKitchenId(cloudKitchen.getCloudKitchenId());
+        if (manager != null) {
+            manager.setCloudKitchen(null);
+            managerRepository.save(manager);
+        }
+
+        kitchenRepository.save(cloudKitchen);
+        return "Deleted Successfully!!!";
     }
+
 
     @Override
     public Object deleteManager(String managerId) {

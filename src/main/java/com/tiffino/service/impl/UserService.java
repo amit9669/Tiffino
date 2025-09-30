@@ -191,6 +191,18 @@ public class UserService implements IUserService {
             throw new RuntimeException("Cart is empty");
         }
 
+        UserSubscription userSubscription = userSubscriptionRepository.findByIsSubscribedTrueAndUser_UserId(user.getUserId());
+
+        if(userSubscription.getIsSubscribed()){
+            Set<String> allergies = userSubscription.getAllergies();
+            String result = " ";
+            for (String a : allergies){
+                result = String.join(",", allergies);
+            }
+            deliveryDetails.setAllergies(result);
+        }else{
+            deliveryDetails.setAllergies("Need To subscribed first!!!");
+        }
         Order order = Order.builder()
                 .user(user)
                 .cloudKitchen(cart.getCloudKitchen())
@@ -348,6 +360,7 @@ public class UserService implements IUserService {
                     .orderId(order.getOrderId())
                     .orderStatus(order.getOrderStatus())
                     .deliveryId(null)
+                    .allergies(order.getDeliveryDetails().getAllergies())
                     .deliveryStatus(DeliveryStatus.PENDING)
                     .deliveryPersonName("Not Assigned")
                     .deliveryPersonPhone("N/A")
@@ -370,20 +383,20 @@ public class UserService implements IUserService {
         Cuisine cuisine = cuisineRepository.findByName(cuisineName);
         List<Meal> meals = cuisine.getMeals();
         List<CloudKitchenMeal> cloudKitchenMeals = cloudKitchenMealRepository.findAll();
-        List<Map<String,Object>> mapList = new ArrayList<>();
-        for (Meal meal : meals){
-            for (CloudKitchenMeal kitchenMeal : cloudKitchenMeals){
-                if(meal.getMealId().equals(kitchenMeal.getMeal().getMealId())){
-                   Map<String,Object> map = new HashMap<>();
-                   map.put("mealId",meal.getMealId());
-                   map.put("mealName", meal.getName());
-                   map.put("mealPhotos",meal.getPhotos());
-                   map.put("mealDescription",meal.getDescription());
-                   map.put("mealNutritionalInformation",meal.getNutritionalInformation());
-                   map.put("mealPrice",meal.getPrice());
-                   map.put("cloudKitchenId",kitchenMeal.getCloudKitchen().getCloudKitchenId());
-                   map.put("cloudKitchenName",kitchenMeal.getCloudKitchen().getCity()+" - "+kitchenMeal.getCloudKitchen().getDivision());
-                   mapList.add(map);
+        List<Map<String, Object>> mapList = new ArrayList<>();
+        for (Meal meal : meals) {
+            for (CloudKitchenMeal kitchenMeal : cloudKitchenMeals) {
+                if (meal.getMealId().equals(kitchenMeal.getMeal().getMealId())) {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("mealId", meal.getMealId());
+                    map.put("mealName", meal.getName());
+                    map.put("mealPhotos", meal.getPhotos());
+                    map.put("mealDescription", meal.getDescription());
+                    map.put("mealNutritionalInformation", meal.getNutritionalInformation());
+                    map.put("mealPrice", meal.getPrice());
+                    map.put("cloudKitchenId", kitchenMeal.getCloudKitchen().getCloudKitchenId());
+                    map.put("cloudKitchenName", kitchenMeal.getCloudKitchen().getCity() + " - " + kitchenMeal.getCloudKitchen().getDivision());
+                    mapList.add(map);
                 }
             }
         }
@@ -403,9 +416,7 @@ public class UserService implements IUserService {
 
                 results.addAll(mealsByCuisine);
             }
-        }
-
-        else {
+        } else {
             for (String cuisineName : cuisineNames) {
                 List<Map<String, Object>> mealsByCuisine =
                         (List<Map<String, Object>>) this.getAllMealsByCuisineName(cuisineName);
@@ -424,12 +435,11 @@ public class UserService implements IUserService {
     }
 
 
-
-    public Set<String> createCloudKitchenName(){
+    public Set<String> createCloudKitchenName() {
         List<CloudKitchenMeal> cloudKitchenMeals = cloudKitchenMealRepository.findAll();
         Set<String> cloudKitchenNameSet = new HashSet<>();
-        for (CloudKitchenMeal cloudKitchenMeal : cloudKitchenMeals){
-            cloudKitchenNameSet.add(cloudKitchenMeal.getCloudKitchen().getCity()+" - "+cloudKitchenMeal.getCloudKitchen().getDivision());
+        for (CloudKitchenMeal cloudKitchenMeal : cloudKitchenMeals) {
+            cloudKitchenNameSet.add(cloudKitchenMeal.getCloudKitchen().getCity() + " - " + cloudKitchenMeal.getCloudKitchen().getDivision());
         }
         return cloudKitchenNameSet;
     }
@@ -800,7 +810,7 @@ public class UserService implements IUserService {
 
                 Order order = orderRepository.findById(item.getOrder().getOrderId()).get();
 
-                if (!order.getOrderStatus().equals("DELIVERED")){
+                if (!order.getOrderStatus().equals("DELIVERED")) {
                     throw new RuntimeException("Status is PENDING Or SOMETHING");
                 }
 

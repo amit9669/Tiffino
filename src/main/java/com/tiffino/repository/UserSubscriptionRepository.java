@@ -14,4 +14,6 @@ public interface UserSubscriptionRepository extends JpaRepository<UserSubscripti
     long countByUser_UserId(Long userId);
 
     boolean existsByUser_UserIdAndIsSubscribedTrue(Long userId);
+
+    UserSubscription findByIsSubscribedTrueAndUser_UserId(Long userId);
 }
