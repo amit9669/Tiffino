@@ -6,10 +6,7 @@ import com.tiffino.entity.*;
 import com.tiffino.entity.request.*;
 import com.tiffino.entity.response.*;
 import com.tiffino.repository.*;
-import com.tiffino.service.EmailService;
-import com.tiffino.service.ISuperAdminService;
-import com.tiffino.service.ImageUploadService;
-import com.tiffino.service.OtpService;
+import com.tiffino.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -75,6 +72,9 @@ public class SuperAdminService implements ISuperAdminService {
     @Autowired
     private MealRepository mealRepository;
 
+    @Autowired
+    private DataToken dataToken;
+
     /*@Value("${twilio.account.sid}")
     private String ACCOUNT_SID;
 
@@ -93,16 +93,13 @@ public class SuperAdminService implements ISuperAdminService {
 
     @Override
     public Object updateAdmin(SuperAdminRequest superAdminRequest) {
-        if (superAdminRepository.existsByEmail(superAdminRequest.getEmail())) {
-            SuperAdmin superAdmin = superAdminRepository.findByEmail(superAdminRequest.getEmail()).get();
-            superAdmin.setAdminName(superAdminRequest.getAdminName());
-            superAdmin.setEmail(superAdminRequest.getEmail());
-            superAdmin.setPassword(passwordEncoder.encode(superAdminRequest.getPassword()));
-            superAdminRepository.save(superAdmin);
-            return "Updated Successfully!!!";
-        } else {
-            return "Email Invalid!!";
-        }
+
+        SuperAdmin superAdmin = (SuperAdmin) dataToken.getCurrentUserProfile();
+        superAdmin.setAdminName(superAdminRequest.getAdminName());
+        superAdmin.setEmail(superAdminRequest.getEmail());
+        superAdmin.setPassword(passwordEncoder.encode(superAdminRequest.getPassword()));
+        superAdminRepository.save(superAdmin);
+        return "Updated Successfully!!!";
     }
 
 
@@ -134,7 +131,7 @@ public class SuperAdminService implements ISuperAdminService {
                 return "Invalid or undeliverable email: " + managerRequest.getManagerEmail();
             }
 
-            if(managerRepository.existsByManagerEmail(managerRequest.getManagerEmail())){
+            if (managerRepository.existsByManagerEmail(managerRequest.getManagerEmail())) {
                 return "Email Already Exists!!";
             }
             manager.setManagerEmail(managerRequest.getManagerEmail());
@@ -210,7 +207,6 @@ public class SuperAdminService implements ISuperAdminService {
     }
 
 
-
     public String createCloudKitchenId(String city, String division) {
         if (city == null || division == null || city.isBlank() || division.isBlank()) {
             throw new IllegalArgumentException("City and Division must not be blank");
@@ -239,7 +235,6 @@ public class SuperAdminService implements ISuperAdminService {
         String formattedNumber = String.format("%03d", nextNumber);
         return cityDivisionPrefix + formattedNumber; // e.g. PUNKAT008
     }
-
 
 
     /// /    SMS will get this message :- Sent from your Twilio trial account -Hello! Please check your Email Account!
@@ -359,7 +354,7 @@ public class SuperAdminService implements ISuperAdminService {
                 return "Invalid or undeliverable email: " + personRequest.getEmail();
             }
 
-            if(deliveryPersonRepository.existsByEmail(personRequest.getEmail())){
+            if (deliveryPersonRepository.existsByEmail(personRequest.getEmail())) {
                 return "Delivery Partner is already Exists!!!";
             }
 
