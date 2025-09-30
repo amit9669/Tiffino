@@ -505,6 +505,11 @@ public class SuperAdminService implements ISuperAdminService {
 
     @Override
     public Object getAllCloudKitchenData() {
-        return kitchenRepository.findAll();
+        return kitchenRepository.findAllByIsDeletedFalse();
+    }
+
+    @Override
+    public Object getAllManagers() {
+        return managerRepository.findAllByIsDeletedFalse();
     }
 }

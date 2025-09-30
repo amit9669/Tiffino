@@ -34,4 +34,6 @@ public interface ISuperAdminService {
     Object getAllCuisines();
 
     Object getAllCloudKitchenData();
+
+    Object getAllManagers();
 }

@@ -17,6 +17,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @RestController
@@ -113,6 +115,13 @@ public class UserController {
     @GetMapping("/getAllMealsByCuisineName/{cuisineName}")
     public ResponseEntity<?> getAllMealsByCuisineName(@PathVariable String cuisineName) {
         return new ResponseEntity<>(iUserService.getAllMealsByCuisineName(cuisineName), HttpStatus.OK);
+    }
+
+    @GetMapping("/searchFilterForUser")
+    public ResponseEntity<?> searchFilterForUser(@RequestBody Map<String, List<String>> request){
+        List<String> cuisineNames = request.get("cuisineNames");
+        List<String> cloudKitchenNames = request.get("cloudKitchenNames");
+         return new ResponseEntity<>(iUserService.searchFilterForUser(cuisineNames, cloudKitchenNames),HttpStatus.OK);
     }
 
     @PostMapping("/addCart")

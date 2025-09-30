@@ -1,6 +1,5 @@
 package com.tiffino.service.impl;
 
-import com.itextpdf.text.BaseColor;
 import com.lowagie.text.Font;
 import com.lowagie.text.Image;
 import com.lowagie.text.PageSize;
@@ -369,7 +368,70 @@ public class UserService implements IUserService {
     @Override
     public Object getAllMealsByCuisineName(String cuisineName) {
         Cuisine cuisine = cuisineRepository.findByName(cuisineName);
-        return cuisine.getMeals();
+        List<Meal> meals = cuisine.getMeals();
+        List<CloudKitchenMeal> cloudKitchenMeals = cloudKitchenMealRepository.findAll();
+        List<Map<String,Object>> mapList = new ArrayList<>();
+        for (Meal meal : meals){
+            for (CloudKitchenMeal kitchenMeal : cloudKitchenMeals){
+                if(meal.getMealId().equals(kitchenMeal.getMeal().getMealId())){
+                   Map<String,Object> map = new HashMap<>();
+                   map.put("mealId",meal.getMealId());
+                   map.put("mealName", meal.getName());
+                   map.put("mealPhotos",meal.getPhotos());
+                   map.put("mealDescription",meal.getDescription());
+                   map.put("mealNutritionalInformation",meal.getNutritionalInformation());
+                   map.put("mealPrice",meal.getPrice());
+                   map.put("cloudKitchenId",kitchenMeal.getCloudKitchen().getCloudKitchenId());
+                   map.put("cloudKitchenName",kitchenMeal.getCloudKitchen().getCity()+" - "+kitchenMeal.getCloudKitchen().getDivision());
+                   mapList.add(map);
+                }
+            }
+        }
+        return mapList;
+    }
+
+    @Override
+    public Object searchFilterForUser(List<String> cuisineNames, List<String> cloudKitchenNames) {
+        List<Map<String, Object>> results = new ArrayList<>();
+
+        if (cuisineNames == null || cuisineNames.isEmpty()) {
+            List<Cuisine> allCuisines = cuisineRepository.findAll();
+
+            for (Cuisine cuisine : allCuisines) {
+                List<Map<String, Object>> mealsByCuisine =
+                        (List<Map<String, Object>>) this.getAllMealsByCuisineName(cuisine.getName());
+
+                results.addAll(mealsByCuisine);
+            }
+        }
+
+        else {
+            for (String cuisineName : cuisineNames) {
+                List<Map<String, Object>> mealsByCuisine =
+                        (List<Map<String, Object>>) this.getAllMealsByCuisineName(cuisineName);
+
+                results.addAll(mealsByCuisine);
+            }
+        }
+
+        if (cloudKitchenNames != null && !cloudKitchenNames.isEmpty()) {
+            results = results.stream()
+                    .filter(meal -> cloudKitchenNames.contains(meal.get("cloudKitchenName")))
+                    .collect(Collectors.toList());
+        }
+
+        return results;
+    }
+
+
+
+    public Set<String> createCloudKitchenName(){
+        List<CloudKitchenMeal> cloudKitchenMeals = cloudKitchenMealRepository.findAll();
+        Set<String> cloudKitchenNameSet = new HashSet<>();
+        for (CloudKitchenMeal cloudKitchenMeal : cloudKitchenMeals){
+            cloudKitchenNameSet.add(cloudKitchenMeal.getCloudKitchen().getCity()+" - "+cloudKitchenMeal.getCloudKitchen().getDivision());
+        }
+        return cloudKitchenNameSet;
     }
 
     @Override

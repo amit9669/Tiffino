@@ -142,6 +142,7 @@ public class AuthService {
     public Object changePassword(int otp, String newPassword, String confirmNewPassword, HttpSession session) {
 
         String emailOrId = (String) session.getAttribute("emailOrId");
+        System.out.println("changePassword----->"+emailOrId);
 
         Optional<User> user = userRepository.findByEmail(emailOrId);
         if (user.isPresent()) {
@@ -153,6 +154,7 @@ public class AuthService {
                 return "Invalid Credentials";
             }
         }
+        
 
         Optional<Manager> manager = managerRepo.findByManagerEmail(emailOrId);
         if (manager.isPresent()) {

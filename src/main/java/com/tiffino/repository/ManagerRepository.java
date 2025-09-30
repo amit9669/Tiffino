@@ -40,4 +40,7 @@ public interface ManagerRepository extends JpaRepository<Manager, String> {
             "WHERE m.managerId LIKE CONCAT(:prefix, '%') " +
             "ORDER BY m.managerId DESC")
     List<String> findLastManagerIdForPrefix(@Param("prefix") String prefix, Pageable pageable);
+
+    List<Manager> findAllByIsDeletedFalse();
+
 }

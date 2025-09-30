@@ -4,6 +4,7 @@ import com.tiffino.entity.DeliveryDetails;
 import com.tiffino.entity.request.*;
 
 import java.io.OutputStream;
+import java.util.List;
 
 
 public interface IUserService {
@@ -24,9 +25,11 @@ public interface IUserService {
 
     void deleteReview(Long reviewId);
 
-    public Object trackOrder(Long orderId);
+    Object trackOrder(Long orderId);
 
     Object getAllMealsByCuisineName(String cuisineName);
+
+    Object searchFilterForUser(List<String> cuisineNames,List<String> cloudKitchenName);
 
     Object assignSubscriptionToUser(SubscriptionRequest subscriptionRequest);
 
