@@ -95,12 +95,13 @@ public class SuperAdminService implements ISuperAdminService {
     public Object updateAdmin(SuperAdminRequest superAdminRequest) {
 
         SuperAdmin superAdmin = (SuperAdmin) dataToken.getCurrentUserProfile();
+        SuperAdmin superAdmin1 = superAdminRepository.findById(superAdmin.getSuperAdminId()).get();
         if(superAdminRequest != null){
             if(!superAdminRequest.getAdminName().isBlank() || !superAdminRequest.getEmail().isBlank() || !superAdminRequest.getPassword().isBlank()){
-                superAdmin.setAdminName(superAdminRequest.getAdminName());
-                superAdmin.setEmail(superAdminRequest.getEmail());
-                superAdmin.setPassword(passwordEncoder.encode(superAdminRequest.getPassword()));
-                superAdminRepository.save(superAdmin);
+                superAdmin1.setAdminName(superAdminRequest.getAdminName());
+                superAdmin1.setEmail(superAdminRequest.getEmail());
+                superAdmin1.setPassword(passwordEncoder.encode(superAdminRequest.getPassword()));
+                superAdminRepository.save(superAdmin1);
                 return "Updated Successfully!!!";
             }else{
                 return "is blank";
