@@ -1,15 +1,11 @@
 package com.tiffino.controller;
 
 import com.tiffino.entity.request.ManagerPasswordRequest;
-import com.tiffino.entity.request.PasswordRequest;
 import com.tiffino.service.IManagerService;
-import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/manager")
