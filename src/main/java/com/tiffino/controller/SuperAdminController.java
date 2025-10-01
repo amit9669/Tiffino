@@ -3,8 +3,11 @@ package com.tiffino.controller;
 import com.tiffino.entity.request.*;
 import com.tiffino.repository.GiftCardsRepository;
 import com.tiffino.service.ISuperAdminService;
+import com.tiffino.service.TokenBlacklistService;
 import com.tiffino.service.impl.SuperAdminService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,8 +28,17 @@ public class SuperAdminController {
     @Autowired
     private SuperAdminService superAdminService;
 
+    @Autowired
+    private TokenBlacklistService tokenBlacklistService;
+
     @PostMapping("/updateAdmin")
-    public ResponseEntity<?> updateAdmin(@RequestBody SuperAdminRequest superAdminRequest) {
+    public ResponseEntity<?> updateAdmin(@RequestBody SuperAdminRequest superAdminRequest, HttpServletRequest request) {
+        String authHeader = request.getHeader("Authorization");
+
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String token = authHeader.substring(7);
+            tokenBlacklistService.blacklistToken(token);
+        }
         return new ResponseEntity<>(iSuperAdminService.updateAdmin(superAdminRequest), HttpStatus.OK);
     }
 

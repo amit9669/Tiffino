@@ -11,7 +11,8 @@ import java.util.List;
 public class MealResponse {
     private Long mealId;
     private String mealName;
-    private double price;
+    private double finalPrice;
+    private double originalPrice;
     private String photos;
     private String nutritionalInformation;
     private String description;

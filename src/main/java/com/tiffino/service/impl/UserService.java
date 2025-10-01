@@ -120,6 +120,8 @@ public class UserService implements IUserService {
 
     @Override
     public Object getAllAvailableMealsGroupedByCuisine() {
+        User user = (User) this.dataToken.getCurrentUserProfile();
+
         List<CloudKitchenMeal> availableMeals = cloudKitchenMealRepository.findByAvailableTrue();
 
         Map<String, Map<Long, MealResponse>> groupedByCuisine = new HashMap<>();
@@ -128,6 +130,12 @@ public class UserService implements IUserService {
             String cuisineName = ckMeal.getMeal().getCuisine().getName();
             Long mealId = ckMeal.getMeal().getMealId();
 
+            boolean hasActiveSubscription = userSubscriptionRepository
+                    .existsByUser_UserIdAndIsSubscribedTrue(user.getUserId());
+
+            double originalPrice = ckMeal.getMeal().getPrice();
+            double finalPrice = hasActiveSubscription ? applyDiscount(originalPrice) : originalPrice;
+
             groupedByCuisine
                     .computeIfAbsent(cuisineName, k -> new HashMap<>())
                     .compute(mealId, (id, mealResp) -> {
@@ -135,7 +143,8 @@ public class UserService implements IUserService {
                             return MealResponse.builder()
                                     .mealId(mealId)
                                     .mealName(ckMeal.getMeal().getName())
-                                    .price(ckMeal.getMeal().getPrice())
+                                    .originalPrice(originalPrice)
+                                    .finalPrice(finalPrice)
                                     .photos(ckMeal.getMeal().getPhotos())
                                     .description(ckMeal.getMeal().getDescription())
                                     .nutritionalInformation(ckMeal.getMeal().getNutritionalInformation())
@@ -166,6 +175,11 @@ public class UserService implements IUserService {
                 .toList();
     }
 
+    private double applyDiscount(double price) {
+        double discountRate = 0.20;
+        return price - (price * discountRate);
+    }
+
 
     @Transactional
     @Override
@@ -193,14 +207,14 @@ public class UserService implements IUserService {
 
         UserSubscription userSubscription = userSubscriptionRepository.findByIsSubscribedTrueAndUser_UserId(user.getUserId());
 
-        if(userSubscription.getIsSubscribed()){
+        if (userSubscription.getIsSubscribed()) {
             Set<String> allergies = userSubscription.getAllergies();
             String result = " ";
-            for (String a : allergies){
+            for (String a : allergies) {
                 result = String.join(",", allergies);
             }
             deliveryDetails.setAllergies(result);
-        }else{
+        } else {
             deliveryDetails.setAllergies("Need To subscribed first!!!");
         }
         Order order = Order.builder()
@@ -380,20 +394,29 @@ public class UserService implements IUserService {
 
     @Override
     public Object getAllMealsByCuisineName(String cuisineName) {
+        User user = (User) dataToken.getCurrentUserProfile();
+
         Cuisine cuisine = cuisineRepository.findByName(cuisineName);
         List<Meal> meals = cuisine.getMeals();
         List<CloudKitchenMeal> cloudKitchenMeals = cloudKitchenMealRepository.findAll();
         List<Map<String, Object>> mapList = new ArrayList<>();
+        boolean hasActiveSubscription = userSubscriptionRepository
+                .existsByUser_UserIdAndIsSubscribedTrue(user.getUserId());
+
         for (Meal meal : meals) {
             for (CloudKitchenMeal kitchenMeal : cloudKitchenMeals) {
                 if (meal.getMealId().equals(kitchenMeal.getMeal().getMealId())) {
+                    double originalPrice = meal.getPrice();
+                    double finalPrice = hasActiveSubscription ? applyDiscount(originalPrice) : originalPrice;
+
                     Map<String, Object> map = new HashMap<>();
                     map.put("mealId", meal.getMealId());
                     map.put("mealName", meal.getName());
                     map.put("mealPhotos", meal.getPhotos());
                     map.put("mealDescription", meal.getDescription());
                     map.put("mealNutritionalInformation", meal.getNutritionalInformation());
-                    map.put("mealPrice", meal.getPrice());
+                    map.put("mealOriginalPrice", originalPrice);
+                    map.put("mealFinalPrice", finalPrice);
                     map.put("cloudKitchenId", kitchenMeal.getCloudKitchen().getCloudKitchenId());
                     map.put("cloudKitchenName", kitchenMeal.getCloudKitchen().getCity() + " - " + kitchenMeal.getCloudKitchen().getDivision());
                     mapList.add(map);
@@ -434,16 +457,6 @@ public class UserService implements IUserService {
         return results;
     }
 
-
-    public Set<String> createCloudKitchenName() {
-        List<CloudKitchenMeal> cloudKitchenMeals = cloudKitchenMealRepository.findAll();
-        Set<String> cloudKitchenNameSet = new HashSet<>();
-        for (CloudKitchenMeal cloudKitchenMeal : cloudKitchenMeals) {
-            cloudKitchenNameSet.add(cloudKitchenMeal.getCloudKitchen().getCity() + " - " + cloudKitchenMeal.getCloudKitchen().getDivision());
-        }
-        return cloudKitchenNameSet;
-    }
-
     @Override
     @Transactional
     public Object assignSubscriptionToUser(SubscriptionRequest request) {
@@ -474,7 +487,18 @@ public class UserService implements IUserService {
             System.out.println("UserService");
             uploadedImageUrl = imageUploadService.uploadImage(file);
         }
-        UserSubscription subscription = UserSubscription.builder().user(user).durationType(request.getDurationType()).mealTimes(request.getMealTimes()).allergies(request.getAllergies()).startDate(LocalDateTime.now()).expiryDate(calculateExpiryDate(request.getDurationType())).isSubscribed(true).dietaryFilePath(uploadedImageUrl).finalPrice(finalPrice).build();
+        UserSubscription subscription = UserSubscription.builder()
+                .user(user)
+                .durationType(request.getDurationType())
+                .mealTimes(request.getMealTimes())
+                .allergies(request.getAllergies())
+                .startDate(LocalDateTime.now())
+                .expiryDate(calculateExpiryDate(request.getDurationType()))
+                .isSubscribed(true)
+                .dietaryFilePath(uploadedImageUrl)
+                .finalPrice(finalPrice)
+                .build();
+
         userSubscriptionRepository.save(subscription);
         Map<String, Object> response = new HashMap<>();
         response.put("message", appliedDiscountPercent > 0 ? "Subscribed Successfully with Discount!" : "Subscribed Successfully!");
@@ -606,11 +630,18 @@ public class UserService implements IUserService {
         Map<Long, CloudKitchenMeal> mealMap = availableMeals.stream()
                 .collect(Collectors.toMap(cm -> cm.getMeal().getMealId(), cm -> cm));
 
+        boolean hasActiveSubscription = userSubscriptionRepository
+                .existsByUser_UserIdAndIsSubscribedTrue(user.getUserId());
+
         for (CartRequest.CartMealItem itemReq : request.getMeals()) {
             CloudKitchenMeal ckm = mealMap.get(itemReq.getMealId());
+
             if (ckm == null) {
                 throw new RuntimeException("Meal ID " + itemReq.getMealId() + " not available");
             }
+
+            double originalPrice = ckm.getMeal().getPrice();
+            double finalPrice = hasActiveSubscription ? applyDiscount(originalPrice) : originalPrice;
 
             boolean exists = cart.getItems().stream()
                     .anyMatch(i -> i.getCloudKitchenMeal().getId().equals(ckm.getId()));
@@ -620,19 +651,27 @@ public class UserService implements IUserService {
                 newItem.setCart(cart);
                 newItem.setCloudKitchenMeal(ckm);
                 newItem.setQuantity(1);
-                newItem.setPrice(ckm.getMeal().getPrice());
+                newItem.setPrice(finalPrice);
                 cart.getItems().add(newItem);
+            }else{
+                List<CartItem> items = cart.getItems();
+                for (CartItem item : items){
+                    item.setPrice(finalPrice);
+                }
             }
         }
 
+
         double totalUnitPrice = cart.getItems().stream()
-                .mapToDouble(item -> item.getCloudKitchenMeal().getMeal().getPrice())
+                .mapToDouble(item -> item.getPrice() * item.getQuantity())
                 .sum();
+
         cart.setTotalPrice(totalUnitPrice);
 
         cartRepository.save(cart);
-        return "Meals added to cart without quantity. Total base price: " + totalUnitPrice;
+        return "Meals added to cart without quantity. Total price: " + totalUnitPrice;
     }
+
 
 
     @Override
@@ -677,9 +716,9 @@ public class UserService implements IUserService {
                         item.getCloudKitchenMeal().getMeal().getMealId(),
                         item.getCloudKitchenMeal().getMeal().getName(),
                         item.getCloudKitchenMeal().getMeal().getPhotos(),
-                        item.getCloudKitchenMeal().getMeal().getPrice(),
+                        item.getPrice(),
                         item.getQuantity(),
-                        item.getCloudKitchenMeal().getMeal().getPrice() * item.getQuantity()
+                        item.getPrice() * item.getQuantity()
                 ))
                 .toList();
 
