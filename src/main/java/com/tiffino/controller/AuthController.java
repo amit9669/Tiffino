@@ -29,7 +29,7 @@ public class AuthController {
 
     @GetMapping("/getProfile")
     public ResponseEntity<?> getProfile() {
-        return new ResponseEntity<>(authService.getProfile(), HttpStatus.FOUND);
+        return new ResponseEntity<>(authService.getProfile(), HttpStatus.OK);
     }
 
     @PostMapping("/logout")
