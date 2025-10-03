@@ -39,7 +39,6 @@ public class SecurityConfiguration {
                                 "/user/register",
                                 "/auth/forgotPassword",
                                 "/auth/changePassword",
-                                "/user/getAllAvailableMealsGroupedByCuisine",
                                 "/manager/updatePassword",
                                 "/delivery-person/updatePassword",
                                 "/auth/**",
