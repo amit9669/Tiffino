@@ -123,15 +123,14 @@ public class UserService implements IUserService {
         User user = (User) this.dataToken.getCurrentUserProfile();
 
         List<CloudKitchenMeal> availableMeals = cloudKitchenMealRepository.findByAvailableTrue();
-
         Map<String, Map<Long, MealResponse>> groupedByCuisine = new HashMap<>();
+
+        boolean hasActiveSubscription = user != null &&
+                userSubscriptionRepository.existsByUser_UserIdAndIsSubscribedTrue(user.getUserId());
 
         for (CloudKitchenMeal ckMeal : availableMeals) {
             String cuisineName = ckMeal.getMeal().getCuisine().getName();
             Long mealId = ckMeal.getMeal().getMealId();
-
-            boolean hasActiveSubscription = userSubscriptionRepository
-                    .existsByUser_UserIdAndIsSubscribedTrue(user.getUserId());
 
             double originalPrice = ckMeal.getMeal().getPrice();
             double finalPrice = hasActiveSubscription ? applyDiscount(originalPrice) : originalPrice;
