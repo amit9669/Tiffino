@@ -751,7 +751,7 @@ public class UserService implements IUserService {
             Integer newQty = quantityMap.get(item.getCloudKitchenMeal().getMeal().getMealId());
             if (newQty != null && newQty >= 0) {
                 item.setQuantity(newQty);
-                item.setPrice(item.getCloudKitchenMeal().getMeal().getPrice() * newQty);
+                item.setPrice(item.getCloudKitchenMeal().getMeal().getPrice());
             }
         }
 
