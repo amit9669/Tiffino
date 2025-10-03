@@ -29,8 +29,16 @@ public class DataToken {
     public Object getCurrentUserProfile() {
         try {
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth == null || !auth.isAuthenticated()) {
+                return null;
+            }
+
+            if (auth.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_ANONYMOUS"))) {
+                return null;
+            }
             String email = (String) auth.getPrincipal();
-            String role = auth.getAuthorities().iterator().next().getAuthority(); // e.g., ROLE_SUPER_ADMIN
+            String role = auth.getAuthorities().iterator().next().getAuthority();
 
             switch (role) {
                 case "ROLE_SUPER_ADMIN":
