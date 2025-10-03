@@ -117,9 +117,9 @@ public class UserController {
         return new ResponseEntity<>(iUserService.getAllCuisines(),HttpStatus.OK);
     }
 
-    @GetMapping("/getAllMealsByCuisineName/{cuisineName}")
-    public ResponseEntity<?> getAllMealsByCuisineName(@PathVariable String cuisineName) {
-        return new ResponseEntity<>(iUserService.getAllMealsByStateName(cuisineName), HttpStatus.OK);
+    @GetMapping("/getAllMealsByCuisineName/{stateName}")
+    public ResponseEntity<?> getAllMealsByCuisineName(@PathVariable String stateName) {
+        return new ResponseEntity<>(iUserService.getAllMealsByStateName(stateName), HttpStatus.OK);
     }
 
     @GetMapping("/searchFilterForUser")
