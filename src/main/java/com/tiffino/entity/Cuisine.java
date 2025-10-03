@@ -30,6 +30,12 @@ public class Cuisine {
     @Column(name = "description")
     private String description;
 
+    @Column(name = "state")
+    private String state;
+
+    @Column(name = "cuisine_photo")
+    private String cuisinePhoto;
+
     @Column(name = "is_available")
     private Boolean isAvailable = true;
 

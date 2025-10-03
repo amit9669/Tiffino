@@ -414,8 +414,8 @@ public class SuperAdminService implements ISuperAdminService {
             Cuisine cuisine = new Cuisine();
             cuisine.setName(cuisineRequest.getName());
             cuisine.setDescription(cuisineRequest.getDescription());
-            cuisine.setCreatedAt(LocalDateTime.now());
-            cuisine.setUpdatedAt(LocalDateTime.now());
+            cuisine.setState(cuisineRequest.getState());
+            cuisine.setCuisinePhoto(this.imageUploadService.uploadImage(cuisineRequest.getCuisinePhoto()));
 
             cuisineRepository.save(cuisine);
             return "Cuisine Inserted Successfully!!";

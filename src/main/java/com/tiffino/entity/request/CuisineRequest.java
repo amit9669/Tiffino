@@ -9,4 +9,6 @@ public class CuisineRequest {
     private Long cuisineId;
     private String name;
     private String description;
+    private String state;
+    private MultipartFile cuisinePhoto;
 }

@@ -112,9 +112,14 @@ public class UserController {
         return new ResponseEntity<>(iUserService.trackOrder(orderId), HttpStatus.OK);
     }
 
+    @GetMapping("/getAllCuisines")
+    public ResponseEntity<?> getAllCuisines(){
+        return new ResponseEntity<>(iUserService.getAllCuisines(),HttpStatus.OK);
+    }
+
     @GetMapping("/getAllMealsByCuisineName/{cuisineName}")
     public ResponseEntity<?> getAllMealsByCuisineName(@PathVariable String cuisineName) {
-        return new ResponseEntity<>(iUserService.getAllMealsByCuisineName(cuisineName), HttpStatus.OK);
+        return new ResponseEntity<>(iUserService.getAllMealsByStateName(cuisineName), HttpStatus.OK);
     }
 
     @GetMapping("/searchFilterForUser")

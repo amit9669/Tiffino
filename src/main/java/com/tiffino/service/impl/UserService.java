@@ -391,39 +391,7 @@ public class UserService implements IUserService {
     }
 
 
-    @Override
-    public Object getAllMealsByCuisineName(String cuisineName) {
-        User user = (User) dataToken.getCurrentUserProfile();
 
-        Cuisine cuisine = cuisineRepository.findByName(cuisineName);
-        List<Meal> meals = cuisine.getMeals();
-        List<CloudKitchenMeal> cloudKitchenMeals = cloudKitchenMealRepository.findAll();
-        List<Map<String, Object>> mapList = new ArrayList<>();
-        boolean hasActiveSubscription = userSubscriptionRepository
-                .existsByUser_UserIdAndIsSubscribedTrue(user.getUserId());
-
-        for (Meal meal : meals) {
-            for (CloudKitchenMeal kitchenMeal : cloudKitchenMeals) {
-                if (meal.getMealId().equals(kitchenMeal.getMeal().getMealId())) {
-                    double originalPrice = meal.getPrice();
-                    double finalPrice = hasActiveSubscription ? applyDiscount(originalPrice) : originalPrice;
-
-                    Map<String, Object> map = new HashMap<>();
-                    map.put("mealId", meal.getMealId());
-                    map.put("mealName", meal.getName());
-                    map.put("mealPhotos", meal.getPhotos());
-                    map.put("mealDescription", meal.getDescription());
-                    map.put("mealNutritionalInformation", meal.getNutritionalInformation());
-                    map.put("mealOriginalPrice", originalPrice);
-                    map.put("mealFinalPrice", finalPrice);
-                    map.put("cloudKitchenId", kitchenMeal.getCloudKitchen().getCloudKitchenId());
-                    map.put("cloudKitchenName", kitchenMeal.getCloudKitchen().getCity() + " - " + kitchenMeal.getCloudKitchen().getDivision());
-                    mapList.add(map);
-                }
-            }
-        }
-        return mapList;
-    }
 
     @Override
     public Object searchFilterForUser(List<String> cuisineNames, List<String> cloudKitchenNames) {
@@ -434,14 +402,14 @@ public class UserService implements IUserService {
 
             for (Cuisine cuisine : allCuisines) {
                 List<Map<String, Object>> mealsByCuisine =
-                        (List<Map<String, Object>>) this.getAllMealsByCuisineName(cuisine.getName());
+                        (List<Map<String, Object>>) this.getAllMealsByStateName(cuisine.getName());
 
                 results.addAll(mealsByCuisine);
             }
         } else {
             for (String cuisineName : cuisineNames) {
                 List<Map<String, Object>> mealsByCuisine =
-                        (List<Map<String, Object>>) this.getAllMealsByCuisineName(cuisineName);
+                        (List<Map<String, Object>>) this.getAllMealsByStateName(cuisineName);
 
                 results.addAll(mealsByCuisine);
             }
@@ -909,6 +877,7 @@ public class UserService implements IUserService {
     }
 
 
+
     private PdfPCell createMealCell(String mealName, String mealPhotoUrl, Font font, Color borderColor) {
         try {
             Image mealImage = Image.getInstance(new URL(mealPhotoUrl));
@@ -946,4 +915,42 @@ public class UserService implements IUserService {
     }
 
 
+    @Override
+    public Object getAllMealsByStateName(String stateName) {
+        User user = (User) dataToken.getCurrentUserProfile();
+
+        Cuisine cuisine = cuisineRepository.findByState(stateName);
+        List<Meal> meals = cuisine.getMeals();
+        List<CloudKitchenMeal> cloudKitchenMeals = cloudKitchenMealRepository.findAll();
+        List<Map<String, Object>> mapList = new ArrayList<>();
+        boolean hasActiveSubscription = userSubscriptionRepository
+                .existsByUser_UserIdAndIsSubscribedTrue(user.getUserId());
+
+        for (Meal meal : meals) {
+            for (CloudKitchenMeal kitchenMeal : cloudKitchenMeals) {
+                if (meal.getMealId().equals(kitchenMeal.getMeal().getMealId())) {
+                    double originalPrice = meal.getPrice();
+                    double finalPrice = hasActiveSubscription ? applyDiscount(originalPrice) : originalPrice;
+
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("mealId", meal.getMealId());
+                    map.put("mealName", meal.getName());
+                    map.put("mealPhotos", meal.getPhotos());
+                    map.put("mealDescription", meal.getDescription());
+                    map.put("mealNutritionalInformation", meal.getNutritionalInformation());
+                    map.put("mealOriginalPrice", originalPrice);
+                    map.put("mealFinalPrice", finalPrice);
+                    map.put("cloudKitchenId", kitchenMeal.getCloudKitchen().getCloudKitchenId());
+                    map.put("cloudKitchenName", kitchenMeal.getCloudKitchen().getCity() + " - " + kitchenMeal.getCloudKitchen().getDivision());
+                    mapList.add(map);
+                }
+            }
+        }
+        return mapList;
+    }
+
+    @Override
+    public Object getAllCuisines() {
+        return cuisineRepository.findAll();
+    }
 }

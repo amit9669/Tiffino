@@ -27,8 +27,6 @@ public interface IUserService {
 
     Object trackOrder(Long orderId);
 
-    Object getAllMealsByCuisineName(String cuisineName);
-
     Object searchFilterForUser(List<String> cuisineNames,List<String> cloudKitchenName);
 
     Object assignSubscriptionToUser(SubscriptionRequest subscriptionRequest);
@@ -44,5 +42,9 @@ public interface IUserService {
    Object updateCartQuantities(UpdateQuantityRequest request);
 
     void viewInvoice(Long orderId, OutputStream out);
+
+    Object getAllMealsByStateName(String stateName);
+
+    Object getAllCuisines();
 }
 

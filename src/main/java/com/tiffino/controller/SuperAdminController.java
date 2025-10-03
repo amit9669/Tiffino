@@ -99,7 +99,18 @@ public class SuperAdminController {
 
 
     @PostMapping("/saveOrUpdateCuisine")
-    public ResponseEntity<?> saveOrUpdateCuisine(@RequestBody CuisineRequest cuisineRequest) throws IOException {
+    public ResponseEntity<?> saveOrUpdateCuisine(@RequestParam Long cuisineId,
+                                                 @RequestParam String name,
+                                                 @RequestParam String description,
+                                                 @RequestParam String state,
+                                                 @RequestParam("cuisinePhoto") MultipartFile cuisinePhoto) throws IOException {
+
+        CuisineRequest cuisineRequest = new CuisineRequest();
+        cuisineRequest.setCuisineId(cuisineId);
+        cuisineRequest.setCuisinePhoto(cuisinePhoto);
+        cuisineRequest.setName(name);
+        cuisineRequest.setState(state);
+        cuisineRequest.setDescription(description);
         return ResponseEntity.ok(iSuperAdminService.saveOrUpdateCuisine(cuisineRequest));
     }
 
