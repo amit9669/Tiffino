@@ -26,6 +26,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.awt.*;
 import java.io.OutputStream;
 import java.net.URL;
+import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
@@ -43,6 +44,9 @@ public class UserService implements IUserService {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private OffersRepository offersRepository;
 
     @Autowired
     private UserSubscriptionRepository userSubscriptionRepository;
@@ -128,13 +132,27 @@ public class UserService implements IUserService {
         boolean hasActiveSubscription = user != null &&
                 userSubscriptionRepository.existsByUser_UserIdAndIsSubscribedTrue(user.getUserId());
 
+        LocalDate today = LocalDate.now();
+        List<Offers> todayOffers = offersRepository.findByValidDate(today).stream()
+                .filter(Offers::isActive)
+                .toList();
+
         for (CloudKitchenMeal ckMeal : availableMeals) {
             String cuisineName = ckMeal.getMeal().getCuisine().getName();
             Long mealId = ckMeal.getMeal().getMealId();
 
             double originalPrice = ckMeal.getMeal().getPrice();
-            double finalPrice = hasActiveSubscription ? applyDiscount(originalPrice) : originalPrice;
+            double finalPrice = originalPrice;
 
+            if (hasActiveSubscription) {
+                finalPrice = applyDiscount(originalPrice);
+            } else if (!todayOffers.isEmpty()) {
+                for (Offers offer : todayOffers) {
+                    finalPrice = originalPrice * (1 - offer.getDiscountPercentage() / 100.0);
+                }
+            }
+
+            double finalPrice1 = finalPrice;
             groupedByCuisine
                     .computeIfAbsent(cuisineName, k -> new HashMap<>())
                     .compute(mealId, (id, mealResp) -> {
@@ -143,7 +161,7 @@ public class UserService implements IUserService {
                                     .mealId(mealId)
                                     .mealName(ckMeal.getMeal().getName())
                                     .originalPrice(originalPrice)
-                                    .finalPrice(finalPrice)
+                                    .finalPrice(finalPrice1)
                                     .photos(ckMeal.getMeal().getPhotos())
                                     .description(ckMeal.getMeal().getDescription())
                                     .nutritionalInformation(ckMeal.getMeal().getNutritionalInformation())
@@ -153,7 +171,7 @@ public class UserService implements IUserService {
                                                     .cloudKitchenName(ckMeal.getCloudKitchen().getCity() + " - " + ckMeal.getCloudKitchen().getDivision())
                                                     .build()
                                     )))
-                                    .build();
+                                .build();
                         } else {
                             mealResp.getKitchens().add(
                                     CloudKitchenInfo.builder()
@@ -600,6 +618,11 @@ public class UserService implements IUserService {
         boolean hasActiveSubscription = userSubscriptionRepository
                 .existsByUser_UserIdAndIsSubscribedTrue(user.getUserId());
 
+        LocalDate today = LocalDate.now();
+        List<Offers> todayOffers = offersRepository.findByValidDate(today).stream()
+                .filter(Offers::isActive)
+                .toList();
+
         for (CartRequest.CartMealItem itemReq : request.getMeals()) {
             CloudKitchenMeal ckm = mealMap.get(itemReq.getMealId());
 
@@ -608,7 +631,15 @@ public class UserService implements IUserService {
             }
 
             double originalPrice = ckm.getMeal().getPrice();
-            double finalPrice = hasActiveSubscription ? applyDiscount(originalPrice) : originalPrice;
+            double finalPrice = originalPrice;
+
+            if (hasActiveSubscription) {
+                finalPrice = applyDiscount(originalPrice);
+            } else if (!todayOffers.isEmpty()) {
+                for (Offers offer : todayOffers) {
+                    finalPrice = originalPrice * (1 - offer.getDiscountPercentage() / 100.0);
+                }
+            }
 
             boolean exists = cart.getItems().stream()
                     .anyMatch(i -> i.getCloudKitchenMeal().getId().equals(ckm.getId()));
@@ -620,14 +651,14 @@ public class UserService implements IUserService {
                 newItem.setQuantity(1);
                 newItem.setPrice(finalPrice);
                 cart.getItems().add(newItem);
-            }else{
-                List<CartItem> items = cart.getItems();
-                for (CartItem item : items){
-                    item.setPrice(finalPrice);
+            } else {
+                for (CartItem item : cart.getItems()) {
+                    if (item.getCloudKitchenMeal().getId().equals(ckm.getId())) {
+                        item.setPrice(finalPrice);
+                    }
                 }
             }
         }
-
 
         double totalUnitPrice = cart.getItems().stream()
                 .mapToDouble(item -> item.getPrice() * item.getQuantity())
@@ -638,6 +669,7 @@ public class UserService implements IUserService {
         cartRepository.save(cart);
         return "Meals added to cart without quantity. Total price: " + totalUnitPrice;
     }
+
 
 
 
@@ -923,14 +955,28 @@ public class UserService implements IUserService {
         List<Meal> meals = cuisine.getMeals();
         List<CloudKitchenMeal> cloudKitchenMeals = cloudKitchenMealRepository.findAll();
         List<Map<String, Object>> mapList = new ArrayList<>();
+
         boolean hasActiveSubscription = userSubscriptionRepository
                 .existsByUser_UserIdAndIsSubscribedTrue(user.getUserId());
+
+        LocalDate today = LocalDate.now();
+        List<Offers> todayOffers = offersRepository.findByValidDate(today).stream()
+                .filter(Offers::isActive)
+                .toList();
 
         for (Meal meal : meals) {
             for (CloudKitchenMeal kitchenMeal : cloudKitchenMeals) {
                 if (meal.getMealId().equals(kitchenMeal.getMeal().getMealId())) {
                     double originalPrice = meal.getPrice();
-                    double finalPrice = hasActiveSubscription ? applyDiscount(originalPrice) : originalPrice;
+                    double finalPrice = originalPrice;
+
+                    if (hasActiveSubscription) {
+                        finalPrice = applyDiscount(originalPrice);
+                    } else if (!todayOffers.isEmpty()) {
+                        for (Offers offer : todayOffers) {
+                            finalPrice = originalPrice * (1 - offer.getDiscountPercentage() / 100.0);
+                        }
+                    }
 
                     Map<String, Object> map = new HashMap<>();
                     map.put("mealId", meal.getMealId());
@@ -949,8 +995,59 @@ public class UserService implements IUserService {
         return mapList;
     }
 
+
     @Override
     public Object getAllCuisines() {
         return cuisineRepository.findAll();
     }
+
+    @Override
+    public Object getOffers() {
+        User user = (User) dataToken.getCurrentUserProfile();
+
+        boolean hasActiveSubscription = user != null &&
+                userSubscriptionRepository.existsByUser_UserIdAndIsSubscribedTrue(user.getUserId());
+
+        LocalDate today = LocalDate.now();
+        List<Offers> todayOffers = offersRepository.findByValidDate(today);
+
+        if (hasActiveSubscription || todayOffers.isEmpty()) {
+            return "No offers available for you today.";
+        }
+
+        return todayOffers.stream()
+                .filter(Offers::isActive)
+                .map(offer -> "Today's offer: " + offer.getTitle() + " - " + offer.getDescription())
+                .collect(Collectors.joining(" "));
+    }
+
+
+    @Scheduled(cron = "0 0/1 * * * ?")
+    @Transactional
+    public void generateMonthlyRandomOffer() {
+        LocalDate today = LocalDate.now();
+
+        int[] allowedDays = {6};
+        Random random = new Random();
+        int randomDay = allowedDays[random.nextInt(allowedDays.length)];
+
+        LocalDate offerDate = today.withDayOfMonth(randomDay);
+
+        boolean exists = offersRepository.existsByValidDateAndActiveTrue(offerDate);
+        if (exists) {
+            System.out.println("Offer already exists for " + offerDate);
+            return;
+        }
+
+        Offers offer = new Offers();
+        offer.setTitle("Monthly Special Day Offer");
+        offer.setDescription("Get 20% off today only on meals!");
+        offer.setDiscountPercentage(20);
+        offer.setValidDate(offerDate);
+        offer.setActive(true);
+
+        offersRepository.save(offer);
+        System.out.println("Monthly offer scheduled for: " + offerDate);
+    }
+
 }

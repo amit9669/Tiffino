@@ -103,7 +103,7 @@ public class SuperAdminController {
                                                  @RequestParam String name,
                                                  @RequestParam String description,
                                                  @RequestParam String state,
-                                                 @RequestParam("cuisinePhoto") MultipartFile cuisinePhoto) throws IOException {
+                                                 @RequestParam(required = false) MultipartFile cuisinePhoto) throws IOException {
 
         CuisineRequest cuisineRequest = new CuisineRequest();
         cuisineRequest.setCuisineId(cuisineId);

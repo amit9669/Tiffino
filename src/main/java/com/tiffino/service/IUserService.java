@@ -46,5 +46,7 @@ public interface IUserService {
     Object getAllMealsByStateName(String stateName);
 
     Object getAllCuisines();
+
+    Object getOffers();
 }
 

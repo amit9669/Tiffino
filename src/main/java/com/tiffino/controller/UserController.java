@@ -162,4 +162,9 @@ public class UserController {
         iUserService.viewInvoice(orderId, response.getOutputStream());
     }
 
+    @GetMapping("/getOffers")
+    public ResponseEntity<?> getOffers(){
+        return new ResponseEntity<>(iUserService.getOffers(),HttpStatus.OK);
+    }
+
 }
