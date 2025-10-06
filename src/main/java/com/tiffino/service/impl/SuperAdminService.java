@@ -18,6 +18,9 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -91,22 +94,24 @@ public class SuperAdminService implements ISuperAdminService {
 
     private final Map<String, Integer> cityDivisionCounter = new HashMap<>();
 
+    private final ExecutorService executorService = Executors.newFixedThreadPool(2);
+
     @Override
     public Object updateAdmin(SuperAdminRequest superAdminRequest) {
 
         SuperAdmin superAdmin = (SuperAdmin) dataToken.getCurrentUserProfile();
         SuperAdmin superAdmin1 = superAdminRepository.findById(superAdmin.getSuperAdminId()).get();
-        if(superAdminRequest != null){
-            if(!superAdminRequest.getAdminName().isBlank() || !superAdminRequest.getEmail().isBlank() || !superAdminRequest.getPassword().isBlank()){
+        if (superAdminRequest != null) {
+            if (!superAdminRequest.getAdminName().isBlank() || !superAdminRequest.getEmail().isBlank() || !superAdminRequest.getPassword().isBlank()) {
                 superAdmin1.setAdminName(superAdminRequest.getAdminName());
                 superAdmin1.setEmail(superAdminRequest.getEmail());
                 superAdmin1.setPassword(passwordEncoder.encode(superAdminRequest.getPassword()));
                 superAdminRepository.save(superAdmin1);
                 return "Updated Successfully!!!";
-            }else{
+            } else {
                 return "is blank";
             }
-        }else{
+        } else {
             return "is Null";
         }
     }
@@ -136,9 +141,13 @@ public class SuperAdminService implements ISuperAdminService {
             Manager manager = new Manager();
             manager.setManagerId(this.createManagerId(managerRequest.getCity()));
             manager.setManagerName(managerRequest.getManagerName());
-            if (!emailService.isDeliverableEmail(managerRequest.getManagerEmail())) {
-                return "Invalid or undeliverable email: " + managerRequest.getManagerEmail();
-            }
+
+            Future<String> future = executorService.submit(() -> {
+                if (!emailService.isDeliverableEmail(managerRequest.getManagerEmail())) {
+                    return "Invalid or undeliverable email: " + managerRequest.getManagerEmail();
+                }
+                return "Email is valid: " + managerRequest.getManagerEmail();
+            });
 
             if (managerRepository.existsByManagerEmail(managerRequest.getManagerEmail())) {
                 return "Email Already Exists!!";
@@ -155,9 +164,9 @@ public class SuperAdminService implements ISuperAdminService {
             manager.setCloudKitchen(cloudKitchen);
             Manager savedManager = managerRepository.save(manager);
 //                this.sendSMS(manager.getPhoneNo());
-            emailService.sendEmail(manager.getManagerEmail(), "Tiffino Manager Credential",
+            executorService.submit(() -> emailService.sendEmail(manager.getManagerEmail(), "Tiffino Manager Credential",
                     "Now You are the manager of " + cloudKitchen.getCloudKitchenId() + " this Cloud Kitchen and your Id is : "
-                            + savedManager.getManagerId() + " and your One Time Password is : " + otpService.generateOTP(savedManager.getManagerEmail()));
+                            + savedManager.getManagerId() + " and your One Time Password is : " + otpService.generateOTP(savedManager.getManagerEmail())));
             log.info("this is manager save api : {}", otpService.getOtp(savedManager.getManagerEmail()));
 
             String otpPassword = otpService.getOtp(savedManager.getManagerEmail()) + "";
@@ -344,9 +353,12 @@ public class SuperAdminService implements ISuperAdminService {
         if (deliveryPersonRepository.existsById(personRequest.getDeliveryPersonId())) {
             DeliveryPerson deliveryPerson = deliveryPersonRepository.findById(personRequest.getDeliveryPersonId()).get();
 
-            if (!emailService.isDeliverableEmail(personRequest.getEmail())) {
-                return "Invalid or undeliverable email: " + personRequest.getEmail();
-            }
+            Future<String> future = executorService.submit(() -> {
+                if (!emailService.isDeliverableEmail(personRequest.getEmail())) {
+                    return "Invalid or undeliverable email: " + personRequest.getEmail();
+                }
+                return "Email is valid: " + personRequest.getEmail();
+            });
 
             deliveryPerson.setEmail(personRequest.getEmail());
             deliveryPerson.setPhoneNo(personRequest.getPhoneNo());
@@ -356,9 +368,9 @@ public class SuperAdminService implements ISuperAdminService {
             deliveryPerson.setInsurance(this.imageUploadService.uploadImage(personRequest.getInsurance()));
             deliveryPerson.setLicences(this.imageUploadService.uploadImage(personRequest.getLicences()));
             DeliveryPerson deliveryPersonSaved = deliveryPersonRepository.save(deliveryPerson);
-            emailService.sendEmail(deliveryPerson.getEmail(), "Tiffino Delivery Partner Credential",
+            executorService.submit(() -> emailService.sendEmail(deliveryPerson.getEmail(), "Tiffino Delivery Partner Credential",
                     "Now You are the Delivery Partner of this " + deliveryPerson.getCloudKitchen().getCloudKitchenId()
-                            + " cloudKitchen and your One Time Password is : " + otpService.generateOTP(deliveryPerson.getEmail()));
+                            + " cloudKitchen and your One Time Password is : " + otpService.generateOTP(deliveryPerson.getEmail())));
             deliveryPersonSaved.setPassword(passwordEncoder.encode(otpService.getOtp(deliveryPerson.getEmail()) + ""));
             deliveryPersonSaved.setRole(Role.DELIVERY_PERSON);
             deliveryPersonRepository.save(deliveryPersonSaved);
@@ -382,9 +394,9 @@ public class SuperAdminService implements ISuperAdminService {
             deliveryPerson.setInsurance(this.imageUploadService.uploadImage(personRequest.getInsurance()));
             deliveryPerson.setLicences(this.imageUploadService.uploadImage(personRequest.getLicences()));
             DeliveryPerson deliveryPersonSaved = deliveryPersonRepository.save(deliveryPerson);
-            emailService.sendEmail(deliveryPerson.getEmail(), "Tiffino Delivery Partner Credential",
+            executorService.submit(() -> emailService.sendEmail(deliveryPerson.getEmail(), "Tiffino Delivery Partner Credential",
                     "Now You are the Delivery Partner of this " + deliveryPerson.getCloudKitchen().getCloudKitchenId()
-                            + " cloudKitchen and your One Time Password is : " + otpService.generateOTP(deliveryPerson.getEmail()));
+                            + " cloudKitchen and your One Time Password is : " + otpService.generateOTP(deliveryPerson.getEmail())));
             deliveryPersonSaved.setPassword(passwordEncoder.encode(otpService.getOtp(deliveryPerson.getEmail()) + ""));
             deliveryPersonSaved.setRole(Role.DELIVERY_PERSON);
             deliveryPersonRepository.save(deliveryPersonSaved);

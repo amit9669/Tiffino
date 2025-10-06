@@ -79,9 +79,9 @@ public class SuperAdminController {
             @RequestParam("name") String name,
             @RequestParam("email") String email,
             @RequestParam("phoneNo") String phoneNo,
-            @RequestParam(value = "adharCard") MultipartFile adharCard,
-            @RequestParam(value = "insurance") MultipartFile insurance,
-            @RequestParam(value = "licences") MultipartFile licences,
+            @RequestParam(value = "adharCard", required = false) MultipartFile adharCard,
+            @RequestParam(value = "insurance", required = false) MultipartFile insurance,
+            @RequestParam(value = "licences", required = false) MultipartFile licences,
             @RequestParam("cloudKitchenId") String cloudKitchenId) {
 
         DeliveryPersonRequest personRequest = new DeliveryPersonRequest();
