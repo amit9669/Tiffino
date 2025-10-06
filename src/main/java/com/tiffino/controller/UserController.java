@@ -166,5 +166,4 @@ public class UserController {
     public ResponseEntity<?> getOffers(){
         return new ResponseEntity<>(iUserService.getOffers(),HttpStatus.OK);
     }
-
 }

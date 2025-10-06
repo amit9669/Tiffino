@@ -1037,7 +1037,7 @@ public class UserService implements IUserService {
     public void generateMonthlyRandomOffer() {
         LocalDate today = LocalDate.now();
 
-        int[] allowedDays = {6};
+        int[] allowedDays = {7};
         Random random = new Random();
         int randomDay = allowedDays[random.nextInt(allowedDays.length)];
 
