@@ -202,11 +202,12 @@ public class UserService implements IUserService {
     @Override
     public Object updateCurrentUser(UserUpdationRequest req) {
         User user = (User) dataToken.getCurrentUserProfile();
-        user.setUserName(req.getName());
-        user.setAddress(req.getAddress());
-        user.setDietaryNeeds(req.getDietaryNeeds());
-        user.setMealPreference(req.getMealPreference());
-        user.setPhoneNo(req.getPhoneNo());
+        User user1 = userRepository.findById(user.getUserId()).get();
+        user1.setUserName(req.getName());
+        user1.setAddress(req.getAddress());
+        user1.setDietaryNeeds(req.getDietaryNeeds());
+        user1.setMealPreference(req.getMealPreference());
+        userRepository.save(user1);
         return "Updated Successfully!!";
     }
 
