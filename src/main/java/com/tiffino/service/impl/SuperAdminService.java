@@ -378,9 +378,12 @@ public class SuperAdminService implements ISuperAdminService {
         } else {
             DeliveryPerson deliveryPerson = new DeliveryPerson();
 
-            if (!emailService.isDeliverableEmail(personRequest.getEmail())) {
-                return "Invalid or undeliverable email: " + personRequest.getEmail();
-            }
+            Future<String> future = executorService.submit(() -> {
+                if (!emailService.isDeliverableEmail(personRequest.getEmail())) {
+                    return "Invalid or undeliverable email: " + personRequest.getEmail();
+                }
+                return "Email is valid: " + personRequest.getEmail();
+            });
 
             if (deliveryPersonRepository.existsByEmail(personRequest.getEmail())) {
                 return "Delivery Partner is already Exists!!!";
