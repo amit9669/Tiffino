@@ -16,6 +16,9 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 @Slf4j
 @Service
@@ -27,13 +30,14 @@ public class EmailService {
     @Value("${mail.api.key}")
     private String MAIL_API_KEY;
 
+    private final ExecutorService executorService = Executors.newFixedThreadPool(2);
+
     @Async
     public void sendEmail(String to, String subject, String message) {
-        try {
-//            if (!isDeliverableEmail(to)) {
-//                log.warn("Invalid or undeliverable email: {}", to);
-//                return;
-//            }
+        Future<String> future = executorService.submit(() -> {
+            if (!isDeliverableEmail(to)) {
+                return "Invalid or undeliverable email: " + to;
+            }
 
             SimpleMailMessage email = new SimpleMailMessage();
             email.setTo(to);
@@ -41,10 +45,14 @@ public class EmailService {
             email.setText(message);
             javaMailSender.send(email);
 
-            log.info("Email successfully sent to {}", to);
+            return "Email successfully sent to " + to;
+        });
 
-        } catch (CustomException e) {
-            log.error("Exception while sending Email", e);
+        try {
+            String result = future.get();
+            log.info(result);
+        } catch (Exception e) {
+            log.error("Error sending email", e);
         }
     }
 

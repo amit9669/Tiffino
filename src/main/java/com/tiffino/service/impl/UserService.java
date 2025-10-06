@@ -32,6 +32,9 @@ import java.util.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -99,6 +102,8 @@ public class UserService implements IUserService {
     @Autowired
     private OrderItemRepository orderItemRepository;
 
+    private final ExecutorService executorService = Executors.newFixedThreadPool(2);
+
 
     public Object registerUser(UserRegistrationRequest request) {
 
@@ -106,9 +111,13 @@ public class UserService implements IUserService {
             return "User already exits";
         }
 
-        if (!emailService.isDeliverableEmail(request.getEmail())) {
-            return "Invalid or undeliverable email: " + request.getEmail();
-        }
+        Future<String> future = executorService.submit(() -> {
+            if (!emailService.isDeliverableEmail(request.getEmail())) {
+                return "Invalid or undeliverable email: " + request.getEmail();
+            }
+            return "Email is valid: " + request.getEmail();
+        });
+
 
         User user = User.builder()
                 .userName(request.getName())
