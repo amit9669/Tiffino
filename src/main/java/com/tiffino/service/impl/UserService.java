@@ -292,7 +292,7 @@ public class UserService implements IUserService {
                                         r.setMealName(item.getCloudKitchenMeal().getMeal().getName());
                                         r.setMealPhotos(item.getCloudKitchenMeal().getMeal().getPhotos());
                                         r.setMealQuantity(item.getQuantity());
-                                        r.setMealPrice(item.getPrice());
+                                        r.setMealPrice(item.getPrice()*item.getQuantity());
                                         return r;
                                     })
                                     .toList();
