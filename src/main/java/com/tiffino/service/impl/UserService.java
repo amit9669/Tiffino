@@ -245,14 +245,20 @@ public class UserService implements IUserService {
         } else {
             deliveryDetails.setAllergies("You have to subscribe first for allergies");
         }
+
+        double totalCost = cart.getItems().stream()
+                .mapToDouble(item -> item.getPrice() * item.getQuantity())
+                .sum();
+
         Order order = Order.builder()
                 .user(user)
                 .cloudKitchen(cart.getCloudKitchen())
                 .orderStatus(String.valueOf(DeliveryStatus.PENDING))
                 .deliveryDetails(deliveryDetails)
-                .totalCost(cart.getTotalPrice())
+                .totalCost(totalCost)
                 .isAvailable(true)
                 .build();
+
         List<OrderItem> orderItems = cart.getItems().stream()
                 .map(ci -> OrderItem.builder()
                         .order(order)
@@ -264,7 +270,6 @@ public class UserService implements IUserService {
 
         order.setItems(orderItems);
 
-        // 💾 Save order and clean up cart
         orderRepository.save(order);
         cartRepository.delete(cart);
 
@@ -296,6 +301,10 @@ public class UserService implements IUserService {
                                         return r;
                                     })
                                     .toList();
+
+                    /*double totalCost = order.getItems().stream()
+                            .mapToDouble(i -> i.getPrice() * i.getQuantity())
+                            .sum();*/
 
                     return OrderResponse.builder()
                             .orderId(order.getOrderId())
