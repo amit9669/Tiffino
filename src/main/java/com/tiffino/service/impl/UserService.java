@@ -966,15 +966,23 @@ public class UserService implements IUserService {
 
     @Override
     public Object getAllMealsByStateName(String stateName) {
-        User user = (User) dataToken.getCurrentUserProfile();
+        Object currentUserProfile = dataToken.getCurrentUserProfile();
+        User user = (currentUserProfile instanceof User) ? (User) currentUserProfile : null;
 
         Cuisine cuisine = cuisineRepository.findByState(stateName);
+        if (cuisine == null) {
+            throw new RuntimeException("No cuisine found for state: " + stateName);
+        }
+
         List<Meal> meals = cuisine.getMeals();
         List<CloudKitchenMeal> cloudKitchenMeals = cloudKitchenMealRepository.findAll();
         List<Map<String, Object>> mapList = new ArrayList<>();
 
-        boolean hasActiveSubscription = userSubscriptionRepository
-                .existsByUser_UserIdAndIsSubscribedTrue(user.getUserId());
+        boolean hasActiveSubscription = false;
+        if (user != null) {
+            hasActiveSubscription = userSubscriptionRepository
+                    .existsByUser_UserIdAndIsSubscribedTrue(user.getUserId());
+        }
 
         LocalDate today = LocalDate.now();
         List<Offers> todayOffers = offersRepository.findByValidDate(today).stream()
@@ -1004,11 +1012,16 @@ public class UserService implements IUserService {
                     map.put("mealOriginalPrice", originalPrice);
                     map.put("mealFinalPrice", finalPrice);
                     map.put("cloudKitchenId", kitchenMeal.getCloudKitchen().getCloudKitchenId());
-                    map.put("cloudKitchenName", kitchenMeal.getCloudKitchen().getCity() + " - " + kitchenMeal.getCloudKitchen().getDivision());
+                    map.put("cloudKitchenName", kitchenMeal.getCloudKitchen().getCity()
+                            + " - " + kitchenMeal.getCloudKitchen().getDivision());
+
+                    map.put("hasSubscription", hasActiveSubscription);
+
                     mapList.add(map);
                 }
             }
         }
+
         return mapList;
     }
 
