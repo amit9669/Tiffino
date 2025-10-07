@@ -999,7 +999,7 @@ public class UserService implements IUserService {
                     map.put("mealId", meal.getMealId());
                     map.put("mealName", meal.getName());
                     map.put("photos", meal.getPhotos());
-                    map.put("mealDescription", meal.getDescription());
+                    map.put("description", meal.getDescription());
                     map.put("nutritionalInformation", meal.getNutritionalInformation());
                     map.put("mealOriginalPrice", originalPrice);
                     map.put("mealFinalPrice", finalPrice);
