@@ -3,15 +3,13 @@ package com.tiffino.service;
 import com.tiffino.config.JwtService;
 import com.tiffino.entity.*;
 import com.tiffino.entity.response.AuthResponse;
-import com.tiffino.repository.DeliveryPersonRepository;
-import com.tiffino.repository.ManagerRepository;
-import com.tiffino.repository.SuperAdminRepository;
-import com.tiffino.repository.UserRepository;
+import com.tiffino.repository.*;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 
 @Service
@@ -34,6 +32,9 @@ public class AuthService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private UserSubscriptionRepository userSubscriptionRepository;
 
     @Autowired
     private DeliveryPersonRepository deliveryPersonRepository;
@@ -100,7 +101,22 @@ public class AuthService {
 
 
     public Object getProfile() {
-        return dataToken.getCurrentUserProfile();
+        Object userProfile = dataToken.getCurrentUserProfile();
+
+        if (userProfile instanceof User) {
+            User user = (User) userProfile;
+
+            UserSubscription userSubscription = userSubscriptionRepository
+                    .findByIsSubscribedTrueAndUser_UserId(user.getUserId());
+
+            if (userSubscription != null) {
+                user.setDurationType(userSubscription.getDurationType());
+                user.setEndTime(userSubscription.getExpiryDate().toLocalTime().truncatedTo(ChronoUnit.SECONDS));
+                user.setEndDate(userSubscription.getExpiryDate().toLocalDate());
+            }
+            return user;
+        }
+        return userProfile;
     }
 
 

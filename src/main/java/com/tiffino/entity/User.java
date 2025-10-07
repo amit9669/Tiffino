@@ -5,6 +5,8 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -54,4 +56,13 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(name = "role")
     private Role role = Role.USER;
+
+    @Transient
+    private DurationType durationType;
+
+    @Transient
+    private LocalDate endDate;
+
+    @Transient
+    private LocalTime endTime;
 }

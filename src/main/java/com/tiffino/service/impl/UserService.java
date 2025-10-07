@@ -180,7 +180,7 @@ public class UserService implements IUserService {
                                                     .cloudKitchenName(ckMeal.getCloudKitchen().getCity() + " - " + ckMeal.getCloudKitchen().getDivision())
                                                     .build()
                                     )))
-                                .build();
+                                    .build();
                         } else {
                             mealResp.getKitchens().add(
                                     CloudKitchenInfo.builder()
@@ -223,8 +223,9 @@ public class UserService implements IUserService {
 
     @Transactional
     @Override
-    public Object createOrder(DeliveryDetails deliveryDetails) {
+    public String createOrder(DeliveryDetails deliveryDetails) {
         User user = (User) dataToken.getCurrentUserProfile();
+
         Cart cart = cartRepository.findByUser(user)
                 .orElseThrow(() -> new RuntimeException("No cart found"));
 
@@ -232,17 +233,17 @@ public class UserService implements IUserService {
             throw new RuntimeException("Cart is empty");
         }
 
-        UserSubscription userSubscription = userSubscriptionRepository.findByIsSubscribedTrueAndUser_UserId(user.getUserId());
+        UserSubscription userSubscription = userSubscriptionRepository
+                .findByIsSubscribedTrueAndUser_UserId(user.getUserId());
 
-        if (userSubscription.getIsSubscribed()) {
+        if (userSubscription != null && Boolean.TRUE.equals(userSubscription.getIsSubscribed())) {
             Set<String> allergies = userSubscription.getAllergies();
-            String result = " ";
-            for (String a : allergies) {
-                result = String.join(",", allergies);
-            }
-            deliveryDetails.setAllergies(result);
+            String allergyList = (allergies != null && !allergies.isEmpty())
+                    ? String.join(",", allergies)
+                    : "None";
+            deliveryDetails.setAllergies(allergyList);
         } else {
-            deliveryDetails.setAllergies("Need To subscribed first!!!");
+            deliveryDetails.setAllergies("You have to subscribe first for allergies");
         }
         Order order = Order.builder()
                 .user(user)
@@ -252,7 +253,6 @@ public class UserService implements IUserService {
                 .totalCost(cart.getTotalPrice())
                 .isAvailable(true)
                 .build();
-
         List<OrderItem> orderItems = cart.getItems().stream()
                 .map(ci -> OrderItem.builder()
                         .order(order)
@@ -263,8 +263,11 @@ public class UserService implements IUserService {
                 .toList();
 
         order.setItems(orderItems);
+
+        // 💾 Save order and clean up cart
         orderRepository.save(order);
         cartRepository.delete(cart);
+
         return "Order placed successfully!";
     }
 
@@ -417,8 +420,6 @@ public class UserService implements IUserService {
 
         return "No delivery or pending status found for orderId: " + orderId;
     }
-
-
 
 
     @Override
@@ -681,8 +682,6 @@ public class UserService implements IUserService {
     }
 
 
-
-
     @Override
     @Transactional
     public Object removeMealFromCart(Long mealId) {
@@ -917,7 +916,6 @@ public class UserService implements IUserService {
             throw new RuntimeException("Error creating invoice PDF", e);
         }
     }
-
 
 
     private PdfPCell createMealCell(String mealName, String mealPhotoUrl, Font font, Color borderColor) {
