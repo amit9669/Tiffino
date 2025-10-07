@@ -998,9 +998,9 @@ public class UserService implements IUserService {
                     Map<String, Object> map = new HashMap<>();
                     map.put("mealId", meal.getMealId());
                     map.put("mealName", meal.getName());
-                    map.put("mealPhotos", meal.getPhotos());
+                    map.put("photos", meal.getPhotos());
                     map.put("mealDescription", meal.getDescription());
-                    map.put("mealNutritionalInformation", meal.getNutritionalInformation());
+                    map.put("nutritionalInformation", meal.getNutritionalInformation());
                     map.put("mealOriginalPrice", originalPrice);
                     map.put("mealFinalPrice", finalPrice);
                     map.put("cloudKitchenId", kitchenMeal.getCloudKitchen().getCloudKitchenId());
