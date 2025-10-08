@@ -122,7 +122,18 @@ public class UserController {
         return new ResponseEntity<>(iUserService.getAllMealsByStateName(stateName), HttpStatus.OK);
     }
 
-    @GetMapping("/searchFilterForUser")
+    @GetMapping("/getAllStateName")
+    public ResponseEntity<?> getAllStateName(){
+        return new ResponseEntity<>(iUserService.getAllStateName(),HttpStatus.OK);
+    }
+
+
+    @GetMapping("/getAllCloudKitchenName")
+    public ResponseEntity<?> getAllCloudKitchenName(){
+        return new ResponseEntity<>(iUserService.getAllCloudKitchenName(),HttpStatus.OK);
+    }
+
+    @PostMapping("/searchFilterForUser")
     public ResponseEntity<?> searchFilterForUser(@RequestBody Map<String, List<String>> request){
         List<String> cuisineNames = request.get("cuisineNames");
         List<String> cloudKitchenNames = request.get("cloudKitchenNames");

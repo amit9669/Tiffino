@@ -48,5 +48,9 @@ public interface IUserService {
     Object getAllCuisines();
 
     Object getOffers();
+
+    Object getAllCloudKitchenName();
+
+    Object getAllStateName();
 }
 
