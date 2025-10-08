@@ -297,7 +297,7 @@ public class UserService implements IUserService {
                                         r.setMealName(item.getCloudKitchenMeal().getMeal().getName());
                                         r.setMealPhotos(item.getCloudKitchenMeal().getMeal().getPhotos());
                                         r.setMealQuantity(item.getQuantity());
-                                        r.setMealPrice(item.getPrice()*item.getQuantity());
+                                        r.setMealPrice(item.getPrice() * item.getQuantity());
                                         return r;
                                     })
                                     .toList();
@@ -483,7 +483,6 @@ public class UserService implements IUserService {
 
         return results;
     }
-
 
 
     @Override
@@ -1056,7 +1055,6 @@ public class UserService implements IUserService {
     }
 
 
-
     @Override
     public Object getAllCuisines() {
         return cuisineRepository.findAll();
@@ -1084,12 +1082,17 @@ public class UserService implements IUserService {
 
     @Override
     public Object getAllCloudKitchenName() {
-        return null;
+        List<String> kitchenNameList = new ArrayList<>();
+        List<CloudKitchenMeal> cloudKitchenMeals = cloudKitchenMealRepository.findByAvailableTrue();
+        for (CloudKitchenMeal cloudKitchenMeal : cloudKitchenMeals) {
+            kitchenNameList.add(cloudKitchenMeal.getCloudKitchen().getCity() + " - " + cloudKitchenMeal.getCloudKitchen().getDivision());
+        }
+        return kitchenNameList;
     }
 
     @Override
     public Object getAllStateName() {
-        return null;
+        return cuisineRepository.findAll();
     }
 
 

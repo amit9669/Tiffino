@@ -127,7 +127,6 @@ public class UserController {
         return new ResponseEntity<>(iUserService.getAllStateName(),HttpStatus.OK);
     }
 
-
     @GetMapping("/getAllCloudKitchenName")
     public ResponseEntity<?> getAllCloudKitchenName(){
         return new ResponseEntity<>(iUserService.getAllCloudKitchenName(),HttpStatus.OK);

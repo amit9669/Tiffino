@@ -43,6 +43,8 @@ public class SecurityConfiguration {
                                 "/user/getAllMealsByCuisineName/**",
                                 "/user/getOffers",
                                 "/user/getAllCuisines",
+                                "/user/getAllCloudKitchenName",
+                                "/user/getAllStateName",
                                 "/user/searchFilterForUser",
                                 "/manager/updatePassword",
                                 "/delivery-person/updatePassword",
