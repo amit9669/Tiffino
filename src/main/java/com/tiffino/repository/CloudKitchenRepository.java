@@ -22,4 +22,6 @@ public interface CloudKitchenRepository extends JpaRepository<CloudKitchen,Strin
             "WHERE c.cloudKitchenId LIKE CONCAT(:prefix, '%') " +
             "ORDER BY c.cloudKitchenId DESC")
     List<String> findLastCloudKitchenIdForPrefix(@Param("prefix") String prefix, Pageable pageable);
+
+    List<CloudKitchen> findByIsDeletedFalse();
 }

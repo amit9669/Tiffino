@@ -1083,9 +1083,9 @@ public class UserService implements IUserService {
     @Override
     public Object getAllCloudKitchenName() {
         List<String> kitchenNameList = new ArrayList<>();
-        List<CloudKitchenMeal> cloudKitchenMeals = cloudKitchenMealRepository.findByAvailableTrue();
-        for (CloudKitchenMeal cloudKitchenMeal : cloudKitchenMeals) {
-            kitchenNameList.add(cloudKitchenMeal.getCloudKitchen().getCity() + " - " + cloudKitchenMeal.getCloudKitchen().getDivision());
+        List<CloudKitchen> cloudKitchens = cloudKitchenRepository.findByIsDeletedFalse();
+        for (CloudKitchen cloudKitchen : cloudKitchens) {
+            kitchenNameList.add(cloudKitchen.getCity() + " - " + cloudKitchen.getDivision());
         }
         return kitchenNameList;
     }
