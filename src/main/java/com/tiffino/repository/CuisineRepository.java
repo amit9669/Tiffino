@@ -11,5 +11,5 @@ import java.util.List;
 public interface CuisineRepository extends JpaRepository<Cuisine, Long> {
     List<Cuisine> findByCuisineId(Long cuisineId);
 
-    Cuisine findByState(String stateName);
+    List<Cuisine> findByState(String stateName);
 }

@@ -435,32 +435,62 @@ public class UserService implements IUserService {
     public Object searchFilterForUser(List<String> cuisineNames, List<String> cloudKitchenNames) {
         List<Map<String, Object>> results = new ArrayList<>();
 
+        // 1️⃣ Determine which cuisines to use
+        List<String> targetCuisines;
         if (cuisineNames == null || cuisineNames.isEmpty()) {
-            List<Cuisine> allCuisines = cuisineRepository.findAll();
-
-            for (Cuisine cuisine : allCuisines) {
-                List<Map<String, Object>> mealsByCuisine =
-                        (List<Map<String, Object>>) this.getAllMealsByStateName(cuisine.getName());
-
-                results.addAll(mealsByCuisine);
-            }
+            targetCuisines = cuisineRepository.findAll()
+                    .stream()
+                    .map(Cuisine::getState) // or getName(), depending on how findByState works
+                    .collect(Collectors.toList());
         } else {
-            for (String cuisineName : cuisineNames) {
-                List<Map<String, Object>> mealsByCuisine =
-                        (List<Map<String, Object>>) this.getAllMealsByStateName(cuisineName);
+            targetCuisines = cuisineNames;
+        }
 
+        // 2️⃣ Fetch meals for each cuisine
+        for (String cuisineStateOrName : targetCuisines) {
+            List<Map<String, Object>> mealsByCuisine =
+                    (List<Map<String, Object>>) this.getAllMealsByStateName(cuisineStateOrName);
+
+            if (mealsByCuisine != null && !mealsByCuisine.isEmpty()) {
                 results.addAll(mealsByCuisine);
             }
         }
 
+        // 3️⃣ Apply cloud kitchen filter (if provided)
         if (cloudKitchenNames != null && !cloudKitchenNames.isEmpty()) {
+            // Normalize to handle cases like "Pune-Katraj" vs "Pune - Katraj"
+            Set<String> normalizedKitchenNames = cloudKitchenNames.stream()
+                    .map(name -> name.replaceAll("\\s+", "").toLowerCase())
+                    .collect(Collectors.toSet());
+
             results = results.stream()
-                    .filter(meal -> cloudKitchenNames.contains(meal.get("cloudKitchenName")))
+                    .filter(meal -> {
+                        String kitchenName = String.valueOf(meal.get("cloudKitchenName"))
+                                .replaceAll("\\s+", "")
+                                .toLowerCase();
+                        return normalizedKitchenNames.contains(kitchenName);
+                    })
                     .collect(Collectors.toList());
+        }
+
+        // 4️⃣ If no filters at all (both lists empty), return all meals directly
+        if ((cuisineNames == null || cuisineNames.isEmpty()) &&
+                (cloudKitchenNames == null || cloudKitchenNames.isEmpty())) {
+
+            List<CloudKitchenMeal> allKitchenMeals = cloudKitchenMealRepository.findAll();
+            for (CloudKitchenMeal kitchenMeal : allKitchenMeals) {
+                Cuisine cuisine = kitchenMeal.getMeal().getCuisine();
+                List<Map<String, Object>> meals =
+                        (List<Map<String, Object>>) this.getAllMealsByStateName(cuisine.getState());
+                if (meals != null && !meals.isEmpty()) {
+                    results.addAll(meals);
+                }
+            }
         }
 
         return results;
     }
+
 
     @Override
     @Transactional
@@ -969,14 +999,16 @@ public class UserService implements IUserService {
         Object currentUserProfile = dataToken.getCurrentUserProfile();
         User user = (currentUserProfile instanceof User) ? (User) currentUserProfile : null;
 
-        Cuisine cuisine = cuisineRepository.findByState(stateName);
-        if (cuisine == null) {
-            throw new RuntimeException("No cuisine found for state: " + stateName);
+        // 1️⃣ Get all cuisines for the given state
+        List<Cuisine> cuisines = cuisineRepository.findByState(stateName);
+
+        if (cuisines == null || cuisines.isEmpty()) {
+            log.warn("No cuisines found for state: {}", stateName);
+            return Collections.emptyList();
         }
 
-        List<Meal> meals = cuisine.getMeals();
-        List<CloudKitchenMeal> cloudKitchenMeals = cloudKitchenMealRepository.findAll();
         List<Map<String, Object>> mapList = new ArrayList<>();
+        List<CloudKitchenMeal> cloudKitchenMeals = cloudKitchenMealRepository.findAll();
 
         boolean hasActiveSubscription = false;
         if (user != null) {
@@ -989,43 +1021,51 @@ public class UserService implements IUserService {
                 .filter(Offers::isActive)
                 .toList();
 
-        for (Meal meal : meals) {
-            for (CloudKitchenMeal kitchenMeal : cloudKitchenMeals) {
-                if (meal.getMealId().equals(kitchenMeal.getMeal().getMealId())) {
-                    if(kitchenMeal.isAvailable()){
-                        double originalPrice = meal.getPrice();
-                        double finalPrice = originalPrice;
+        // 2️⃣ Loop over all cuisines
+        for (Cuisine cuisine : cuisines) {
+            List<Meal> meals = cuisine.getMeals();
+            if (meals == null || meals.isEmpty()) continue;
 
-                        if (hasActiveSubscription) {
-                            finalPrice = applyDiscount(originalPrice);
-                        } else if (!todayOffers.isEmpty()) {
-                            for (Offers offer : todayOffers) {
-                                finalPrice = originalPrice * (1 - offer.getDiscountPercentage() / 100.0);
-                            }
+            // 3️⃣ Loop over meals and cloud kitchen meals
+            for (Meal meal : meals) {
+                for (CloudKitchenMeal kitchenMeal : cloudKitchenMeals) {
+                    if (!meal.getMealId().equals(kitchenMeal.getMeal().getMealId())) continue;
+                    if (!kitchenMeal.isAvailable()) continue;
+
+                    double originalPrice = meal.getPrice();
+                    double finalPrice = originalPrice;
+
+                    // 4️⃣ Apply subscription or offer discounts
+                    if (hasActiveSubscription) {
+                        finalPrice = applyDiscount(originalPrice);
+                    } else if (!todayOffers.isEmpty()) {
+                        for (Offers offer : todayOffers) {
+                            finalPrice = originalPrice * (1 - offer.getDiscountPercentage() / 100.0);
                         }
-
-                        Map<String, Object> map = new HashMap<>();
-                        map.put("mealId", kitchenMeal.getMeal().getMealId());
-                        map.put("mealName", kitchenMeal.getMeal().getName());
-                        map.put("photos", kitchenMeal.getMeal().getPhotos());
-                        map.put("description", kitchenMeal.getMeal().getDescription());
-                        map.put("nutritionalInformation", kitchenMeal.getMeal().getNutritionalInformation());
-                        map.put("mealOriginalPrice", originalPrice);
-                        map.put("mealFinalPrice", finalPrice);
-                        map.put("cloudKitchenId", kitchenMeal.getCloudKitchen().getCloudKitchenId());
-                        map.put("cloudKitchenName", kitchenMeal.getCloudKitchen().getCity()
-                                + " - " + kitchenMeal.getCloudKitchen().getDivision());
-
-                        map.put("hasSubscription", hasActiveSubscription);
-
-                        mapList.add(map);
                     }
+
+                    // 5️⃣ Build the result map
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("mealId", kitchenMeal.getMeal().getMealId());
+                    map.put("mealName", kitchenMeal.getMeal().getName());
+                    map.put("photos", kitchenMeal.getMeal().getPhotos());
+                    map.put("description", kitchenMeal.getMeal().getDescription());
+                    map.put("nutritionalInformation", kitchenMeal.getMeal().getNutritionalInformation());
+                    map.put("mealOriginalPrice", originalPrice);
+                    map.put("mealFinalPrice", finalPrice);
+                    map.put("cloudKitchenId", kitchenMeal.getCloudKitchen().getCloudKitchenId());
+                    map.put("cloudKitchenName",
+                            kitchenMeal.getCloudKitchen().getCity() + " - " + kitchenMeal.getCloudKitchen().getDivision());
+                    map.put("hasSubscription", hasActiveSubscription);
+
+                    mapList.add(map);
                 }
             }
         }
 
         return mapList;
     }
+
 
 
     @Override
