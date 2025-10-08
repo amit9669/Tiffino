@@ -435,30 +435,38 @@ public class UserService implements IUserService {
     public Object searchFilterForUser(List<String> cuisineNames, List<String> cloudKitchenNames) {
         List<Map<String, Object>> results = new ArrayList<>();
 
-        // 1️⃣ Determine which cuisines to use
+        if (cuisineNames != null) {
+            cuisineNames = cuisineNames.stream()
+                    .filter(name -> name != null && !name.trim().isEmpty())
+                    .collect(Collectors.toList());
+        }
+
+        if (cloudKitchenNames != null) {
+            cloudKitchenNames = cloudKitchenNames.stream()
+                    .filter(name -> name != null && !name.trim().isEmpty())
+                    .collect(Collectors.toList());
+        }
+
         List<String> targetCuisines;
         if (cuisineNames == null || cuisineNames.isEmpty()) {
             targetCuisines = cuisineRepository.findAll()
                     .stream()
-                    .map(Cuisine::getState) // or getName(), depending on how findByState works
+                    .map(Cuisine::getState)
                     .collect(Collectors.toList());
         } else {
             targetCuisines = cuisineNames;
         }
 
-        // 2️⃣ Fetch meals for each cuisine
-        for (String cuisineStateOrName : targetCuisines) {
+        for (String cuisineName : targetCuisines) {
             List<Map<String, Object>> mealsByCuisine =
-                    (List<Map<String, Object>>) this.getAllMealsByStateName(cuisineStateOrName);
+                    (List<Map<String, Object>>) this.getAllMealsByStateName(cuisineName);
 
             if (mealsByCuisine != null && !mealsByCuisine.isEmpty()) {
                 results.addAll(mealsByCuisine);
             }
         }
 
-        // 3️⃣ Apply cloud kitchen filter (if provided)
         if (cloudKitchenNames != null && !cloudKitchenNames.isEmpty()) {
-            // Normalize to handle cases like "Pune-Katraj" vs "Pune - Katraj"
             Set<String> normalizedKitchenNames = cloudKitchenNames.stream()
                     .map(name -> name.replaceAll("\\s+", "").toLowerCase())
                     .collect(Collectors.toSet());
@@ -473,23 +481,9 @@ public class UserService implements IUserService {
                     .collect(Collectors.toList());
         }
 
-        // 4️⃣ If no filters at all (both lists empty), return all meals directly
-        if ((cuisineNames == null || cuisineNames.isEmpty()) &&
-                (cloudKitchenNames == null || cloudKitchenNames.isEmpty())) {
-
-            List<CloudKitchenMeal> allKitchenMeals = cloudKitchenMealRepository.findAll();
-            for (CloudKitchenMeal kitchenMeal : allKitchenMeals) {
-                Cuisine cuisine = kitchenMeal.getMeal().getCuisine();
-                List<Map<String, Object>> meals =
-                        (List<Map<String, Object>>) this.getAllMealsByStateName(cuisine.getState());
-                if (meals != null && !meals.isEmpty()) {
-                    results.addAll(meals);
-                }
-            }
-        }
-
         return results;
     }
+
 
 
     @Override
@@ -999,7 +993,6 @@ public class UserService implements IUserService {
         Object currentUserProfile = dataToken.getCurrentUserProfile();
         User user = (currentUserProfile instanceof User) ? (User) currentUserProfile : null;
 
-        // 1️⃣ Get all cuisines for the given state
         List<Cuisine> cuisines = cuisineRepository.findByState(stateName);
 
         if (cuisines == null || cuisines.isEmpty()) {
@@ -1021,12 +1014,10 @@ public class UserService implements IUserService {
                 .filter(Offers::isActive)
                 .toList();
 
-        // 2️⃣ Loop over all cuisines
         for (Cuisine cuisine : cuisines) {
             List<Meal> meals = cuisine.getMeals();
             if (meals == null || meals.isEmpty()) continue;
 
-            // 3️⃣ Loop over meals and cloud kitchen meals
             for (Meal meal : meals) {
                 for (CloudKitchenMeal kitchenMeal : cloudKitchenMeals) {
                     if (!meal.getMealId().equals(kitchenMeal.getMeal().getMealId())) continue;
@@ -1035,7 +1026,6 @@ public class UserService implements IUserService {
                     double originalPrice = meal.getPrice();
                     double finalPrice = originalPrice;
 
-                    // 4️⃣ Apply subscription or offer discounts
                     if (hasActiveSubscription) {
                         finalPrice = applyDiscount(originalPrice);
                     } else if (!todayOffers.isEmpty()) {
@@ -1044,7 +1034,6 @@ public class UserService implements IUserService {
                         }
                     }
 
-                    // 5️⃣ Build the result map
                     Map<String, Object> map = new HashMap<>();
                     map.put("mealId", kitchenMeal.getMeal().getMealId());
                     map.put("mealName", kitchenMeal.getMeal().getName());
