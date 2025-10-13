@@ -1020,7 +1020,7 @@ public class UserService implements IUserService {
 
             for (Meal meal : meals) {
                 for (CloudKitchenMeal kitchenMeal : cloudKitchenMeals) {
-                    if(kitchenMeal.getCloudKitchen().getIsDeleted()){
+                    if(!kitchenMeal.getCloudKitchen().getIsDeleted()){
                         if (!meal.getMealId().equals(kitchenMeal.getMeal().getMealId())) continue;
                         if (!kitchenMeal.isAvailable()) continue;
 
