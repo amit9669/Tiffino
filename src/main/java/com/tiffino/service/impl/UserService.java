@@ -1020,35 +1020,37 @@ public class UserService implements IUserService {
 
             for (Meal meal : meals) {
                 for (CloudKitchenMeal kitchenMeal : cloudKitchenMeals) {
-                    if (!meal.getMealId().equals(kitchenMeal.getMeal().getMealId())) continue;
-                    if (!kitchenMeal.isAvailable()) continue;
+                    if(kitchenMeal.getCloudKitchen().getIsDeleted()){
+                        if (!meal.getMealId().equals(kitchenMeal.getMeal().getMealId())) continue;
+                        if (!kitchenMeal.isAvailable()) continue;
 
-                    double originalPrice = meal.getPrice();
-                    double finalPrice = originalPrice;
+                        double originalPrice = meal.getPrice();
+                        double finalPrice = originalPrice;
 
-                    if (hasActiveSubscription) {
-                        finalPrice = applyDiscount(originalPrice);
-                    } else if (!todayOffers.isEmpty()) {
-                        for (Offers offer : todayOffers) {
-                            finalPrice = originalPrice * (1 - offer.getDiscountPercentage() / 100.0);
+                        if (hasActiveSubscription) {
+                            finalPrice = applyDiscount(originalPrice);
+                        } else if (!todayOffers.isEmpty()) {
+                            for (Offers offer : todayOffers) {
+                                finalPrice = originalPrice * (1 - offer.getDiscountPercentage() / 100.0);
+                            }
                         }
+
+                        Map<String, Object> map = new HashMap<>();
+                        map.put("mealId", kitchenMeal.getMeal().getMealId());
+                        map.put("mealName", kitchenMeal.getMeal().getName());
+                        map.put("photos", kitchenMeal.getMeal().getPhotos());
+                        map.put("description", kitchenMeal.getMeal().getDescription());
+                        map.put("nutritionalInformation", kitchenMeal.getMeal().getNutritionalInformation());
+                        map.put("mealOriginalPrice", originalPrice);
+                        map.put("mealFinalPrice", finalPrice);
+                        map.put("cloudKitchenId", kitchenMeal.getCloudKitchen().getCloudKitchenId());
+                        map.put("cloudKitchenName",
+                                kitchenMeal.getCloudKitchen().getCity() + " - " + kitchenMeal.getCloudKitchen().getDivision());
+                        map.put("hasSubscription", hasActiveSubscription);
+
+                        mapList.add(map);
                     }
-
-                    Map<String, Object> map = new HashMap<>();
-                    map.put("mealId", kitchenMeal.getMeal().getMealId());
-                    map.put("mealName", kitchenMeal.getMeal().getName());
-                    map.put("photos", kitchenMeal.getMeal().getPhotos());
-                    map.put("description", kitchenMeal.getMeal().getDescription());
-                    map.put("nutritionalInformation", kitchenMeal.getMeal().getNutritionalInformation());
-                    map.put("mealOriginalPrice", originalPrice);
-                    map.put("mealFinalPrice", finalPrice);
-                    map.put("cloudKitchenId", kitchenMeal.getCloudKitchen().getCloudKitchenId());
-                    map.put("cloudKitchenName",
-                            kitchenMeal.getCloudKitchen().getCity() + " - " + kitchenMeal.getCloudKitchen().getDivision());
-                    map.put("hasSubscription", hasActiveSubscription);
-
-                    mapList.add(map);
-                }
+                    }
             }
         }
 
@@ -1086,7 +1088,9 @@ public class UserService implements IUserService {
         List<String> kitchenNameList = new ArrayList<>();
         List<CloudKitchen> cloudKitchens = cloudKitchenRepository.findByIsDeletedFalse();
         for (CloudKitchen cloudKitchen : cloudKitchens) {
-            kitchenNameList.add(cloudKitchen.getCity() + " - " + cloudKitchen.getDivision());
+            if(!cloudKitchen.getIsDeleted()) {
+                kitchenNameList.add(cloudKitchen.getCity() + " - " + cloudKitchen.getDivision());
+            }
         }
         return kitchenNameList;
     }
