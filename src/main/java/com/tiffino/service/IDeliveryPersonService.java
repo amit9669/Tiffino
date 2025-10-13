@@ -1,7 +1,5 @@
 package com.tiffino.service;
 
-import jakarta.servlet.http.HttpSession;
-
 public interface IDeliveryPersonService {
 
     Object pickupOrder(Long deliveryId);

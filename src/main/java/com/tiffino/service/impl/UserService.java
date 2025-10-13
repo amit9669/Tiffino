@@ -147,50 +147,52 @@ public class UserService implements IUserService {
                 .toList();
 
         for (CloudKitchenMeal ckMeal : availableMeals) {
-            String cuisineName = ckMeal.getMeal().getCuisine().getName();
-            Long mealId = ckMeal.getMeal().getMealId();
+            if(!ckMeal.getCloudKitchen().getIsDeleted()){
+                String cuisineName = ckMeal.getMeal().getCuisine().getName();
+                Long mealId = ckMeal.getMeal().getMealId();
 
-            double originalPrice = ckMeal.getMeal().getPrice();
-            double finalPrice = originalPrice;
+                double originalPrice = ckMeal.getMeal().getPrice();
+                double finalPrice = originalPrice;
 
-            if (hasActiveSubscription) {
-                finalPrice = applyDiscount(originalPrice);
-            } else if (!todayOffers.isEmpty()) {
-                for (Offers offer : todayOffers) {
-                    finalPrice = originalPrice * (1 - offer.getDiscountPercentage() / 100.0);
+                if (hasActiveSubscription) {
+                    finalPrice = applyDiscount(originalPrice);
+                } else if (!todayOffers.isEmpty()) {
+                    for (Offers offer : todayOffers) {
+                        finalPrice = originalPrice * (1 - offer.getDiscountPercentage() / 100.0);
+                    }
                 }
-            }
 
-            double finalPrice1 = finalPrice;
-            groupedByCuisine
-                    .computeIfAbsent(cuisineName, k -> new HashMap<>())
-                    .compute(mealId, (id, mealResp) -> {
-                        if (mealResp == null) {
-                            return MealResponse.builder()
-                                    .mealId(mealId)
-                                    .mealName(ckMeal.getMeal().getName())
-                                    .originalPrice(originalPrice)
-                                    .finalPrice(finalPrice1)
-                                    .photos(ckMeal.getMeal().getPhotos())
-                                    .description(ckMeal.getMeal().getDescription())
-                                    .nutritionalInformation(ckMeal.getMeal().getNutritionalInformation())
-                                    .kitchens(new ArrayList<>(List.of(
-                                            CloudKitchenInfo.builder()
-                                                    .cloudKitchenId(ckMeal.getCloudKitchen().getCloudKitchenId())
-                                                    .cloudKitchenName(ckMeal.getCloudKitchen().getCity() + " - " + ckMeal.getCloudKitchen().getDivision())
-                                                    .build()
-                                    )))
-                                    .build();
-                        } else {
-                            mealResp.getKitchens().add(
-                                    CloudKitchenInfo.builder()
-                                            .cloudKitchenId(ckMeal.getCloudKitchen().getCloudKitchenId())
-                                            .cloudKitchenName(ckMeal.getCloudKitchen().getCity() + " - " + ckMeal.getCloudKitchen().getDivision())
-                                            .build()
-                            );
-                            return mealResp;
-                        }
-                    });
+                double finalPrice1 = finalPrice;
+                groupedByCuisine
+                        .computeIfAbsent(cuisineName, k -> new HashMap<>())
+                        .compute(mealId, (id, mealResp) -> {
+                            if (mealResp == null) {
+                                return MealResponse.builder()
+                                        .mealId(mealId)
+                                        .mealName(ckMeal.getMeal().getName())
+                                        .originalPrice(originalPrice)
+                                        .finalPrice(finalPrice1)
+                                        .photos(ckMeal.getMeal().getPhotos())
+                                        .description(ckMeal.getMeal().getDescription())
+                                        .nutritionalInformation(ckMeal.getMeal().getNutritionalInformation())
+                                        .kitchens(new ArrayList<>(List.of(
+                                                CloudKitchenInfo.builder()
+                                                        .cloudKitchenId(ckMeal.getCloudKitchen().getCloudKitchenId())
+                                                        .cloudKitchenName(ckMeal.getCloudKitchen().getCity() + " - " + ckMeal.getCloudKitchen().getDivision())
+                                                        .build()
+                                        )))
+                                        .build();
+                            } else {
+                                mealResp.getKitchens().add(
+                                        CloudKitchenInfo.builder()
+                                                .cloudKitchenId(ckMeal.getCloudKitchen().getCloudKitchenId())
+                                                .cloudKitchenName(ckMeal.getCloudKitchen().getCity() + " - " + ckMeal.getCloudKitchen().getDivision())
+                                                .build()
+                                );
+                                return mealResp;
+                            }
+                        });
+            }
         }
 
         return groupedByCuisine.entrySet().stream()
@@ -880,7 +882,6 @@ public class UserService implements IUserService {
                 header.setPadding(8f);
                 table.addCell(header);
             });
-
 
             double grandTotal = 0.0;
 

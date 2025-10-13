@@ -9,7 +9,6 @@ import com.tiffino.repository.*;
 import com.tiffino.service.DataToken;
 import com.tiffino.service.IManagerService;
 import com.tiffino.service.OtpService;
-import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
@@ -298,6 +297,10 @@ public class ManagerService implements IManagerService {
         Manager manager = (Manager) dataToken.getCurrentUserProfile();
 
         CloudKitchen cloudKitchen = manager.getCloudKitchen();
+
+        if (cloudKitchen.getIsDeleted()) {
+            return "Cloud Kitchen is deleted!";
+        }
 
         Optional<Meal> mealOptional = mealRepository.findById(mealId);
 
