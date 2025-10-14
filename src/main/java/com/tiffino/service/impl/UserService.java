@@ -336,6 +336,14 @@ public class UserService implements IUserService {
             throw new RuntimeException("Delivered orders cannot be cancelled");
         }
 
+        if ("ASSIGNED_TO_DELIVERY".equalsIgnoreCase(order.getOrderStatus())) {
+            throw new RuntimeException("Assigned orders cannot be cancelled");
+        }
+
+        if ("OUT_FOR_DELIVERY".equalsIgnoreCase(order.getOrderStatus())) {
+            throw new RuntimeException("Pick Up orders cannot be cancelled");
+        }
+
         order.setOrderStatus("CANCELLED");
         order.setIsAvailable(false);
         orderRepository.save(order);
