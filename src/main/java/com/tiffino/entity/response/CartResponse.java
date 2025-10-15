@@ -11,6 +11,7 @@ public class CartResponse {
     private Long cartId;
     private String cloudKitchenId;
     private String cloudKitchenName;
+    private Boolean hasSubscribed;
     private double totalPrice;
     private List<CartMealInfo> meals;
 

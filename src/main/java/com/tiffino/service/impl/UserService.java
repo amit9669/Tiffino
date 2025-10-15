@@ -304,13 +304,10 @@ public class UserService implements IUserService {
                                     })
                                     .toList();
 
-                    /*double totalCost = order.getItems().stream()
-                            .mapToDouble(i -> i.getPrice() * i.getQuantity())
-                            .sum();*/
-
                     return OrderResponse.builder()
                             .orderId(order.getOrderId())
                             .orderStatus(order.getOrderStatus())
+                            .allergies(order.getDeliveryDetails().getAllergies())
                             .totalCost(order.getTotalCost())
                             .orderDate(orderDate)
                             .orderTime(orderTime)
@@ -801,10 +798,19 @@ public class UserService implements IUserService {
         cart.setTotalPrice(totalPrice);
         Cart saveCart = cartRepository.save(cart);
 
+        UserSubscription userSubscription = userSubscriptionRepository
+                .findByIsSubscribedTrueAndUser_UserId(user.getUserId());
+
+        boolean isSubscribed = false;
+        if (userSubscription != null) {
+            isSubscribed = userSubscription.getIsSubscribed();
+        }
+
         return new CartResponse(
                 saveCart.getId(),
                 saveCart.getCloudKitchen().getCloudKitchenId(),
                 saveCart.getCloudKitchen().getCity() + "-" + saveCart.getCloudKitchen().getDivision(),
+                isSubscribed,
                 saveCart.getTotalPrice(),
                 mealInfos
         );
@@ -819,19 +825,20 @@ public class UserService implements IUserService {
                 .orElseThrow(() -> new RuntimeException("Cart Not Found"));
 
         Map<Long, Integer> quantityMap = request.getItems().stream()
-                .collect(Collectors.toMap(UpdateQuantityRequest.ItemQuantity::getMealId,
-                        UpdateQuantityRequest.ItemQuantity::getQuantity));
+                .collect(Collectors.toMap(
+                        UpdateQuantityRequest.ItemQuantity::getMealId,
+                        UpdateQuantityRequest.ItemQuantity::getQuantity
+                ));
 
         for (CartItem item : cart.getItems()) {
             Integer newQty = quantityMap.get(item.getCloudKitchenMeal().getMeal().getMealId());
             if (newQty != null && newQty >= 0) {
                 item.setQuantity(newQty);
-                item.setPrice(item.getPrice());
             }
         }
 
         double total = cart.getItems().stream()
-                .mapToDouble(CartItem::getPrice)
+                .mapToDouble(item -> item.getPrice() * item.getQuantity()) // <-- FIXED HERE
                 .sum();
 
         cart.setTotalPrice(total);
@@ -839,6 +846,7 @@ public class UserService implements IUserService {
 
         return "Cart updated with quantities. Total Price: " + total;
     }
+
 
     @Override
     public void viewInvoice(Long orderId, OutputStream out) {

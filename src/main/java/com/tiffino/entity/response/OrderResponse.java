@@ -13,6 +13,7 @@ public class OrderResponse {
     private String orderStatus;
     private Double totalCost;
     private String orderDate;
+    private String allergies;
     private String orderTime;
     private List<OrderMealsResponse> orderMealsResponses;
 
