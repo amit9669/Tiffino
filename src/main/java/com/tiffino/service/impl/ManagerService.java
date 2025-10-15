@@ -18,9 +18,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -361,7 +359,6 @@ public class ManagerService implements IManagerService {
 
     @Override
     public Object getAllDetails() {
-
         Manager manager = (Manager) dataToken.getCurrentUserProfile();
 
         List<Order> orders = orderRepository.findAllByIsAvailableTrue().stream()
@@ -369,8 +366,66 @@ public class ManagerService implements IManagerService {
                         .equals(order.getCloudKitchen().getCloudKitchenId()))
                 .toList();
 
+        List<OrderSummaryResponse> pendingOrders = orders.stream()
+                .filter(o -> "PENDING".equalsIgnoreCase(o.getOrderStatus()))
+                .map(o -> new OrderSummaryResponse(
+                        o.getOrderId(),
+                        o.getOrderStatus(),
+                        o.getTotalCost(),
+                        o.getDeliveryDetails().getAddress(),
+                        o.getDeliveryDetails().getCity(),
+                        o.getDeliveryDetails().getState(),
+                        o.getDeliveryDetails().getPinCode(),
+                        o.getDeliveryDetails().getPhoneNo(),
+                        o.getDeliveryDetails().getAllergies()
+                ))
+                .toList();
 
+        List<OrderSummaryResponse> assignedOrders = orders.stream()
+                .filter(o -> "ASSIGNED_TO_DELIVERY".equalsIgnoreCase(o.getOrderStatus()))
+                .map(o -> new OrderSummaryResponse(
+                        o.getOrderId(),
+                        o.getOrderStatus(),
+                        o.getTotalCost(),
+                        o.getDeliveryDetails().getAddress(),
+                        o.getDeliveryDetails().getCity(),
+                        o.getDeliveryDetails().getState(),
+                        o.getDeliveryDetails().getPinCode(),
+                        o.getDeliveryDetails().getPhoneNo(),
+                        o.getDeliveryDetails().getAllergies()
+                ))
+                .toList();
 
-        return null;
+        List<OrderSummaryResponse> deliveredOrders = orders.stream()
+                .filter(o -> "DELIVERED".equalsIgnoreCase(o.getOrderStatus()))
+                .map(o -> new OrderSummaryResponse(
+                        o.getOrderId(),
+                        o.getOrderStatus(),
+                        o.getTotalCost(),
+                        o.getDeliveryDetails().getAddress(),
+                        o.getDeliveryDetails().getCity(),
+                        o.getDeliveryDetails().getState(),
+                        o.getDeliveryDetails().getPinCode(),
+                        o.getDeliveryDetails().getPhoneNo(),
+                        o.getDeliveryDetails().getAllergies()
+                ))
+                .toList();
+
+        double totalCost = orders.stream()
+                .mapToDouble(Order::getTotalCost)
+                .sum();
+
+        Map<String, Object> response = Map.of(
+                "totalOrders", orders.size(),
+                "totalPendingOrders", pendingOrders,
+                "totalCountOfPendingOrder", pendingOrders.size(),
+                "totalAssignedOrder", assignedOrders,
+                "totalCountOfAssignedOrder", assignedOrders.size(),
+                "totalDeliveredOrder", deliveredOrders,
+                "totalCountOfDeliveredOrder", deliveredOrders.size(),
+                "totalOrderCost", totalCost
+        );
+
+        return List.of(response);
     }
 }
