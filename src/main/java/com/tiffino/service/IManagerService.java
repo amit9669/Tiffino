@@ -29,4 +29,6 @@ public interface IManagerService {
     Object acceptedOrder(Long orderId);
 
     Object orderPrepared(Long orderId);
+
+    Object getAllDetails();
 }

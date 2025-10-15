@@ -358,4 +358,19 @@ public class ManagerService implements IManagerService {
         orderRepository.save(order);
         return "ORDER-PREPARED";
     }
+
+    @Override
+    public Object getAllDetails() {
+
+        Manager manager = (Manager) dataToken.getCurrentUserProfile();
+
+        List<Order> orders = orderRepository.findAllByIsAvailableTrue().stream()
+                .filter(order -> manager.getCloudKitchen().getCloudKitchenId()
+                        .equals(order.getCloudKitchen().getCloudKitchenId()))
+                .toList();
+
+
+
+        return null;
+    }
 }

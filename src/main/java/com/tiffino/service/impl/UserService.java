@@ -761,6 +761,7 @@ public class UserService implements IUserService {
         Integer totalAllergies = allergies.size();
         cart.setAllergies(allergiesResult);
         cart.setTotalAllergies(totalAllergies);
+        cart.setTotalPrice((cart.getTotalAllergies() * 10) + cart.getTotalPrice());
         cartRepository.save(cart);
         return allergiesResult;
     }
@@ -789,15 +790,6 @@ public class UserService implements IUserService {
             return "Cart is empty";
         }
 
-        double totalPrice;
-        totalPrice = cart.getTotalPrice();
-        if (cart.getAllergies() != null) {
-            totalPrice = (cart.getTotalAllergies() * 10) + cart.getTotalPrice();
-        }
-
-        cart.setTotalPrice(totalPrice);
-        Cart saveCart = cartRepository.save(cart);
-
         UserSubscription userSubscription = userSubscriptionRepository
                 .findByIsSubscribedTrueAndUser_UserId(user.getUserId());
 
@@ -807,11 +799,11 @@ public class UserService implements IUserService {
         }
 
         return new CartResponse(
-                saveCart.getId(),
-                saveCart.getCloudKitchen().getCloudKitchenId(),
-                saveCart.getCloudKitchen().getCity() + "-" + saveCart.getCloudKitchen().getDivision(),
+                cart.getId(),
+                cart.getCloudKitchen().getCloudKitchenId(),
+                cart.getCloudKitchen().getCity() + "-" + cart.getCloudKitchen().getDivision(),
                 isSubscribed,
-                saveCart.getTotalPrice(),
+                cart.getTotalPrice(),
                 mealInfos
         );
     }

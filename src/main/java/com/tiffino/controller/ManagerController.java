@@ -60,6 +60,11 @@ public class ManagerController {
         return new ResponseEntity<>(iManagerService.getAllOrders(), HttpStatus.OK);
     }
 
+    @GetMapping("/getAllDetails")
+    public ResponseEntity<?> getAllDetails(){
+        return new ResponseEntity<>(iManagerService.getAllDetails(),HttpStatus.OK);
+    }
+
     @PostMapping("/acceptedOrder/{orderId}")
     public ResponseEntity<?> acceptedOrder(@PathVariable Long orderId){
         return new ResponseEntity<>(iManagerService.acceptedOrder(orderId),HttpStatus.OK);
