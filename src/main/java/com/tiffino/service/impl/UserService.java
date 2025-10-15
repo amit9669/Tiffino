@@ -225,7 +225,7 @@ public class UserService implements IUserService {
 
     @Transactional
     @Override
-    public String createOrder(DeliveryDetails deliveryDetails) {
+    public Object createOrder(DeliveryDetails deliveryDetails) {
         User user = (User) dataToken.getCurrentUserProfile();
 
         Cart cart = cartRepository.findByUser(user)
@@ -272,10 +272,10 @@ public class UserService implements IUserService {
 
         order.setItems(orderItems);
 
-        orderRepository.save(order);
+        Order save = orderRepository.save(order);
         cartRepository.delete(cart);
 
-        return "Order placed successfully!";
+        return save.getOrderId();
     }
 
 
