@@ -52,5 +52,7 @@ public interface IUserService {
     Object getAllCloudKitchenName();
 
     Object getAllStateName();
+
+    Object addAllergies(List<String> allergies);
 }
 

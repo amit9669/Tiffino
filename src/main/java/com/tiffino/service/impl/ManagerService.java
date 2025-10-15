@@ -273,6 +273,7 @@ public class ManagerService implements IManagerService {
                         .orderId(order.getOrderId())
                         .orderStatus(order.getOrderStatus())
                         .totalCost(order.getTotalCost())
+                        .allergies(order.getDeliveryDetails().getAllergies())
                         .address(order.getDeliveryDetails().getAddress())
                         .orderDate(String.valueOf(order.getCreatedAt().toLocalDate()))
                         .orderTime(String.valueOf(order.getCreatedAt().toLocalTime().truncatedTo(ChronoUnit.SECONDS)))

@@ -147,7 +147,7 @@ public class UserService implements IUserService {
                 .toList();
 
         for (CloudKitchenMeal ckMeal : availableMeals) {
-            if(!ckMeal.getCloudKitchen().getIsDeleted()){
+            if (!ckMeal.getCloudKitchen().getIsDeleted()) {
                 String cuisineName = ckMeal.getMeal().getCuisine().getName();
                 Long mealId = ckMeal.getMeal().getMealId();
 
@@ -241,11 +241,11 @@ public class UserService implements IUserService {
         if (userSubscription != null && Boolean.TRUE.equals(userSubscription.getIsSubscribed())) {
             Set<String> allergies = userSubscription.getAllergies();
             String allergyList = (allergies != null && !allergies.isEmpty())
-                    ? String.join(",", allergies)
+                    ? String.join(", ", allergies)
                     : "None";
             deliveryDetails.setAllergies(allergyList);
         } else {
-            deliveryDetails.setAllergies("You have to subscribe first for allergies");
+            deliveryDetails.setAllergies(cart.getAllergies());
         }
 
         double totalCost = cart.getItems().stream()
@@ -753,6 +753,22 @@ public class UserService implements IUserService {
     }
 
     @Override
+    public Object addAllergies(List<String> allergies) {
+        User user = (User) dataToken.getCurrentUserProfile();
+
+        Cart cart = cartRepository.findByUser(user).orElse(null);
+        if (cart == null) {
+            return "Cart is empty";
+        }
+        String allergiesResult = String.join(", ", allergies);
+        Integer totalAllergies = allergies.size();
+        cart.setAllergies(allergiesResult);
+        cart.setTotalAllergies(totalAllergies);
+        cartRepository.save(cart);
+        return allergiesResult;
+    }
+
+    @Override
     public Object viewCart() {
         User user = (User) dataToken.getCurrentUserProfile();
 
@@ -776,11 +792,20 @@ public class UserService implements IUserService {
             return "Cart is empty";
         }
 
+        double totalPrice;
+        totalPrice = cart.getTotalPrice();
+        if (cart.getAllergies() != null) {
+            totalPrice = (cart.getTotalAllergies() * 10) + cart.getTotalPrice();
+        }
+
+        cart.setTotalPrice(totalPrice);
+        Cart saveCart = cartRepository.save(cart);
+
         return new CartResponse(
-                cart.getId(),
-                cart.getCloudKitchen().getCloudKitchenId(),
-                cart.getCloudKitchen().getCity() + "-" + cart.getCloudKitchen().getDivision(),
-                cart.getTotalPrice(),
+                saveCart.getId(),
+                saveCart.getCloudKitchen().getCloudKitchenId(),
+                saveCart.getCloudKitchen().getCity() + "-" + saveCart.getCloudKitchen().getDivision(),
+                saveCart.getTotalPrice(),
                 mealInfos
         );
     }
@@ -1028,7 +1053,7 @@ public class UserService implements IUserService {
 
             for (Meal meal : meals) {
                 for (CloudKitchenMeal kitchenMeal : cloudKitchenMeals) {
-                    if(!kitchenMeal.getCloudKitchen().getIsDeleted()){
+                    if (!kitchenMeal.getCloudKitchen().getIsDeleted()) {
                         if (!meal.getMealId().equals(kitchenMeal.getMeal().getMealId())) continue;
                         if (!kitchenMeal.isAvailable()) continue;
 
@@ -1058,7 +1083,7 @@ public class UserService implements IUserService {
 
                         mapList.add(map);
                     }
-                    }
+                }
             }
         }
 
@@ -1096,7 +1121,7 @@ public class UserService implements IUserService {
         List<String> kitchenNameList = new ArrayList<>();
         List<CloudKitchen> cloudKitchens = cloudKitchenRepository.findByIsDeletedFalse();
         for (CloudKitchen cloudKitchen : cloudKitchens) {
-            if(!cloudKitchen.getIsDeleted()) {
+            if (!cloudKitchen.getIsDeleted()) {
                 kitchenNameList.add(cloudKitchen.getCity() + " - " + cloudKitchen.getDivision());
             }
         }

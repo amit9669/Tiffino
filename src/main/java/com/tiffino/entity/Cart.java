@@ -42,6 +42,12 @@ public class Cart {
     @Column(name = "total_price")
     private double totalPrice;
 
+    @Column(name = "allergies")
+    private String allergies;
+
+    @Column(name = "total_allergies")
+    private Integer totalAllergies;
+
     @CreationTimestamp
     private LocalDateTime createdAt;
 

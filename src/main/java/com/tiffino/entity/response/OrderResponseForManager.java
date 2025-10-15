@@ -15,6 +15,7 @@ public class OrderResponseForManager {
     private String orderStatus;
     private String userName;
     private String address;
+    private String allergies;
     private Double totalCost;
     private String orderDate;
     private String orderTime;

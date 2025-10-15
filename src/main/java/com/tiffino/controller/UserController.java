@@ -154,6 +154,11 @@ public class UserController {
         return ResponseEntity.ok(iUserService.viewCart());
     }
 
+    @PostMapping("/addAllergies")
+    public ResponseEntity<?> addAllergies(@RequestBody List<String> allergies){
+        return new ResponseEntity<>(iUserService.addAllergies(allergies),HttpStatus.OK);
+    }
+
     @PostMapping("/updateCartQuantities")
     public ResponseEntity<?> updateCartQuantities(@RequestBody UpdateQuantityRequest request){
         return new ResponseEntity<>(iUserService.updateCartQuantities(request),HttpStatus.OK);
