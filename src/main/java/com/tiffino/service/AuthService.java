@@ -151,7 +151,7 @@ public class AuthService {
             this.emailService.sendEmail(deliveryPerson.get().getEmail(), "OTP for Change Password", "Your OTP is :-" + this.otpService.generateOTP(emailOrId));
             return "Check your Email!!!";
         }
-        return new AuthResponse("Invalid User credentials");
+        return "Invalid User credentials";
     }
 
 
