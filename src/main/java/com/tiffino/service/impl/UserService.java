@@ -248,9 +248,7 @@ public class UserService implements IUserService {
             deliveryDetails.setAllergies(cart.getAllergies());
         }
 
-        double totalCost = cart.getItems().stream()
-                .mapToDouble(item -> item.getPrice() * item.getQuantity())
-                .sum();
+        double totalCost = cart.getTotalPrice();
 
         Order order = Order.builder()
                 .user(user)
