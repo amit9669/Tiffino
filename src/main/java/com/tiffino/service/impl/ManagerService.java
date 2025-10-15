@@ -208,7 +208,7 @@ public class ManagerService implements IManagerService {
         cloudKitchenMeal.setAvailable(false);
         cloudKitchenMeal.setUnavailable(true);
         cloudKitchenMealRepository.save(cloudKitchenMeal);
-        return "Disable Meal for Cloud-Kitchen"+mealId;
+        return "Disable Meal for Cloud-Kitchen" + mealId;
     }
 
     @Override
@@ -334,5 +334,27 @@ public class ManagerService implements IManagerService {
                 return "Disable Meal for Cloud-Kitchen " + mealId;
             }
         }
+    }
+
+    @Override
+    public Object acceptedOrder(Long orderId) {
+        Order order = orderRepository.findById(orderId).get();
+
+        if(order.getOrderStatus().equalsIgnoreCase("PENDING")){
+            order.setOrderStatus("ACCEPTED-ORDER");
+        }
+        orderRepository.save(order);
+        return "ACCEPTED-ORDER";
+    }
+
+    @Override
+    public Object orderPrepared(Long orderId) {
+        Order order = orderRepository.findById(orderId).get();
+
+        if(order.getOrderStatus().equalsIgnoreCase("ACCEPTED-ORDER")){
+            order.setOrderStatus("ORDER-PREPARED");
+        }
+        orderRepository.save(order);
+        return "ORDER-PREPARED";
     }
 }

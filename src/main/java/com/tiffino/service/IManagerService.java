@@ -25,4 +25,8 @@ public interface IManagerService {
     Object listOfDeliveryPersonIsAvailable();
 
     Object addOrRemoveMeals(Long mealId);
+
+    Object acceptedOrder(Long orderId);
+
+    Object orderPrepared(Long orderId);
 }
