@@ -410,30 +410,63 @@ public class UserService implements IUserService {
                     .build();
         }
 
+        // If no delivery is found, check the order status itself
         Order order = orderRepository.findByOrderIdAndUser_UserId(orderId, user.getUserId())
                 .orElseThrow(() -> new RuntimeException("Order not found for this user"));
 
-        if ("PENDING".equalsIgnoreCase(order.getOrderStatus())) {
-            return DeliveryTrackingResponse.builder()
-                    .orderId(order.getOrderId())
-                    .orderStatus(order.getOrderStatus())
-                    .deliveryId(null)
-                    .allergies(order.getDeliveryDetails().getAllergies())
-                    .deliveryStatus(DeliveryStatus.PENDING)
-                    .deliveryPersonName("Not Assigned")
-                    .deliveryPersonPhone("N/A")
-                    .assignedAt(null)
-                    .pickedUpAt(null)
-                    .deliveredAt(null)
-                    .build();
-        }
+        String status = order.getOrderStatus().toUpperCase();
 
-        if ("CANCELLED".equalsIgnoreCase(order.getOrderStatus())) {
-            return "Order has Cancelled!!!";
-        }
+        switch (status) {
+            case "PENDING":
+                return DeliveryTrackingResponse.builder()
+                        .orderId(order.getOrderId())
+                        .orderStatus(order.getOrderStatus())
+                        .deliveryId(null)
+                        .allergies(order.getDeliveryDetails().getAllergies())
+                        .deliveryStatus(DeliveryStatus.PENDING)
+                        .deliveryPersonName("Not Assigned")
+                        .deliveryPersonPhone("N/A")
+                        .assignedAt(null)
+                        .pickedUpAt(null)
+                        .deliveredAt(null)
+                        .build();
 
-        return "No delivery or pending status found for orderId: " + orderId;
+            case "ACCEPTED-ORDER":
+                return DeliveryTrackingResponse.builder()
+                        .orderId(order.getOrderId())
+                        .orderStatus(order.getOrderStatus())
+                        .deliveryId(null)
+                        .allergies(order.getDeliveryDetails().getAllergies())
+                        .deliveryStatus(null)
+                        .deliveryPersonName("Not Assigned")
+                        .deliveryPersonPhone("N/A")
+                        .assignedAt(null)
+                        .pickedUpAt(null)
+                        .deliveredAt(null)
+                        .build();
+
+            case "ORDER-PREPARED":
+                return DeliveryTrackingResponse.builder()
+                        .orderId(order.getOrderId())
+                        .orderStatus(order.getOrderStatus())
+                        .deliveryId(null)
+                        .allergies(order.getDeliveryDetails().getAllergies())
+                        .deliveryStatus(null)
+                        .deliveryPersonName("Not Assigned")
+                        .deliveryPersonPhone("N/A")
+                        .assignedAt(null)
+                        .pickedUpAt(null)
+                        .deliveredAt(null)
+                        .build();
+
+            case "CANCELLED":
+                return "Order has been cancelled!!!";
+
+            default:
+                return "No delivery or recognizable status found for orderId: " + orderId;
+        }
     }
+
 
 
     @Override
