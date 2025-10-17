@@ -788,14 +788,49 @@ public class UserService implements IUserService {
         if (cart == null) {
             return "Cart is empty";
         }
-        String allergiesResult = String.join(", ", allergies);
-        Integer totalAllergies = allergies.size();
-        cart.setAllergies(allergiesResult);
-        cart.setTotalAllergies(totalAllergies);
-        cart.setTotalPrice((cart.getTotalAllergies() * 10) + cart.getTotalPrice());
+
+        Set<String> existingAllergies = new HashSet<>();
+        if (cart.getAllergies() != null && !cart.getAllergies().isBlank()) {
+            existingAllergies = Arrays.stream(cart.getAllergies().split(","))
+                    .map(String::trim)
+                    .collect(Collectors.toSet());
+        }
+
+        Set<String> updatedAllergies = new HashSet<>(allergies);
+
+        Set<String> addedAllergies = new HashSet<>(updatedAllergies);
+        addedAllergies.removeAll(existingAllergies); // only new ones
+
+        Set<String> removedAllergies = new HashSet<>(existingAllergies);
+        removedAllergies.removeAll(updatedAllergies); // only removed ones
+
+        existingAllergies.removeAll(removedAllergies);
+        existingAllergies.addAll(addedAllergies);
+
+        int oldCount = cart.getTotalAllergies() != null ? cart.getTotalAllergies() : 0;
+        int newCount = existingAllergies.size();
+
+        double oldPrice = cart.getTotalPrice() != 0.0 ? cart.getTotalPrice() : 0.0;
+        double allergyPricePerItem = 10.0;
+
+        double adjustedPrice = oldPrice + ((newCount - oldCount) * allergyPricePerItem);
+
+        cart.setAllergies(String.join(", ", existingAllergies));
+        cart.setTotalAllergies(newCount);
+        cart.setTotalPrice(adjustedPrice);
+
         cartRepository.save(cart);
-        return allergiesResult;
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("allergies", existingAllergies);
+        response.put("added", addedAllergies);
+        response.put("removed", removedAllergies);
+        response.put("totalAllergies", newCount);
+        response.put("totalPrice", adjustedPrice);
+
+        return response;
     }
+
 
     @Override
     public Object viewCart() {
