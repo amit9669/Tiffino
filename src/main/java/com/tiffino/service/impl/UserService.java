@@ -154,8 +154,9 @@ public class UserService implements IUserService {
                 double originalPrice = ckMeal.getMeal().getPrice();
                 double finalPrice = originalPrice;
 
+                // 🟢 UPDATED: Hide price completely if user has active subscription
                 if (hasActiveSubscription) {
-                    finalPrice = applyDiscount(originalPrice);
+                    finalPrice = 0.0;
                 } else if (!todayOffers.isEmpty()) {
                     for (Offers offer : todayOffers) {
                         finalPrice = originalPrice * (1 - offer.getDiscountPercentage() / 100.0);
@@ -163,6 +164,7 @@ public class UserService implements IUserService {
                 }
 
                 double finalPrice1 = finalPrice;
+
                 groupedByCuisine
                         .computeIfAbsent(cuisineName, k -> new HashMap<>())
                         .compute(mealId, (id, mealResp) -> {
@@ -170,7 +172,7 @@ public class UserService implements IUserService {
                                 return MealResponse.builder()
                                         .mealId(mealId)
                                         .mealName(ckMeal.getMeal().getName())
-                                        .originalPrice(originalPrice)
+                                        .originalPrice(hasActiveSubscription ? 0.0 : originalPrice) // 🟢 hide original too
                                         .finalPrice(finalPrice1)
                                         .photos(ckMeal.getMeal().getPhotos())
                                         .description(ckMeal.getMeal().getDescription())
@@ -202,6 +204,7 @@ public class UserService implements IUserService {
                         .build())
                 .toList();
     }
+
 
     private double applyDiscount(double price) {
         double discountRate = 0.20;
@@ -410,7 +413,6 @@ public class UserService implements IUserService {
                     .build();
         }
 
-        // If no delivery is found, check the order status itself
         Order order = orderRepository.findByOrderIdAndUser_UserId(orderId, user.getUserId())
                 .orElseThrow(() -> new RuntimeException("Order not found for this user"));
 
@@ -466,7 +468,6 @@ public class UserService implements IUserService {
                 return "No delivery or recognizable status found for orderId: " + orderId;
         }
     }
-
 
 
     @Override
@@ -531,7 +532,9 @@ public class UserService implements IUserService {
             return "User already has active subscription!! Please wait for it to expire.";
         }
         boolean isFile = request.getDietaryFilePath() != null;
-        double originalPrice = priceCalculatorService.calculatePrice(request.getDurationType(), request.getMealTimes(), request.getAllergies(), request.getCaloriesPerMeal(), isFile);
+        double originalPrice = priceCalculatorService.calculatePrice(request.getDurationType(),
+                request.getMealTimes(), request.getAllergies(),
+                request.getCaloriesPerMeal(), isFile);
         double finalPrice = originalPrice;
         double appliedDiscountPercent = 0.0;
         if (request.getGiftCardCodeInput() != null && !request.getGiftCardCodeInput().isBlank()) {
@@ -706,7 +709,6 @@ public class UserService implements IUserService {
 
         for (CartRequest.CartMealItem itemReq : request.getMeals()) {
             CloudKitchenMeal ckm = mealMap.get(itemReq.getMealId());
-
             if (ckm == null) {
                 throw new RuntimeException("Meal ID " + itemReq.getMealId() + " not available");
             }
@@ -715,7 +717,7 @@ public class UserService implements IUserService {
             double finalPrice = originalPrice;
 
             if (hasActiveSubscription) {
-                finalPrice = applyDiscount(originalPrice);
+                finalPrice = 0.0;
             } else if (!todayOffers.isEmpty()) {
                 for (Offers offer : todayOffers) {
                     finalPrice = originalPrice * (1 - offer.getDiscountPercentage() / 100.0);
@@ -741,15 +743,19 @@ public class UserService implements IUserService {
             }
         }
 
-        double totalUnitPrice = cart.getItems().stream()
-                .mapToDouble(item -> item.getPrice() * item.getQuantity())
-                .sum();
+        double totalUnitPrice = hasActiveSubscription ? 0.0 :
+                cart.getItems().stream()
+                        .mapToDouble(item -> item.getPrice() * item.getQuantity())
+                        .sum();
 
         cart.setTotalPrice(totalUnitPrice);
-
         cartRepository.save(cart);
-        return "Meals added to cart without quantity. Total price: " + totalUnitPrice;
+
+        return hasActiveSubscription
+                ? "Meals added to cart under subscription. Total price: 0.0"
+                : "Meals added to cart. Total price: " + totalUnitPrice;
     }
+
 
 
     @Override
@@ -841,14 +847,19 @@ public class UserService implements IUserService {
             return "Cart is empty";
         }
 
+        UserSubscription userSubscription = userSubscriptionRepository
+                .findByIsSubscribedTrueAndUser_UserId(user.getUserId());
+
+        boolean isSubscribed = userSubscription != null && userSubscription.getIsSubscribed();
+
         List<CartResponse.CartMealInfo> mealInfos = cart.getItems().stream()
                 .map(item -> new CartResponse.CartMealInfo(
                         item.getCloudKitchenMeal().getMeal().getMealId(),
                         item.getCloudKitchenMeal().getMeal().getName(),
                         item.getCloudKitchenMeal().getMeal().getPhotos(),
-                        item.getPrice(),
+                        isSubscribed ? 0.0 : item.getPrice(),
                         item.getQuantity(),
-                        item.getPrice() * item.getQuantity()
+                        isSubscribed ? 0.0 : (item.getPrice() * item.getQuantity())
                 ))
                 .toList();
 
@@ -856,20 +867,14 @@ public class UserService implements IUserService {
             return "Cart is empty";
         }
 
-        UserSubscription userSubscription = userSubscriptionRepository
-                .findByIsSubscribedTrueAndUser_UserId(user.getUserId());
-
-        boolean isSubscribed = false;
-        if (userSubscription != null) {
-            isSubscribed = userSubscription.getIsSubscribed();
-        }
+        double totalPrice = isSubscribed ? 0.0 : cart.getTotalPrice();
 
         return new CartResponse(
                 cart.getId(),
                 cart.getCloudKitchen().getCloudKitchenId(),
                 cart.getCloudKitchen().getCity() + "-" + cart.getCloudKitchen().getDivision(),
                 isSubscribed,
-                cart.getTotalPrice(),
+                totalPrice,
                 mealInfos
         );
     }
@@ -1127,7 +1132,8 @@ public class UserService implements IUserService {
                         double finalPrice = originalPrice;
 
                         if (hasActiveSubscription) {
-                            finalPrice = applyDiscount(originalPrice);
+                            originalPrice = 0.0;
+                            finalPrice = 0.0;
                         } else if (!todayOffers.isEmpty()) {
                             for (Offers offer : todayOffers) {
                                 finalPrice = originalPrice * (1 - offer.getDiscountPercentage() / 100.0);
@@ -1140,8 +1146,10 @@ public class UserService implements IUserService {
                         map.put("photos", kitchenMeal.getMeal().getPhotos());
                         map.put("description", kitchenMeal.getMeal().getDescription());
                         map.put("nutritionalInformation", kitchenMeal.getMeal().getNutritionalInformation());
+
                         map.put("mealOriginalPrice", originalPrice);
                         map.put("mealFinalPrice", finalPrice);
+
                         map.put("cloudKitchenId", kitchenMeal.getCloudKitchen().getCloudKitchenId());
                         map.put("cloudKitchenName",
                                 kitchenMeal.getCloudKitchen().getCity() + " - " + kitchenMeal.getCloudKitchen().getDivision());
