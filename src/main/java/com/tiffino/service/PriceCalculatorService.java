@@ -32,12 +32,16 @@ public class PriceCalculatorService {
 
         double price = basePerDay * mealsCount * days;
 
-        if (caloriesPerMeal != null && caloriesPerMeal > 800) price *= 1.08;
-        else if (caloriesPerMeal != null && caloriesPerMeal > 500) price *= 1.04;
+        if (caloriesPerMeal != null && caloriesPerMeal > 800) price *= 3.08;
+        else if (caloriesPerMeal != null && caloriesPerMeal > 500) price *= 3.04;
 
-        if (allergies != null && !allergies.isEmpty()) price *= 1.05;
+        if (allergies == null || allergies.isEmpty()) {
+            price *= 1;
+        } else {
+            price *= 4.05;
+        }
 
-        if (hasUploadedDietaryPlan) price *= 1.03;
+        if (hasUploadedDietaryPlan) price *= 5.03;
 
         return Math.round(price * 100.0) / 100.0;
     }
