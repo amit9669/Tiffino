@@ -31,4 +31,6 @@ public interface IManagerService {
     Object orderPrepared(Long orderId);
 
     Object getAllDetails();
+
+    Object openClosedCloudKitchen();
 }

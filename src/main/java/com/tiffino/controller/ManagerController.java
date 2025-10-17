@@ -79,4 +79,9 @@ public class ManagerController {
     public ResponseEntity<?> addOrRemoveMeals(@PathVariable Long mealId){
         return new ResponseEntity<>(iManagerService.addOrRemoveMeals(mealId),HttpStatus.OK);
     }
+
+    @PostMapping("/openClosedCloudKitchen")
+    public ResponseEntity<?> openClosedCloudKitchen(){
+        return new ResponseEntity<>(iManagerService.openClosedCloudKitchen(),HttpStatus.OK);
+    }
 }

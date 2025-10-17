@@ -9,4 +9,5 @@ import lombok.*;
 public class CloudKitchenInfo {
     private String cloudKitchenId;
     private String cloudKitchenName;
+    private Boolean isOpened;
 }

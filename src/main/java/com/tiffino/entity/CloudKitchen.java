@@ -59,6 +59,9 @@ public class CloudKitchen {
     @JsonBackReference
     private Manager manager;
 
+    @Column(name = "is_Opened")
+    private Boolean isOpened = true ;
+
     @OneToMany(mappedBy = "cloudKitchen", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Review> reviews = new ArrayList<>();
 

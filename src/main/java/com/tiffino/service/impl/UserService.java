@@ -188,6 +188,7 @@ public class UserService implements IUserService {
                                 mealResp.getKitchens().add(
                                         CloudKitchenInfo.builder()
                                                 .cloudKitchenId(ckMeal.getCloudKitchen().getCloudKitchenId())
+                                                .isOpened(ckMeal.getCloudKitchen().getIsOpened())
                                                 .cloudKitchenName(ckMeal.getCloudKitchen().getCity() + " - " + ckMeal.getCloudKitchen().getDivision())
                                                 .build()
                                 );
@@ -689,6 +690,11 @@ public class UserService implements IUserService {
             return "You can only add meals from one CloudKitchen at a time";
         }
 
+        assert cart.getCloudKitchen() != null;
+        if(!cart.getCloudKitchen().getIsOpened()){
+            return "CloudKitchen Time is Closed!!";
+        }
+
         List<Long> mealIds = request.getMeals().stream()
                 .map(CartRequest.CartMealItem::getMealId)
                 .toList();
@@ -1151,6 +1157,7 @@ public class UserService implements IUserService {
                         map.put("mealFinalPrice", finalPrice);
 
                         map.put("cloudKitchenId", kitchenMeal.getCloudKitchen().getCloudKitchenId());
+                        map.put("isOpened", kitchenMeal.getCloudKitchen().getIsOpened());
                         map.put("cloudKitchenName",
                                 kitchenMeal.getCloudKitchen().getCity() + " - " + kitchenMeal.getCloudKitchen().getDivision());
                         map.put("hasSubscription", hasActiveSubscription);
