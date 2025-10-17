@@ -690,11 +690,6 @@ public class UserService implements IUserService {
             return "You can only add meals from one CloudKitchen at a time";
         }
 
-        assert cart.getCloudKitchen() != null;
-        if(!cart.getCloudKitchen().getIsOpened()){
-            return "CloudKitchen Time is Closed!!";
-        }
-
         List<Long> mealIds = request.getMeals().stream()
                 .map(CartRequest.CartMealItem::getMealId)
                 .toList();
