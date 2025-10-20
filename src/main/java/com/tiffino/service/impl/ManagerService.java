@@ -36,6 +36,9 @@ public class ManagerService implements IManagerService {
     private PasswordEncoder passwordEncoder;
 
     @Autowired
+    private OrderItemRepository orderItemRepository;
+
+    @Autowired
     private JwtService jwtService;
 
     @Autowired
@@ -277,6 +280,7 @@ public class ManagerService implements IManagerService {
                         .orderDate(String.valueOf(order.getCreatedAt().toLocalDate()))
                         .orderTime(String.valueOf(order.getCreatedAt().toLocalTime().truncatedTo(ChronoUnit.SECONDS)))
                         .userName(order.getUser().getUserName())
+                        .mealName(orderItemRepository.findAllByOrder_OrderId(order.getOrderId()).stream().map(orderItem -> orderItem.getCloudKitchenMeal().getMeal().getName()).toList())
                         .build()
                 )
                 .toList();

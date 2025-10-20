@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -19,4 +21,5 @@ public class OrderResponseForManager {
     private Double totalCost;
     private String orderDate;
     private String orderTime;
+    private List<String> mealName;
 }
