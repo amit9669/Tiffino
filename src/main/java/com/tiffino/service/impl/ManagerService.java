@@ -437,20 +437,20 @@ public class ManagerService implements IManagerService {
     @Override
     public Object openClosedCloudKitchen() {
         Manager manager = (Manager) dataToken.getCurrentUserProfile();
-
         CloudKitchen cloudKitchen = manager.getCloudKitchen();
 
-        if(cloudKitchen.getIsOpened() == null){
+        if (cloudKitchen.getIsOpened() == null) {
             cloudKitchen.setIsOpened(true);
-            kitchenRepository.save(cloudKitchen);
+        } else {
+            cloudKitchen.setIsOpened(!cloudKitchen.getIsOpened());
         }
 
-        if(cloudKitchen.getIsOpened()){
-            cloudKitchen.setIsOpened(false);
-        }else{
-            cloudKitchen.setIsOpened(true);
-        }
         kitchenRepository.save(cloudKitchen);
-        return "change it!!";
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("status", cloudKitchen.getIsOpened() ? "open" : "closed");
+        response.put("message", "Cloud Kitchen is now " + (cloudKitchen.getIsOpened() ? "Open" : "Closed"));
+
+        return response;
     }
 }
