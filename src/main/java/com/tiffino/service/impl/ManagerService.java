@@ -436,11 +436,17 @@ public class ManagerService implements IManagerService {
 
         CloudKitchen cloudKitchen = manager.getCloudKitchen();
 
-        if(cloudKitchen.getIsOpened()){
-            cloudKitchen.setIsOpened(false);
+        if(cloudKitchen.getIsOpened() == null){
+            cloudKitchen.setIsOpened(true);
+            kitchenRepository.save(cloudKitchen);
         }
 
+        if(cloudKitchen.getIsOpened()){
+            cloudKitchen.setIsOpened(false);
+        }else{
+            cloudKitchen.setIsOpened(true);
+        }
         kitchenRepository.save(cloudKitchen);
-        return "Closed!";
+        return "change it!!";
     }
 }
