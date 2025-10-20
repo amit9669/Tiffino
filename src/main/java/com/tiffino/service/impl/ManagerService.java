@@ -445,12 +445,8 @@ public class ManagerService implements IManagerService {
             cloudKitchen.setIsOpened(!cloudKitchen.getIsOpened());
         }
 
-        kitchenRepository.save(cloudKitchen);
+        CloudKitchen save = kitchenRepository.save(cloudKitchen);
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("status", cloudKitchen.getIsOpened() ? "open" : "closed");
-        response.put("message", "Cloud Kitchen is now " + (cloudKitchen.getIsOpened() ? "Open" : "Closed"));
-
-        return response;
+        return save.getIsOpened();
     }
 }
