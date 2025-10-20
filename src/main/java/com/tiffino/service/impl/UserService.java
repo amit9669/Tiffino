@@ -154,7 +154,6 @@ public class UserService implements IUserService {
                 double originalPrice = ckMeal.getMeal().getPrice();
                 double finalPrice = originalPrice;
 
-                // 🟢 UPDATED: Hide price completely if user has active subscription
                 if (hasActiveSubscription) {
                     finalPrice = 0.0;
                 } else if (!todayOffers.isEmpty()) {
@@ -180,6 +179,7 @@ public class UserService implements IUserService {
                                         .kitchens(new ArrayList<>(List.of(
                                                 CloudKitchenInfo.builder()
                                                         .cloudKitchenId(ckMeal.getCloudKitchen().getCloudKitchenId())
+                                                        .isOpened(ckMeal.getCloudKitchen().getIsOpened())
                                                         .cloudKitchenName(ckMeal.getCloudKitchen().getCity() + " - " + ckMeal.getCloudKitchen().getDivision())
                                                         .build()
                                         )))
