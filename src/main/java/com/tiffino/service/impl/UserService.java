@@ -758,7 +758,6 @@ public class UserService implements IUserService {
     }
 
 
-
     @Override
     @Transactional
     public Object removeMealFromCart(Long mealId) {
@@ -1214,10 +1213,9 @@ public class UserService implements IUserService {
     @Transactional
     public void generateMonthlyRandomOffer() {
         LocalDate today = LocalDate.now();
-
-        int[] allowedDays = {7};
+        int maxDay = today.lengthOfMonth();
         Random random = new Random();
-        int randomDay = allowedDays[random.nextInt(allowedDays.length)];
+        int randomDay = random.nextInt(maxDay) + 1;
 
         LocalDate offerDate = today.withDayOfMonth(randomDay);
 
@@ -1237,5 +1235,4 @@ public class UserService implements IUserService {
         offersRepository.save(offer);
         System.out.println("Monthly offer scheduled for: " + offerDate);
     }
-
 }
