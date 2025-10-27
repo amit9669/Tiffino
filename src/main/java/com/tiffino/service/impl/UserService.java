@@ -27,6 +27,7 @@ import java.awt.*;
 import java.io.OutputStream;
 import java.net.URL;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
@@ -1209,21 +1210,26 @@ public class UserService implements IUserService {
     }
 
 
-    @Scheduled(cron = "0 0/1 * * * ?")
+    @Scheduled(cron = "0 0 0 1 * ?")
     @Transactional
     public void generateMonthlyRandomOffer() {
         LocalDate today = LocalDate.now();
+        YearMonth currentMonth = YearMonth.from(today);
+
+        boolean existsForMonth = offersRepository.existsByValidDateBetweenAndActiveTrue(
+                currentMonth.atDay(1),
+                currentMonth.atEndOfMonth()
+        );
+
+        if (existsForMonth) {
+            System.out.println("Monthly offer already exists for " + currentMonth);
+            return;
+        }
+
         int maxDay = today.lengthOfMonth();
         Random random = new Random();
         int randomDay = random.nextInt(maxDay) + 1;
-
         LocalDate offerDate = today.withDayOfMonth(randomDay);
-
-        boolean exists = offersRepository.existsByValidDateAndActiveTrue(offerDate);
-        if (exists) {
-            System.out.println("Offer already exists for " + offerDate);
-            return;
-        }
 
         Offers offer = new Offers();
         offer.setTitle("Monthly Special Day Offer");
@@ -1233,6 +1239,7 @@ public class UserService implements IUserService {
         offer.setActive(true);
 
         offersRepository.save(offer);
-        System.out.println("Monthly offer scheduled for: " + offerDate);
+        System.out.println("New monthly offer scheduled for: " + offerDate);
     }
+
 }

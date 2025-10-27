@@ -10,4 +10,6 @@ public interface OffersRepository extends JpaRepository<Offers, Long> {
     List<Offers> findByValidDate(LocalDate today);
 
     boolean existsByValidDateAndActiveTrue(LocalDate offerDate);
+
+    boolean existsByValidDateBetweenAndActiveTrue(LocalDate localDate, LocalDate localDate1);
 }
