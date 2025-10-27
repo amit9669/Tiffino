@@ -35,7 +35,11 @@ public class SecurityConfiguration {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        // ✅ Public endpoints
                         .requestMatchers(
+                                "/v3/api-docs/**",      // Swagger API docs
+                                "/swagger-ui/**",       // Swagger UI resources
+                                "/swagger-ui.html",     // Swagger main page
                                 "/user/register",
                                 "/auth/forgotPassword",
                                 "/auth/changePassword",
@@ -51,10 +55,14 @@ public class SecurityConfiguration {
                                 "/auth/**",
                                 "/meals/**"
                         ).permitAll()
+
+                        // ✅ Role-based protected endpoints
                         .requestMatchers("/superAdmin/**").hasRole("SUPER_ADMIN")
                         .requestMatchers("/manager/**").hasRole("MANAGER")
                         .requestMatchers("/user/**").hasRole("USER")
                         .requestMatchers("/delivery-person/**").hasRole("DELIVERY_PERSON")
+
+                        // Everything else needs authentication
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())
@@ -87,7 +95,7 @@ public class SecurityConfiguration {
         configuration.setAllowedOrigins(List.of("http://localhost:4200")); // Angular dev server
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
-        configuration.setAllowCredentials(true); // if you use cookies with Angular
+        configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);

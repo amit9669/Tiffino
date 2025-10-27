@@ -4,6 +4,7 @@ import com.tiffino.entity.request.DeliveryPersonPasswordRequest;
 import com.tiffino.entity.request.ManagerPasswordRequest;
 import com.tiffino.entity.request.PasswordRequest;
 import com.tiffino.service.IDeliveryPersonService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/delivery-person")
+@SecurityRequirement(name = "bearerAuth")
 public class DeliveryPersonController {
 
     @Autowired

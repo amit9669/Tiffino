@@ -8,6 +8,7 @@ import com.tiffino.repository.OrderRepository;
 import com.tiffino.service.EmailService;
 import com.tiffino.service.IUserService;
 import com.tiffino.service.OtpService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +24,7 @@ import java.util.Set;
 
 @RestController
 @RequestMapping("/user")
+@SecurityRequirement(name = "bearerAuth")
 public class UserController {
 
     @Autowired
@@ -117,7 +119,7 @@ public class UserController {
         return new ResponseEntity<>(iUserService.getAllCuisines(),HttpStatus.OK);
     }
 
-    @GetMapping("/getAllMealsByCuisineName/{stateName}")
+    @GetMapping("/getAllMealsByStateName/{stateName}")
     public ResponseEntity<?> getAllMealsByCuisineName(@PathVariable String stateName) {
         return new ResponseEntity<>(iUserService.getAllMealsByStateName(stateName), HttpStatus.OK);
     }

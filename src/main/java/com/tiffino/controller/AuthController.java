@@ -4,6 +4,7 @@ import com.tiffino.entity.request.LogInRequest;
 import com.tiffino.entity.response.LogInResponse;
 import com.tiffino.service.AuthService;
 import com.tiffino.service.TokenBlacklistService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/auth")
+@SecurityRequirement(name = "bearerAuth")
 public class AuthController {
 
     @Autowired

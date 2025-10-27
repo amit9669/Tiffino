@@ -5,6 +5,7 @@ import com.tiffino.repository.GiftCardsRepository;
 import com.tiffino.service.ISuperAdminService;
 import com.tiffino.service.TokenBlacklistService;
 import com.tiffino.service.impl.SuperAdminService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpRequest;
@@ -17,6 +18,7 @@ import java.io.IOException;
 
 @RestController
 @RequestMapping("/superAdmin")
+@SecurityRequirement(name = "bearerAuth")
 public class SuperAdminController {
 
     @Autowired
