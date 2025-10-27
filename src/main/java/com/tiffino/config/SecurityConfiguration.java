@@ -44,7 +44,7 @@ public class SecurityConfiguration {
                                 "/auth/forgotPassword",
                                 "/auth/changePassword",
                                 "/user/getAllAvailableMealsGroupedByCuisine",
-                                "/user/getAllMealsByCuisineName/**",
+                                "/user/getAllMealsByStateName/**",
                                 "/user/getOffers",
                                 "/user/getAllCuisines",
                                 "/user/getAllCloudKitchenName",
