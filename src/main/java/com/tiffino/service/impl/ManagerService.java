@@ -289,7 +289,7 @@ public class ManagerService implements IManagerService {
     @Override
     public Object listOfDeliveryPersonIsAvailable() {
         Manager manager = (Manager) dataToken.getCurrentUserProfile();
-        List<DeliveryPerson> deliveryPeople = deliveryPersonRepository.findByIsAvailableTrue();
+        List<DeliveryPerson> deliveryPeople = deliveryPersonRepository.findByIsAvailableTrueAndIsActiveTrue();
 
         return deliveryPeople.stream()
                 .filter(dp -> dp.getCloudKitchen().getCloudKitchenId()

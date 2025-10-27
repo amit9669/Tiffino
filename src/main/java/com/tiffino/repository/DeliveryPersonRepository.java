@@ -12,4 +12,6 @@ public interface DeliveryPersonRepository extends JpaRepository<DeliveryPerson,L
     Optional<DeliveryPerson> findByEmail(String email);
 
     boolean existsByEmail(String email);
+
+    List<DeliveryPerson> findByIsAvailableTrueAndIsActiveTrue();
 }
