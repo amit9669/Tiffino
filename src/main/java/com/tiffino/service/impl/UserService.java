@@ -932,10 +932,18 @@ public class UserService implements IUserService {
             Color grayBg = new Color(245, 245, 245);
 
             // === Add Logo ===
-            Image logo = Image.getInstance("D:\\QuantumSoft\\Tiffino\\src\\assets\\images\\shidori_logo1.png");
-            logo.scaleToFit(100, 100);
-            logo.setAlignment(Element.ALIGN_CENTER);
-            doc.add(logo);
+            try {
+                Image logo = Image.getInstance(new URL("https://res.cloudinary.com/dd9dcfegb/image/upload/v1761554552/geon2zixjcu89svlfcmo.png"));
+                logo.scaleToFit(100, 100);
+                logo.setAlignment(Element.ALIGN_CENTER);
+                doc.add(logo);
+            } catch (Exception e) {
+                Paragraph fallback = new Paragraph("Shidhori Kitchen",
+                        FontFactory.getFont(FontFactory.HELVETICA_BOLD, 20, new Color(255, 102, 0)));
+                fallback.setAlignment(Element.ALIGN_CENTER);
+                doc.add(fallback);
+            }
+
 
             // === Title ===
             Font kitchenFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 26, shidhoriOrange);
