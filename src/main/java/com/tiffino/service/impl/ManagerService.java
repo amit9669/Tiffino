@@ -221,7 +221,7 @@ public class ManagerService implements IManagerService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found"));
 
-        if (!order.getOrderStatus().equals("PENDING") && !order.getOrderStatus().equals("CONFIRMED")) {
+        if (!order.getOrderStatus().equals("ORDER-PREPARED") && !order.getOrderStatus().equals("CONFIRMED")) {
             return "Order already assigned or processed";
         }
 
