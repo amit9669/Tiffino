@@ -683,6 +683,7 @@ public class UserService implements IUserService {
                     Cart c = new Cart();
                     c.setUser(user);
                     c.setCloudKitchen(cloudKitchen);
+                    c.setItems(new ArrayList<>());
                     return c;
                 });
 
@@ -721,9 +722,11 @@ public class UserService implements IUserService {
             if (hasActiveSubscription) {
                 finalPrice = 0.0;
             } else if (!todayOffers.isEmpty()) {
-                for (Offers offer : todayOffers) {
-                    finalPrice = originalPrice * (1 - offer.getDiscountPercentage() / 100.0);
-                }
+                double maxDiscount = todayOffers.stream()
+                        .mapToDouble(Offers::getDiscountPercentage)
+                        .max()
+                        .orElse(0.0);
+                finalPrice = originalPrice * (1 - maxDiscount / 100.0);
             }
 
             boolean exists = cart.getItems().stream()
@@ -745,17 +748,13 @@ public class UserService implements IUserService {
             }
         }
 
-        double totalUnitPrice = hasActiveSubscription ? 0.0 :
-                cart.getItems().stream()
-                        .mapToDouble(item -> item.getPrice() * item.getQuantity())
-                        .sum();
+        cart.setTotalPrice(calculateTotalPrice(cart));
 
-        cart.setTotalPrice(totalUnitPrice);
         cartRepository.save(cart);
 
         return hasActiveSubscription
                 ? "Meals added to cart under subscription. Total price: 0.0"
-                : "Meals added to cart. Total price: " + totalUnitPrice;
+                : "Meals added to cart. Total price: " + cart.getTotalPrice();
     }
 
 
@@ -795,36 +794,26 @@ public class UserService implements IUserService {
         if (cart == null) {
             return "Cart is empty";
         }
-
         Set<String> existingAllergies = new HashSet<>();
         if (cart.getAllergies() != null && !cart.getAllergies().isBlank()) {
             existingAllergies = Arrays.stream(cart.getAllergies().split(","))
                     .map(String::trim)
                     .collect(Collectors.toSet());
         }
-
         Set<String> updatedAllergies = new HashSet<>(allergies);
-
         Set<String> addedAllergies = new HashSet<>(updatedAllergies);
-        addedAllergies.removeAll(existingAllergies); // only new ones
+        addedAllergies.removeAll(existingAllergies);
 
         Set<String> removedAllergies = new HashSet<>(existingAllergies);
-        removedAllergies.removeAll(updatedAllergies); // only removed ones
+        removedAllergies.removeAll(updatedAllergies);
 
         existingAllergies.removeAll(removedAllergies);
         existingAllergies.addAll(addedAllergies);
-
-        int oldCount = cart.getTotalAllergies() != null ? cart.getTotalAllergies() : 0;
         int newCount = existingAllergies.size();
-
-        double oldPrice = cart.getTotalPrice() != 0.0 ? cart.getTotalPrice() : 0.0;
-        double allergyPricePerItem = 10.0;
-
-        double adjustedPrice = oldPrice + ((newCount - oldCount) * allergyPricePerItem);
-
         cart.setAllergies(String.join(", ", existingAllergies));
         cart.setTotalAllergies(newCount);
-        cart.setTotalPrice(adjustedPrice);
+
+        cart.setTotalPrice(calculateTotalPrice(cart));
 
         cartRepository.save(cart);
 
@@ -833,7 +822,7 @@ public class UserService implements IUserService {
         response.put("added", addedAllergies);
         response.put("removed", removedAllergies);
         response.put("totalAllergies", newCount);
-        response.put("totalPrice", adjustedPrice);
+        response.put("totalPrice", cart.getTotalPrice());
 
         return response;
     }
@@ -901,16 +890,22 @@ public class UserService implements IUserService {
             }
         }
 
-        double total = cart.getItems().stream()
-                .mapToDouble(item -> item.getPrice() * item.getQuantity()) // <-- FIXED HERE
-                .sum();
+        cart.setTotalPrice(calculateTotalPrice(cart));
 
-        cart.setTotalPrice(total);
         cartRepository.save(cart);
 
-        return "Cart updated with quantities. Total Price: " + total;
+        return "Cart updated with quantities. Total Price: " + cart.getTotalPrice();
     }
 
+    private double calculateTotalPrice(Cart cart) {
+        double mealTotal = cart.getItems().stream()
+                .mapToDouble(item -> item.getPrice() * item.getQuantity())
+                .sum();
+
+        double allergyTotal = (cart.getTotalAllergies() != null ? cart.getTotalAllergies() : 0) * 10.0;
+
+        return mealTotal + allergyTotal;
+    }
 
     @Override
     public void viewInvoice(Long orderId, OutputStream out) {
