@@ -53,7 +53,9 @@ public class SecurityConfiguration {
                                 "/manager/updatePassword",
                                 "/delivery-person/updatePassword",
                                 "/auth/**",
-                                "/meals/**"
+                                "/meals/**",
+                                "/ws/**",
+                                "/api/chat/**"
                         ).permitAll()
 
                         // ✅ Role-based protected endpoints

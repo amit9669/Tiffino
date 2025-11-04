@@ -33,4 +33,6 @@ public interface IManagerService {
     Object getAllDetails();
 
     Object openClosedCloudKitchen();
+
+    Object getQueryFromUser();
 }

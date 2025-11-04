@@ -17,7 +17,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -448,5 +447,10 @@ public class ManagerService implements IManagerService {
         CloudKitchen save = kitchenRepository.save(cloudKitchen);
 
         return save.getIsOpened();
+    }
+
+    @Override
+    public Object getQueryFromUser() {
+        return null;
     }
 }

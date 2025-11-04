@@ -827,7 +827,6 @@ public class UserService implements IUserService {
         return response;
     }
 
-
     @Override
     public Object viewCart() {
         User user = (User) dataToken.getCurrentUserProfile();
