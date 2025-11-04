@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>FoodCare Chat — Beast Mode</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+          background: linear-gradient(135deg, #0d0d0d, #1a1a1a);
+          font-family: 'Inter', sans-serif;
+          color: #e5e7eb;
+        }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 10px; }
+
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from {opacity:0; transform:translateY(6px);} to {opacity:1; transform:translateY(0);} }
+
+        .card { background:#18181b; border:1px solid #2d2d2d; box-shadow:0 4px 20px rgba(0,0,0,0.4); }
+        input:focus { border-color:#4f46e5; outline:none; }
+
+        .bot-bubble { background:#27272a; color:#f4f4f5; }
+        .user-bubble { background:#4f46e5; color:#fff; }
+        .quick { background:#1f1f22; border:1px solid #3f3f46; color:#d1d5db; border-radius:9999px; padding:.4rem .9rem; cursor:pointer; }
+        .quick:hover { background:#2e2e31; }
+
+        .beast-btn { background:#4f46e5; color:#fff; font-weight:600; border-radius:0.75rem; transition:background .25s, transform .2s; }
+        .beast-btn:hover { background:#3730a3; transform:translateY(-1px); }
+    </style>
+</head>
+
+<body class="min-h-screen flex items-center justify-center p-4">
+<div class="w-full max-w-2xl card rounded-2xl p-5 flex flex-col">
+    <div id="status" class="text-center text-sm text-gray-400 mb-3">🟡 Connecting...</div>
+    <h2 class="text-2xl font-bold text-gray-200 mb-4 text-center tracking-wide">
+        🍽️ FoodCare Chat — Beast Mode
+    </h2>
+
+    <div id="chatBody" class="flex-1 overflow-auto rounded-xl p-4 bg-[#131316] space-y-3 border border-[#2a2a2a]"></div>
+
+    <div class="mt-4 flex items-center gap-2">
+        <input id="msgInput" placeholder="Type your message..."
+               class="flex-1 p-3 rounded-xl border border-gray-700 bg-[#0d0d0d] text-gray-200 focus:outline-none" />
+        <button id="sendBtn" class="px-5 py-3 beast-btn">Send</button>
+    </div>
+</div>
+
+<script>
+    const chatBody = document.getElementById('chatBody');
+    const msgInput = document.getElementById('msgInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const statusEl = document.getElementById('status');
+
+    // WebSocket connection
+    const ws = new WebSocket(`${location.origin.replace(/^http/, 'ws')}/ws/chat`);
+    ws.onopen = () => { statusEl.innerHTML = '<span class="text-green-400">🟢 Connected via WS</span>'; };
+    ws.onclose = () => { statusEl.innerHTML = '<span class="text-red-400">🔴 Disconnected</span>'; };
+    ws.onerror = () => { statusEl.innerHTML = '<span class="text-red-400">⚠️ Connection Error</span>'; };
+    ws.onmessage = e => { try { const msg = JSON.parse(e.data); handleBotMessage(msg); } catch { console.warn('Bad JSON'); } };
+
+    // Send message
+    sendBtn.onclick = () => sendMessage();
+    msgInput.onkeydown = e => { if (e.key === 'Enter') sendMessage(); };
+
+    function sendMessage(text) {
+      const message = text || msgInput.value.trim();
+      if (!message) return;
+      ws.send(JSON.stringify({ text: message }));
+      appendUser(message);
+      msgInput.value = '';
+    }
+
+    function appendUser(text) {
+      addLine(`<div class="flex justify-end"><div class="user-bubble px-4 py-2 rounded-2xl max-w-[80%]"><strong>You:</strong> ${escapeHtml(text)}</div></div>`);
+    }
+
+    function handleBotMessage(msg) {
+      addLine(`<div class="flex items-start space-x-2"><div class="bot-bubble px-4 py-2 rounded-2xl max-w-[80%]"><strong class="text-indigo-400">Bot:</strong> ${escapeHtml(msg.reply || '')}</div></div>`);
+
+      if (msg.quickReplies) {
+        const wrap = document.createElement('div');
+        wrap.className = 'flex flex-wrap gap-2 pl-8 mt-1 fade-in';
+        msg.quickReplies.forEach(r => {
+          const b = document.createElement('span');
+          b.className = 'quick';
+          b.textContent = r;
+          b.onclick = () => r.toLowerCase().includes('upload') ? openFilePicker() : sendMessage(r);
+          wrap.appendChild(b);
+        });
+        chatBody.appendChild(wrap);
+      }
+
+      chatBody.scrollTop = chatBody.scrollHeight;
+    }
+
+    function addLine(html) {
+      const d = document.createElement('div');
+      d.className = 'fade-in';
+      d.innerHTML = html;
+      chatBody.appendChild(d);
+      chatBody.scrollTop = chatBody.scrollHeight;
+    }
+
+    function escapeHtml(s) {
+      return s.replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+    }
+
+    // ---------------- IMAGE UPLOAD ----------------
+    function openFilePicker() {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.click();
+      input.onchange = async () => {
+        const file = input.files[0];
+        if (!file) return;
+
+        addLine(`<div class="flex justify-end"><div class="user-bubble px-4 py-2 rounded-2xl max-w-[80%]">📸 You uploaded: ${escapeHtml(file.name)}</div></div>`);
+
+        const formData = new FormData();
+        formData.append('file', file);
+        try {
+          const r = await fetch('/api/upload', { method: 'POST', body: formData });
+          const data = await r.json();
+          const url = data.url || data.imageUrl;
+          if (url) {
+            addLine(`<div class="pl-8 fade-in text-sm text-gray-400">✅ Uploaded: <a href="${url}" target="_blank" class="underline text-indigo-400">${url}</a></div>`);
+            addLine(`<div class="pl-8"><img src="${url}" class="rounded-xl border border-gray-700 mt-2 max-h-48"></div>`);
+            ws.send(JSON.stringify({ imageUrl: url, text: 'uploaded photo' }));
+          }
+        } catch (err) {
+          addLine(`<div class="text-red-400 text-sm pl-8">❌ Upload failed: ${err.message}</div>`);
+        }
+      };
+    }
+</script>
+</body>
+</html>

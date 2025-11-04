@@ -1,5 +1,4 @@
 package com.tiffino.config;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tiffino.entity.request.ClientMessage;
 import com.tiffino.entity.response.BotResponse;
@@ -28,14 +27,11 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) {
-        String username = (String) session.getAttributes().get("username");
-        log.info("✅ WebSocket connected by user: {}", username);
-
+        log.info("Connection established: " + session.getId());
         sessionData.put(session.getId(), new ConcurrentHashMap<>());
         BotResponse welcome = botService.buildWelcome();
         send(session, welcome);
     }
-
 
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) {

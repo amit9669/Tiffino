@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -29,8 +30,6 @@ public class ChatBotService {
     @Autowired
     private ImageUploadService imageUploadService;
 
-    @Autowired
-    private DataToken dataToken;
 
     private static final Logger log = LoggerFactory.getLogger(ChatBotService.class);
 
@@ -41,7 +40,8 @@ public class ChatBotService {
     public BotResponse buildWelcome() {
         BotResponse r = BotResponse.of(
                 "Hi — I’m FoodCare. I can help with order mismatches, spoiled food, insects, bad taste and more. What happened with your order?",
-                "welcome");
+                "welcome"
+        );
         r.setQuickReplies(Arrays.asList("Wrong item delivered", "Food spoiled", "Found insect", "Bad taste"));
         return r;
     }
@@ -56,10 +56,12 @@ public class ChatBotService {
     public BotResponse handleClientMessage(String sessionId, ClientMessage client, Map<String, Object> metadata) {
         String text = safe(client.getMessage());
 
+        // Case 1: user uploaded a photo (MultipartFile present)
         if (client.getFoodUrl() != null && !client.getFoodUrl().isEmpty()) {
             return handleImageUpload(sessionId, client, metadata);
         }
 
+        // 🟢 Case 2: check if user previously was asked about spoiled food details
         if (Boolean.TRUE.equals(metadata.get("expectingSpoiledType"))) {
             return handleSpoiled(client, metadata, null);
         }
@@ -97,8 +99,10 @@ public class ChatBotService {
         String imageUrl = client.getFoodUrl();
         log.info("✅ Image uploaded for session {}: {}", sessionId, imageUrl);
 
+        // 🟢 Notify manager / save complaint to DB
         saveComplaintForManager(client, last, imageUrl);
 
+        // 🟢 Build confirmation reply for user
         String confirmation;
         if (last.type == SimpleClassifier.Type.INSECT) {
             confirmation = "Thank you. Your photo has been uploaded and forwarded to our quality team for urgent review.";
@@ -117,21 +121,18 @@ public class ChatBotService {
 
     private void saveComplaintForManager(ClientMessage client, SimpleClassifier.Classification classification, String imageUrl) {
         try {
+            OrderComplaint complaint = new OrderComplaint();
+            complaint.setComplaintText(classification.type.toString());
+            complaint.setImageUrl(imageUrl);
+            complaint.setOrderId(client.getOrderId());
 
-            Long orderId = client.getOrderId();
-            Order order = orderRepository.findById(orderId).get();
-            User user = order.getUser();
+            Order order = orderRepository.findById(client.getOrderId()).get();
 
-            OrderComplaint orderComplaint = new OrderComplaint();
-            orderComplaint.setUserId(user.getUserId());
-            orderComplaint.setComplaintText(client.getMessage());
-            orderComplaint.setOrderId(client.getOrderId());
-            orderComplaint.setImageUrl(imageUrl);
+            complaint.setUserId(order.getUser().getUserId());
 
-            orderComplaintRepository.save(orderComplaint);
+            orderComplaintRepository.save(complaint);
 
             Map<String, Object> record = new HashMap<>();
-            record.put("userId", client.getUserId());
             record.put("orderId", client.getOrderId());
             record.put("type", classification.type.toString());
             record.put("message", client.getMessage());
@@ -157,15 +158,21 @@ public class ChatBotService {
     private BotResponse handleSpoiled(ClientMessage client, Map<String, Object> meta, SimpleClassifier.Classification c) {
         String userReply = safe(client.getMessage()).toLowerCase();
 
+        // If we're expecting user to specify spoiled type (visibly spoiled / bad smell / cold)
         if (Boolean.TRUE.equals(meta.get("expectingSpoiledType"))) {
+            meta.remove("expectingSpoiledType"); // clear state
+
+            // Save complaint in DB — no image, just text
+            SimpleClassifier.Classification classification =
+                    (c != null) ? c : new SimpleClassifier.Classification(SimpleClassifier.Type.SPOILED, 1.0, List.of());
+            saveComplaintForManager(client, classification, null);
+
             if (userReply.contains("visibly") || userReply.contains("spoiled") || userReply.contains("bad smell")) {
-                meta.remove("expectingSpoiledType");
                 return BotResponse.of(
                         "Sorry for that, you will get a response from our technical support team shortly.",
                         "notify_support"
                 );
             } else if (userReply.contains("arrived") || userReply.contains("cold")) {
-                meta.remove("expectingSpoiledType");
                 return BotResponse.of(
                         "Extremely sorry for that. We’ll ensure your next order is delivered fresh and warm!",
                         "apologize_cold"
@@ -180,6 +187,7 @@ public class ChatBotService {
             }
         }
 
+        // Ask user for more details
         meta.put("expectingSpoiledType", true);
 
         BotResponse r = BotResponse.of(
@@ -191,6 +199,7 @@ public class ChatBotService {
     }
 
 
+
     private BotResponse handleInsect(ClientMessage client, Map<String, Object> meta, SimpleClassifier.Classification c) {
         meta.put("expectingPhoto", true);
         BotResponse r = BotResponse.of(
@@ -200,7 +209,7 @@ public class ChatBotService {
         Map<String, Object> details = new HashMap<>();
         details.put("escalation", "high");
         r.setDetails(details);
-        r.setQuickReplies(Arrays.asList("Upload photo", "I already consumed it"));
+        r.setQuickReplies(Arrays.asList("Upload photo"));
         log.warn("⚠️ Escalation required: insect found — mark session for human review. Classification details: {}", c);
         meta.put("escalated", true);
         return r;

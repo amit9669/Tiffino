@@ -37,9 +37,9 @@ public class SecurityConfiguration {
                 .authorizeHttpRequests(auth -> auth
                         // ✅ Public endpoints
                         .requestMatchers(
-                                "/v3/api-docs/**",      // Swagger API docs
-                                "/swagger-ui/**",       // Swagger UI resources
-                                "/swagger-ui.html",     // Swagger main page
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
                                 "/user/register",
                                 "/auth/forgotPassword",
                                 "/auth/changePassword",
@@ -55,8 +55,18 @@ public class SecurityConfiguration {
                                 "/auth/**",
                                 "/meals/**",
                                 "/ws/**",
-                                "/api/chat/**"
+                                "/api/chat/**",
+                                "/api/upload",
+                                // ✅ Add these lines ↓↓↓
+                                "/",
+                                "/index.html",
+                                "/static/**",
+                                "/css/**",
+                                "/js/**",
+                                "/images/**",
+                                "/favicon.ico"
                         ).permitAll()
+
 
                         // ✅ Role-based protected endpoints
                         .requestMatchers("/superAdmin/**").hasRole("SUPER_ADMIN")
