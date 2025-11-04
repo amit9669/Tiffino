@@ -1,4 +1,5 @@
 package com.tiffino.config;
+
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.socket.config.annotation.*;
 
@@ -11,9 +12,15 @@ public class WebSocketConfig implements WebSocketConfigurer {
         this.chatWebSocketHandler = chatWebSocketHandler;
     }
 
+//    @Override
+//    public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
+//        registry.addHandler(chatWebSocketHandler, "/ws/chat")
+//                .setAllowedOrigins("*").withSockJS(); // tighten in prod
+//    }
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
         registry.addHandler(chatWebSocketHandler, "/ws/chat")
-                .setAllowedOrigins("*"); // tighten in prod
+                .setAllowedOrigins("http://localhost:4200", "https://foodcare.in", "https://www.foodcare.in")
+                .withSockJS();
     }
 }
