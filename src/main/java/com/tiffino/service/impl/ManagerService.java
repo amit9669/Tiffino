@@ -456,20 +456,24 @@ public class ManagerService implements IManagerService {
     }
 
     @Override
-    public Object getAllOrderQuery() {
+    public List<OrderComplaintManagerResponse> getAllOrderQuery() {
         List<OrderComplaint> orderComplaints = orderComplaintRepository.findAll();
-
         List<OrderComplaintManagerResponse> responseList = new ArrayList<>();
-        OrderComplaintManagerResponse response = new OrderComplaintManagerResponse();
-        for (OrderComplaint orderComplaint : orderComplaints){
+
+        for (OrderComplaint orderComplaint : orderComplaints) {
+            OrderComplaintManagerResponse response = new OrderComplaintManagerResponse();
+
             response.setOrderId(orderComplaint.getOrderId());
             response.setComplaint(orderComplaint.getComplaintText());
-            User user = userRepository.findById(orderComplaint.getUserId()).get();
-            response.setCustomerName(user.getUserName());
-            response.setCustomerPhoneNo(user.getPhoneNo());
             response.setImageUrl(orderComplaint.getImageUrl());
-            response.setCustomerAddress(user.getAddress());
             response.setComplaintId(orderComplaint.getComplaintId());
+
+            userRepository.findById(orderComplaint.getUserId()).ifPresent(user -> {
+                response.setCustomerName(user.getUserName());
+                response.setCustomerPhoneNo(user.getPhoneNo());
+                response.setCustomerAddress(user.getAddress());
+            });
+
             responseList.add(response);
         }
         return responseList;
