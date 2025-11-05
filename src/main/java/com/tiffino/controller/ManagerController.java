@@ -86,4 +86,9 @@ public class ManagerController {
     public ResponseEntity<?> openClosedCloudKitchen(){
         return new ResponseEntity<>(iManagerService.openClosedCloudKitchen(),HttpStatus.OK);
     }
+
+    @GetMapping("/getAllOrderQuery")
+    public ResponseEntity<?> getAllOrderQuery(){
+        return new ResponseEntity<>(iManagerService.getAllOrderQuery(),HttpStatus.OK);
+    }
 }

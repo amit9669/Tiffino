@@ -13,9 +13,9 @@ import java.util.Map;
 public class BotResponse {
 
     private String reply;
-    private String action; // e.g., "ask_for_photo", "initiate_refund", "escalate", "confirm"
+    private String action;
     private Map<String, Object> details;
-    private List<String> quickReplies; // buttons user can click
+    private List<String> quickReplies;
 
     public static BotResponse of(String reply, String action) {
         BotResponse b = new BotResponse();

@@ -6,41 +6,84 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
-            background: linear-gradient(135deg, #0d0d0d, #1a1a1a);
+            background: linear-gradient(135deg, #fff7f0, #fff);
             font-family: 'Inter', sans-serif;
-            color: #e5e7eb;
+            color: #2d2d2d;
         }
+
         ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: #f97316; border-radius: 10px; }
 
         .fade-in { animation: fadeIn 0.3s ease-in-out; }
         @keyframes fadeIn { from {opacity:0; transform:translateY(6px);} to {opacity:1; transform:translateY(0);} }
 
-        .card { background:#18181b; border:1px solid #2d2d2d; box-shadow:0 4px 20px rgba(0,0,0,0.4); }
-        input:focus { border-color:#4f46e5; outline:none; }
+        .card {
+            background: #ffffff;
+            border: 1px solid #f4f4f4;
+            box-shadow: 0 4px 30px rgba(249, 115, 22, 0.1);
+        }
 
-        .bot-bubble { background:#27272a; color:#f4f4f5; }
-        .user-bubble { background:#4f46e5; color:#fff; }
-        .quick { background:#1f1f22; border:1px solid #3f3f46; color:#d1d5db; border-radius:9999px; padding:.4rem .9rem; cursor:pointer; }
-        .quick:hover { background:#2e2e31; }
+        input:focus {
+            border-color: #f97316;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.2);
+        }
 
-        .beast-btn { background:#4f46e5; color:#fff; font-weight:600; border-radius:0.75rem; transition:background .25s, transform .2s; }
-        .beast-btn:hover { background:#3730a3; transform:translateY(-1px); }
+        .bot-bubble {
+            background: #fff3e6;
+            color: #333;
+            border: 1px solid #ffd5b8;
+        }
+
+        .user-bubble {
+            background: #f97316;
+            color: #fff;
+        }
+
+        .quick {
+            background: #fff7f0;
+            border: 1px solid #fcd5b5;
+            color: #f97316;
+            border-radius: 9999px;
+            padding: .4rem .9rem;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .quick:hover {
+            background: #f97316;
+            color: #fff;
+        }
+
+        .beast-btn {
+            background: #f97316;
+            color: #fff;
+            font-weight: 600;
+            border-radius: 0.75rem;
+            transition: background .25s, transform .2s;
+        }
+
+        .beast-btn:hover {
+            background: #ea580c;
+            transform: translateY(-1px);
+        }
+
+        a.support-link { color: #f97316; text-decoration: underline; }
     </style>
 </head>
 
 <body class="min-h-screen flex items-center justify-center p-4">
 <div class="w-full max-w-2xl card rounded-2xl p-5 flex flex-col">
-    <div id="status" class="text-center text-sm text-gray-400 mb-3">🟡 Connecting...</div>
-    <h2 class="text-2xl font-bold text-gray-200 mb-4 text-center tracking-wide">
-        🍽️ FoodCare Chat — Beast Mode
+    <div id="status" class="text-center text-sm text-gray-500 mb-3">🟡 Connecting...</div>
+    <h2 class="text-2xl font-bold text-gray-700 mb-4 text-center tracking-wide">
+        🍽️ <span class="text-orange-500">Tiffino Support Chat</span>
     </h2>
 
-    <div id="chatBody" class="flex-1 overflow-auto rounded-xl p-4 bg-[#131316] space-y-3 border border-[#2a2a2a]"></div>
+    <div id="chatBody" class="flex-1 overflow-auto rounded-xl p-4 bg-[#fffaf5] space-y-3 border border-[#ffe6cc]"></div>
 
     <div class="mt-4 flex items-center gap-2">
         <input id="msgInput" placeholder="Type your message..."
-               class="flex-1 p-3 rounded-xl border border-gray-700 bg-[#0d0d0d] text-gray-200 focus:outline-none" />
+               class="flex-1 p-3 rounded-xl border border-gray-300 bg-[#fff] text-gray-800 focus:outline-none" />
         <button id="sendBtn" class="px-5 py-3 beast-btn">Send</button>
     </div>
 </div>
@@ -55,24 +98,31 @@
     const orderId = params.get("orderId");
 
     if (!orderId) {
-      alert("⚠️ Missing orderId in URL (e.g. ?orderId=123)");
+      console.warn("Missing orderId in URL (e.g. ?orderId=123)");
     }
 
     // ------------------ WebSocket Setup ------------------
     const ws = new WebSocket(`${location.origin.replace(/^http/, 'ws')}/ws/chat`);
-    let welcomeSent = false; // ✅ Send welcome only once
+    let welcomeSeen = false;
 
     ws.onopen = () => {
-      statusEl.innerHTML = `<span class="text-green-400">🟢 Connected (Order ID: ${orderId})</span>`;
-      // Notify backend of orderId
-      ws.send(JSON.stringify({ orderId: Number(orderId), text: "User connected to chat" }));
+      statusEl.innerHTML = `<span class="text-green-500">🟢 Connected</span>`;
+      if (orderId) {
+        ws.send(JSON.stringify({ orderId: Number(orderId), text: "User connected to chat" }));
+      } else {
+        ws.send(JSON.stringify({ text: "User connected to chat (no orderId)" }));
+      }
     };
 
-    ws.onclose = () => { statusEl.innerHTML = '<span class="text-red-400">🔴 Disconnected</span>'; };
-    ws.onerror = () => { statusEl.innerHTML = '<span class="text-red-400">⚠️ Connection Error</span>'; };
+    ws.onclose = () => { statusEl.innerHTML = '<span class="text-red-500">🔴 Disconnected</span>'; };
+    ws.onerror = () => { statusEl.innerHTML = '<span class="text-red-500">⚠️ Connection Error</span>'; };
     ws.onmessage = e => {
-      try { const msg = JSON.parse(e.data); handleBotMessage(msg); }
-      catch { console.warn('Bad JSON'); }
+      try {
+        const msg = JSON.parse(e.data);
+        handleBotMessage(msg);
+      } catch (err) {
+        console.warn('Bad JSON from ws message', e.data);
+      }
     };
 
     // ------------------ Send Messages ------------------
@@ -82,25 +132,65 @@
     function sendMessage(text) {
       const message = text || msgInput.value.trim();
       if (!message) return;
-      ws.send(JSON.stringify({ orderId: Number(orderId), text: message }));
+      const payload = { text: message };
+      if (orderId) payload.orderId = Number(orderId);
+      ws.send(JSON.stringify(payload));
       appendUser(message);
       msgInput.value = '';
     }
 
     function appendUser(text) {
-      addLine(`<div class="flex justify-end"><div class="user-bubble px-4 py-2 rounded-2xl max-w-[80%]"><strong>You:</strong> ${escapeHtml(text)}</div></div>`);
+      addLine(`<div class="flex justify-end"><div class="user-bubble px-4 py-2 rounded-2xl max-w-[80%] shadow"><strong>You:</strong> ${escapeHtml(text)}</div></div>`);
     }
 
-    // ------------------ Handle Bot Messages ------------------
-    function handleBotMessage(msg) {
-      // ✅ Welcome only once
-      if (!welcomeSent && msg.reply && msg.stage === 'welcome') {
-          welcomeSent = true;
+    // ------------------ Sanitizer: remove apology prefixes & neutralize welcome ------------------
+    function sanitizeReplyText(raw, msg) {
+      if (!raw) return '';
+
+      // 1) If backend marks this as a welcome stage, ignore it entirely (user requested no first comment)
+      if (msg && msg.stage === 'welcome') {
+        // mark that we saw a welcome (so we don't rely on it later)
+        welcomeSeen = true;
+        return null; // signal: do not render
       }
 
-      addLine(`<div class="flex items-start space-x-2"><div class="bot-bubble px-4 py-2 rounded-2xl max-w-[80%]"><strong class="text-indigo-400">Bot:</strong> ${escapeHtml(msg.reply || '')}</div></div>`);
+      // 2) Remove common apology/opening phrases that start messages
+      //    e.g. "I'm sorry —", "I’m really sorry.", "Sorry about that.", "Extremely sorry for that."
+      //    We'll strip such phrases and any following punctuation/dash/space.
+      let s = String(raw);
+      s = s.replace(/^\s*(I(\'|’)m sorry|I am sorry|I(\'|’)m really sorry|I am really sorry|Sorry for that|Sorry about that|Extremely sorry for that|I\'m sorry about that)[\s\-\—:,.]+/i, '');
 
-      if (msg.quickReplies) {
+      // 3) Trim extra leading/trailing whitespace
+      s = s.trim();
+
+      // 4) If after stripping it's empty, return a neutral fallback sentence
+      if (!s) {
+        return "Please tell us more about the issue or select an option.";
+      }
+
+      return s;
+    }
+
+    // ------------------ Handle Support Team Messages ------------------
+    function handleBotMessage(msg) {
+      // if msg is null/undefined, ignore
+      if (!msg) return;
+
+      // prefer msg.reply but fall back to msg.text
+      const rawReply = msg.reply || msg.text || '';
+
+      // sanitize the reply (and possibly skip rendering)
+      const sanitized = sanitizeReplyText(rawReply, msg);
+      if (sanitized === null) {
+        // frontend is configured to skip all 'welcome' stage messages entirely
+        return;
+      }
+
+      // show message labeled "Support team:" (never "Bot")
+      addLine(`<div class="flex items-start space-x-2"><div class="bot-bubble px-4 py-2 rounded-2xl max-w-[80%] shadow"><strong class="text-orange-500">Support team:</strong> ${escapeHtml(sanitized)}</div></div>`);
+
+      // quick replies handling
+      if (msg.quickReplies && Array.isArray(msg.quickReplies) && msg.quickReplies.length) {
         const wrap = document.createElement('div');
         wrap.className = 'flex flex-wrap gap-2 pl-8 mt-1 fade-in';
         msg.quickReplies.forEach(r => {
@@ -108,7 +198,7 @@
           b.className = 'quick';
           b.textContent = r;
           b.onclick = () => {
-              if (r.toLowerCase().includes('upload')) openFilePicker();
+              if (r.toLowerCase().includes('upload') || r.toLowerCase().includes('photo')) openFilePicker();
               else sendMessage(r);
           };
           wrap.appendChild(b);
@@ -128,7 +218,8 @@
     }
 
     function escapeHtml(s) {
-      return s.replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+      if (s == null) return '';
+      return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
     }
 
     // ------------------ IMAGE UPLOAD ------------------
@@ -150,15 +241,21 @@
           const data = await r.json();
           const url = data.url || data.imageUrl;
           if (url) {
-            addLine(`<div class="pl-8 fade-in text-sm text-gray-400">✅ Uploaded: <a href="${url}" target="_blank" class="underline text-indigo-400">${url}</a></div>`);
-            addLine(`<div class="pl-8"><img src="${url}" class="rounded-xl border border-gray-700 mt-2 max-h-48"></div>`);
-            ws.send(JSON.stringify({ orderId: Number(orderId), foodUrl: url, text: 'uploaded photo' }));
+            addLine(`<div class="pl-8 fade-in text-sm text-gray-600">✅ Uploaded</div>`);
+            addLine(`<div class="pl-8"><img src="${url}" class="rounded-xl border border-gray-300 mt-2 max-h-48"></div>`);
+            const payload = { text: 'uploaded photo', foodUrl: url };
+            if (orderId) payload.orderId = Number(orderId);
+            ws.send(JSON.stringify(payload));
+          } else {
+            addLine(`<div class="text-red-500 text-sm pl-8">❌ Upload succeeded but server did not return a URL.</div>`);
           }
         } catch (err) {
-          addLine(`<div class="text-red-400 text-sm pl-8">❌ Upload failed: ${err.message}</div>`);
+          addLine(`<div class="text-red-500 text-sm pl-8">❌ Upload failed: ${escapeHtml(err.message || 'Network error')}</div>`);
         }
       };
     }
+
+    // No local starter message (user asked to remove the first comment), so we do not inject any initial message here.
 </script>
 </body>
 </html>

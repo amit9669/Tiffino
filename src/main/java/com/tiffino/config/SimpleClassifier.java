@@ -3,10 +3,6 @@ package com.tiffino.config;
 import java.util.*;
 import java.util.regex.Pattern;
 
-/**
- * Very small rule-based classifier for common complaint types.
- * Replace with ML/NLP if you need better accuracy.
- */
 public class SimpleClassifier {
 
     public enum Type { MISMATCH, SPOILED, INSECT, BAD_TASTE, UNKNOWN }
@@ -74,7 +70,6 @@ public class SimpleClassifier {
             }
         }
 
-        // choose highest hits
         Type best = Type.UNKNOWN;
         int bestHits = 0;
         for (Type t : hits.keySet()) {
@@ -86,9 +81,8 @@ public class SimpleClassifier {
             }
         }
 
-        double confidence = Math.min(1.0, bestHits / 2.0); // simple heuristic
+        double confidence = Math.min(1.0, bestHits / 2.0);
         if (best == Type.UNKNOWN && text.length() > 30) {
-            // try some heuristics: if user says "There's something wrong", leave unknown
             return new Classification(Type.UNKNOWN, 0.2, Collections.emptyList());
         }
 

@@ -38,6 +38,12 @@ public class ManagerService implements IManagerService {
     private OrderItemRepository orderItemRepository;
 
     @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private OrderComplaintRepository orderComplaintRepository;
+
+    @Autowired
     private JwtService jwtService;
 
     @Autowired
@@ -450,7 +456,22 @@ public class ManagerService implements IManagerService {
     }
 
     @Override
-    public Object getQueryFromUser() {
-        return null;
+    public Object getAllOrderQuery() {
+        List<OrderComplaint> orderComplaints = orderComplaintRepository.findAll();
+
+        List<OrderComplaintManagerResponse> responseList = new ArrayList<>();
+        OrderComplaintManagerResponse response = new OrderComplaintManagerResponse();
+        for (OrderComplaint orderComplaint : orderComplaints){
+            response.setOrderId(orderComplaint.getOrderId());
+            response.setComplaint(orderComplaint.getComplaintText());
+            User user = userRepository.findById(orderComplaint.getUserId()).get();
+            response.setCustomerName(user.getUserName());
+            response.setCustomerPhoneNo(user.getPhoneNo());
+            response.setImageUrl(orderComplaint.getImageUrl());
+            response.setCustomerAddress(user.getAddress());
+            response.setComplaintId(orderComplaint.getComplaintId());
+            responseList.add(response);
+        }
+        return responseList;
     }
 }
