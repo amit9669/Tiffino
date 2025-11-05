@@ -6,9 +6,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
-          background: linear-gradient(135deg, #0d0d0d, #1a1a1a);
-          font-family: 'Inter', sans-serif;
-          color: #e5e7eb;
+            background: linear-gradient(135deg, #0d0d0d, #1a1a1a);
+            font-family: 'Inter', sans-serif;
+            color: #e5e7eb;
         }
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 10px; }
@@ -51,21 +51,38 @@
     const sendBtn = document.getElementById('sendBtn');
     const statusEl = document.getElementById('status');
 
-    // WebSocket connection
+    const params = new URLSearchParams(window.location.search);
+    const orderId = params.get("orderId");
+
+    if (!orderId) {
+      alert("⚠️ Missing orderId in URL (e.g. ?orderId=123)");
+    }
+
+    // ------------------ WebSocket Setup ------------------
     const ws = new WebSocket(`${location.origin.replace(/^http/, 'ws')}/ws/chat`);
-    ws.onopen = () => { statusEl.innerHTML = '<span class="text-green-400">🟢 Connected via WS</span>'; };
+    let welcomeSent = false; // ✅ Send welcome only once
+
+    ws.onopen = () => {
+      statusEl.innerHTML = `<span class="text-green-400">🟢 Connected (Order ID: ${orderId})</span>`;
+      // Notify backend of orderId
+      ws.send(JSON.stringify({ orderId: Number(orderId), text: "User connected to chat" }));
+    };
+
     ws.onclose = () => { statusEl.innerHTML = '<span class="text-red-400">🔴 Disconnected</span>'; };
     ws.onerror = () => { statusEl.innerHTML = '<span class="text-red-400">⚠️ Connection Error</span>'; };
-    ws.onmessage = e => { try { const msg = JSON.parse(e.data); handleBotMessage(msg); } catch { console.warn('Bad JSON'); } };
+    ws.onmessage = e => {
+      try { const msg = JSON.parse(e.data); handleBotMessage(msg); }
+      catch { console.warn('Bad JSON'); }
+    };
 
-    // Send message
+    // ------------------ Send Messages ------------------
     sendBtn.onclick = () => sendMessage();
     msgInput.onkeydown = e => { if (e.key === 'Enter') sendMessage(); };
 
     function sendMessage(text) {
       const message = text || msgInput.value.trim();
       if (!message) return;
-      ws.send(JSON.stringify({ text: message }));
+      ws.send(JSON.stringify({ orderId: Number(orderId), text: message }));
       appendUser(message);
       msgInput.value = '';
     }
@@ -74,7 +91,13 @@
       addLine(`<div class="flex justify-end"><div class="user-bubble px-4 py-2 rounded-2xl max-w-[80%]"><strong>You:</strong> ${escapeHtml(text)}</div></div>`);
     }
 
+    // ------------------ Handle Bot Messages ------------------
     function handleBotMessage(msg) {
+      // ✅ Welcome only once
+      if (!welcomeSent && msg.reply && msg.stage === 'welcome') {
+          welcomeSent = true;
+      }
+
       addLine(`<div class="flex items-start space-x-2"><div class="bot-bubble px-4 py-2 rounded-2xl max-w-[80%]"><strong class="text-indigo-400">Bot:</strong> ${escapeHtml(msg.reply || '')}</div></div>`);
 
       if (msg.quickReplies) {
@@ -84,7 +107,10 @@
           const b = document.createElement('span');
           b.className = 'quick';
           b.textContent = r;
-          b.onclick = () => r.toLowerCase().includes('upload') ? openFilePicker() : sendMessage(r);
+          b.onclick = () => {
+              if (r.toLowerCase().includes('upload')) openFilePicker();
+              else sendMessage(r);
+          };
           wrap.appendChild(b);
         });
         chatBody.appendChild(wrap);
@@ -105,7 +131,7 @@
       return s.replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
     }
 
-    // ---------------- IMAGE UPLOAD ----------------
+    // ------------------ IMAGE UPLOAD ------------------
     function openFilePicker() {
       const input = document.createElement('input');
       input.type = 'file';
@@ -126,7 +152,7 @@
           if (url) {
             addLine(`<div class="pl-8 fade-in text-sm text-gray-400">✅ Uploaded: <a href="${url}" target="_blank" class="underline text-indigo-400">${url}</a></div>`);
             addLine(`<div class="pl-8"><img src="${url}" class="rounded-xl border border-gray-700 mt-2 max-h-48"></div>`);
-            ws.send(JSON.stringify({ imageUrl: url, text: 'uploaded photo' }));
+            ws.send(JSON.stringify({ orderId: Number(orderId), foodUrl: url, text: 'uploaded photo' }));
           }
         } catch (err) {
           addLine(`<div class="text-red-400 text-sm pl-8">❌ Upload failed: ${err.message}</div>`);

@@ -12,15 +12,15 @@ public class WebSocketConfig implements WebSocketConfigurer {
         this.chatWebSocketHandler = chatWebSocketHandler;
     }
 
-//    @Override
-//    public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-//        registry.addHandler(chatWebSocketHandler, "/ws/chat")
-//                .setAllowedOrigins("*").withSockJS(); // tighten in prod
-//    }
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
         registry.addHandler(chatWebSocketHandler, "/ws/chat")
-                .setAllowedOrigins("http://localhost:4200", "https://foodcare.in", "https://www.foodcare.in")
-                .withSockJS();
+                .setAllowedOrigins("*"); // tighten in prod
     }
+//    @Override
+//    public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
+//        registry.addHandler(chatWebSocketHandler, "/ws/chat")
+//                .setAllowedOrigins("http://localhost:4200", "https://foodcare.in", "https://www.foodcare.in")
+//                .withSockJS();
+//    }
 }
