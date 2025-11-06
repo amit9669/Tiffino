@@ -457,24 +457,31 @@ public class ManagerService implements IManagerService {
 
     @Override
     public List<OrderComplaintManagerResponse> getAllOrderQuery() {
+        Manager manager = (Manager) dataToken.getCurrentUserProfile();
+        CloudKitchen cloudKitchen = manager.getCloudKitchen();
+
         List<OrderComplaint> orderComplaints = orderComplaintRepository.findAll();
         List<OrderComplaintManagerResponse> responseList = new ArrayList<>();
 
         for (OrderComplaint orderComplaint : orderComplaints) {
-            OrderComplaintManagerResponse response = new OrderComplaintManagerResponse();
 
-            response.setOrderId(orderComplaint.getOrderId());
-            response.setComplaint(orderComplaint.getComplaintText());
-            response.setImageUrl(orderComplaint.getImageUrl());
-            response.setComplaintId(orderComplaint.getComplaintId());
+            Order order = orderRepository.findById(orderComplaint.getOrderId()).get();
+            if(cloudKitchen.getCloudKitchenId().equals(order.getCloudKitchen().getCloudKitchenId())){
+                OrderComplaintManagerResponse response = new OrderComplaintManagerResponse();
 
-            userRepository.findById(orderComplaint.getUserId()).ifPresent(user -> {
-                response.setCustomerName(user.getUserName());
-                response.setCustomerPhoneNo(user.getPhoneNo());
-                response.setCustomerAddress(user.getAddress());
-            });
+                response.setOrderId(orderComplaint.getOrderId());
+                response.setComplaint(orderComplaint.getComplaintText());
+                response.setImageUrl(orderComplaint.getImageUrl());
+                response.setComplaintId(orderComplaint.getComplaintId());
 
-            responseList.add(response);
+                userRepository.findById(orderComplaint.getUserId()).ifPresent(user -> {
+                    response.setCustomerName(user.getUserName());
+                    response.setCustomerPhoneNo(user.getPhoneNo());
+                    response.setCustomerAddress(user.getAddress());
+                });
+
+                responseList.add(response);
+            }
         }
         return responseList;
     }
