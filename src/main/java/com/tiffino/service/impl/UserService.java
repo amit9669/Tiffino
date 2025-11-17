@@ -435,6 +435,8 @@ public class UserService implements IUserService {
                         .assignedAt(null)
                         .pickedUpAt(null)
                         .deliveredAt(null)
+                        .userAddress(order.getDeliveryDetails().getAddress())
+                        .cloudKitchenAddress(order.getCloudKitchen().getAddress())
                         .build();
 
             case "ACCEPTED-ORDER":
@@ -449,6 +451,8 @@ public class UserService implements IUserService {
                         .assignedAt(null)
                         .pickedUpAt(null)
                         .deliveredAt(null)
+                        .userAddress(order.getDeliveryDetails().getAddress())
+                        .cloudKitchenAddress(order.getCloudKitchen().getAddress())
                         .build();
 
             case "ORDER-PREPARED":
@@ -463,6 +467,8 @@ public class UserService implements IUserService {
                         .assignedAt(null)
                         .pickedUpAt(null)
                         .deliveredAt(null)
+                        .userAddress(order.getDeliveryDetails().getAddress())
+                        .cloudKitchenAddress(order.getCloudKitchen().getAddress())
                         .build();
 
             case "CANCELLED":
