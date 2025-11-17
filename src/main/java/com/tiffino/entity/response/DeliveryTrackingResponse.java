@@ -20,4 +20,6 @@ public class DeliveryTrackingResponse {
     private LocalDateTime assignedAt;
     private LocalDateTime pickedUpAt;
     private LocalDateTime deliveredAt;
+    private String userAddress;
+    private String cloudKitchenAddress;
 }

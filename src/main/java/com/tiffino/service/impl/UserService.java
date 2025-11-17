@@ -398,6 +398,9 @@ public class UserService implements IUserService {
         Optional<Delivery> deliveryOpt =
                 deliveryRepository.findByOrder_OrderIdAndOrder_User_UserId(orderId, user.getUserId());
 
+        Order order = orderRepository.findByOrderIdAndUser_UserId(orderId, user.getUserId())
+                .orElseThrow(() -> new RuntimeException("Order not found for this user"));
+
         if (deliveryOpt.isPresent()) {
             Delivery d = deliveryOpt.get();
             return DeliveryTrackingResponse.builder()
@@ -412,11 +415,10 @@ public class UserService implements IUserService {
                     .assignedAt(d.getAssignedAt())
                     .pickedUpAt(d.getPickedUpAt())
                     .deliveredAt(d.getDeliveredAt())
+                    .userAddress(order.getDeliveryDetails().getAddress())
+                    .cloudKitchenAddress(order.getCloudKitchen().getAddress())
                     .build();
         }
-
-        Order order = orderRepository.findByOrderIdAndUser_UserId(orderId, user.getUserId())
-                .orElseThrow(() -> new RuntimeException("Order not found for this user"));
 
         String status = order.getOrderStatus().toUpperCase();
 

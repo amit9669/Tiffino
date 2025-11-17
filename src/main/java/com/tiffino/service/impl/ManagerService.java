@@ -349,7 +349,7 @@ public class ManagerService implements IManagerService {
     public Object acceptedOrder(Long orderId) {
         Order order = orderRepository.findById(orderId).get();
 
-        if(order.getOrderStatus().equalsIgnoreCase("PENDING")){
+        if (order.getOrderStatus().equalsIgnoreCase("PENDING")) {
             order.setOrderStatus("ACCEPTED-ORDER");
         }
         orderRepository.save(order);
@@ -360,7 +360,7 @@ public class ManagerService implements IManagerService {
     public Object orderPrepared(Long orderId) {
         Order order = orderRepository.findById(orderId).get();
 
-        if(order.getOrderStatus().equalsIgnoreCase("ACCEPTED-ORDER")){
+        if (order.getOrderStatus().equalsIgnoreCase("ACCEPTED-ORDER")) {
             order.setOrderStatus("ORDER-PREPARED");
         }
         orderRepository.save(order);
@@ -466,7 +466,7 @@ public class ManagerService implements IManagerService {
         for (OrderComplaint orderComplaint : orderComplaints) {
 
             Order order = orderRepository.findById(orderComplaint.getOrderId()).get();
-            if(cloudKitchen.getCloudKitchenId().equals(order.getCloudKitchen().getCloudKitchenId())){
+            if (cloudKitchen.getCloudKitchenId().equals(order.getCloudKitchen().getCloudKitchenId())) {
                 OrderComplaintManagerResponse response = new OrderComplaintManagerResponse();
 
                 response.setOrderId(orderComplaint.getOrderId());
@@ -479,8 +479,6 @@ public class ManagerService implements IManagerService {
                     response.setCustomerPhoneNo(user.getPhoneNo());
                     response.setCustomerAddress(user.getAddress());
                 });
-
-                responseList.add(response);
             }
         }
         return responseList;
