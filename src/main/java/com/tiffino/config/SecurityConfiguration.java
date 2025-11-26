@@ -56,6 +56,7 @@ public class SecurityConfiguration {
                                 "/ws/**",
                                 "/api/chat/**",
                                 "/api/upload",
+                                "/helpdesk/chat",
                                 "/",
                                 "/index.html",
                                 "/static/**",
