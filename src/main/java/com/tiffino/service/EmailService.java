@@ -2,7 +2,6 @@ package com.tiffino.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.tiffino.exception.CustomException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,8 +34,9 @@ public class EmailService {
     @Async
     public void sendEmail(String to, String subject, String message) {
         Future<String> future = executorService.submit(() -> {
+
             if (!isDeliverableEmail(to)) {
-                return "Invalid or undeliverable email: " + to;
+                log.warn("Email validation failed, but allowing send to {}", to);
             }
 
             SimpleMailMessage email = new SimpleMailMessage();
@@ -58,11 +58,9 @@ public class EmailService {
 
     public boolean isDeliverableEmail(String email) {
         try {
-            String apiKey = MAIL_API_KEY;
-
             String url = String.format(
                     "http://apilayer.net/api/check?access_key=%s&email=%s&smtp=1&format=1",
-                    apiKey,
+                    MAIL_API_KEY,
                     URLEncoder.encode(email, StandardCharsets.UTF_8)
             );
 
@@ -73,20 +71,33 @@ public class EmailService {
                     .build();
 
             HttpResponse<String> res = client.send(req, HttpResponse.BodyHandlers.ofString());
+
             ObjectMapper mapper = new ObjectMapper();
             JsonNode json = mapper.readTree(res.body());
 
-            boolean formatValid = json.path("format_valid").asBoolean();
-            boolean mxFound = json.path("mx_found").asBoolean();
-            boolean smtpCheck = json.path("smtp_check").asBoolean();
-
             log.info("MailboxLayer response: {}", json.toString());
 
-            return formatValid && mxFound && smtpCheck;
+            boolean formatValid = json.path("format_valid").asBoolean();
+            boolean mxFound = json.path("mx_found").asBoolean();
+
+            boolean smtpCheck = json.path("smtp_check").asBoolean();
+
+            boolean isValid = formatValid && mxFound;
+
+            if (json.has("error")) {
+                log.warn("API returned error, allowing email as valid: {}", json.path("error"));
+                return true;
+            }
+
+            if (!isValid) {
+                log.warn("Email validation failed, smtp_check={} (ignored)", smtpCheck);
+            }
+
+            return isValid;
 
         } catch (Exception e) {
-            log.error("Error verifying email with MailboxLayer", e);
-            return false;
+            log.error("Error verifying email, allowing as valid", e);
+            return true;
         }
     }
 

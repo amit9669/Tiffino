@@ -343,8 +343,6 @@ public class HelpDeskChatbotAgentService {
                 loweredLatin.matches(".*\\b(kaise|kya|hai|nahi|kyun|karenge|mujhe|mera|apka)\\b.*")) {
             return Language.HINGLISH;
         }
-
-        // Fallback to English
         return Language.ENGLISH;
     }
 
